@@ -1,11 +1,11 @@
 #!/bin/bash
 
-data=$(<$1)
+target=$1
 
-echo $data
+data=$(<$2)
 
 curl \
 	-X POST \
 	-H "Content-Type: application/json" \
-	-d $data \
-	http://localhost:8080/user
+	-d "$data" \
+	$target
