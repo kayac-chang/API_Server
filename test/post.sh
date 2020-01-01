@@ -1,11 +1,8 @@
 #!/bin/bash
 
-target=$1
-
-data=$(<$2)
-
 curl \
+	-i \
 	-X POST \
 	-H "Content-Type: application/json" \
-	-d "$data" \
-	$target
+	-d "@$2" \
+	$1
