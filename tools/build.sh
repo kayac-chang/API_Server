@@ -1,8 +1,8 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
-name=${PWD##*/}
+source "${0%/*}/.env"
 
-docker build -t $name . && \
+docker build -t $PROJECT_NAME . && \
 
 docker rmi $(docker images -f "dangling=true" -q) && \
 

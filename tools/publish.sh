@@ -1,17 +1,17 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
 [ -z "$1" ] && echo "username must be supplied" && exit 1
 
-name=${PWD##*/}
+source "${0%/*}/.env"
 
-username=$1
+USER_NAME=$1
 
-project=$username/$name
+PROJECT=$USER_NAME/$PROJECT_NAME
 
-docker login
+docker login && \
 
-docker tag $name $project:latest
+docker tag $PROJECT_NAME $PROJECT:latest && \
 
-docker push $project
+docker push $PROJECT && \
 
 echo "Publish Successed..."
