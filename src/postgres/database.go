@@ -1,8 +1,9 @@
 package postgres
 
 import (
-	"database/sql"
 	"fmt"
+
+	"github.com/jmoiron/sqlx"
 
 	_ "github.com/lib/pq"
 )
@@ -12,30 +13,19 @@ const (
 	port     = 5432
 	user     = "service"
 	password = "123456"
-	dbname   = "test"
 	sslmode  = "disable"
 )
 
-func info() string {
-	return fmt.Sprintf(
+func New(name string) *sqlx.DB {
+
+	info := fmt.Sprintf(
 		"host=%s port=%d user=%s password=%s dbname=%s sslmode=%s",
-		host, port, user, password, dbname, sslmode,
+		host, port, user, password, name, sslmode,
 	)
-}
 
-func New() *sql.DB {
-	db, err := sql.Open("postgres", info())
+	db := sqlx.MustConnect("postgres", info)
 
-	if err != nil {
-		panic(err)
-	}
-	defer db.Close()
-
-	err = db.Ping()
-
-	if err != nil {
-		panic(err)
-	}
+	fmt.Println("Connection Successed...")
 
 	return db
 }

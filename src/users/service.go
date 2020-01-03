@@ -1,4 +1,4 @@
-package user
+package users
 
 import (
 	"context"
@@ -21,21 +21,9 @@ func create(db *mongo.Database) httprouter.Handle {
 
 	tb := db.Collection("users")
 
-	insert := func(u user) (*mongo.InsertOneResult, error) {
-		ctx := context.TODO()
-
-		res, err := tb.InsertOne(ctx, u)
-
-		if err != nil {
-			return nil, err
-		}
-
-		return res, nil
-	}
-
 	return func(w http.ResponseWriter, r *http.Request, p httprouter.Params) {
 
-		//	1. Create User
+		//	Create User
 		u := user{
 			ID: primitive.NewObjectID(),
 		}
@@ -43,17 +31,19 @@ func create(db *mongo.Database) httprouter.Handle {
 		err := json.NewDecoder(r.Body).Decode(&u)
 
 		if err != nil {
-			//TODO: Parse error
+			//TODO
 		}
 
-		//	2. Add to Database
-		_, err = insert(u)
+		//	Add to Database
+		ctx := context.TODO()
+
+		_, err = tb.InsertOne(ctx, u)
 
 		if err != nil {
-			//TODO: Insert error
+			//TODO
 		}
 
-		//	3. Response to Client
+		//	Response to Client
 		w.WriteHeader(http.StatusCreated)
 
 		sendJSON(w, u)

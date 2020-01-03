@@ -3,17 +3,41 @@ package main
 import (
 	"net/http"
 
-	"github.com/KayacChang/API_Server/mongo"
-	"github.com/KayacChang/API_Server/user"
+	"github.com/KayacChang/API_Server/games"
+	"github.com/KayacChang/API_Server/postgres"
+
 	"github.com/julienschmidt/httprouter"
 )
+
+func cors(w http.ResponseWriter, r *http.Request) {
+	if r.Header.Get("Access-Control-Request-Method") != "" {
+		header := w.Header()
+
+		//	Allow Http Methods
+		const allow = "POST, GET, OPTIONS, PUT, DELETE"
+		header.Set("Access-Control-Allow-Methods", allow)
+
+		//	Allow all Headers
+		var allowHeaders = r.Header.Get("Access-Control-Allow-Headers")
+		header.Set("Access-Control-Allow-Headers", allowHeaders)
+
+		//	@TODO: Specifiy allow origin
+		header.Set("Access-Control-Allow-Origin", "*")
+	}
+
+	w.WriteHeader(http.StatusNoContent)
+}
 
 func main() {
 	r := httprouter.New()
 
-	db := mongo.New("test")
+	r.GlobalOPTIONS = http.HandlerFunc(cors)
 
-	user.Serve(r, db)
+	db := postgres.New("test")
+
+	// users.Serve(r, db)
+
+	games.Serve(r, db)
 
 	http.ListenAndServe(":8080", r)
 }
