@@ -1,12 +1,17 @@
 package main
 
 import (
+	"fmt"
 	"net/http"
 
 	"github.com/KayacChang/API_Server/games"
 	"github.com/KayacChang/API_Server/postgres"
 
 	"github.com/julienschmidt/httprouter"
+)
+
+const (
+	port = ":8080"
 )
 
 func cors(w http.ResponseWriter, r *http.Request) {
@@ -35,9 +40,9 @@ func main() {
 
 	db := postgres.New("test")
 
-	// users.Serve(r, db)
-
 	games.Serve(r, db)
 
-	http.ListenAndServe(":8080", r)
+	fmt.Printf("Server running at port: %s\n", port)
+
+	http.ListenAndServe(port, r)
 }
