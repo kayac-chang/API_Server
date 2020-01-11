@@ -1,10 +1,12 @@
-package postgres
+package pg
 
 import (
 	"fmt"
 	"log"
+	"reflect"
 
 	"github.com/jmoiron/sqlx"
+	"github.com/thoas/go-funk"
 
 	_ "github.com/lib/pq"
 )
@@ -55,6 +57,21 @@ func (db DB) MustPreparex(query string) *sqlx.Stmt {
 	}
 
 	return stmt
+}
+
+func (db DB) Prepare(querys map[string]string) map[string]*sqlx.Stmt {
+
+	stmts, ok := funk.Map(querys, func(k string, query string) (string, *sqlx.Stmt) {
+
+		return k, db.MustPreparex(query)
+
+	}).(map[string]*sqlx.Stmt)
+
+	if !ok {
+		log.Fatal(reflect.TypeOf(stmts))
+	}
+
+	return stmts
 }
 
 func New(name string) DB {

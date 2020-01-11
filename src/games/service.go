@@ -5,73 +5,71 @@ import (
 	"log"
 	"net/http"
 
-	"github.com/KayacChang/API_Server/postgres"
+	"github.com/KayacChang/API_Server/pg"
 	"github.com/julienschmidt/httprouter"
 )
 
-const (
-	selectAll  = "SELECT id, name, href FROM games"
-	selectByID = selectAll + " WHERE id = $1"
-	insertOne  = "INSERT INTO games (name, href) VALUES ($1, $2) RETURNING id, name, href"
-)
+func Serve(r *httprouter.Router, db pg.DB) {
 
-func Serve(r *httprouter.Router, db postgres.DB) *httprouter.Router {
+	tb := TableFrom(db)
 
-	r.GET("/games",
-		read(db, selectAll))
+	r.GET("/games", read(tb))
 
-	r.GET("/games/:id",
-		read(db, selectByID))
+	r.GET("/games/:id", read(tb))
 
-	r.POST("/games",
-		create(db, insertOne))
-
-	return r
+	r.POST("/games", insert(tb))
 }
 
-func read(db postgres.DB, query string) httprouter.Handle {
+func read(tb Table) httprouter.Handle {
 
-	stmt := db.MustPreparex(query)
+	selectBy := func(id string) *Game {
 
-	exec := func(games *[]Game, id string) error {
+		res := Game{}
 
-		if id == "" {
-			return stmt.Select(games)
-		}
-
-		return stmt.Select(games, id)
-	}
-
-	return func(w http.ResponseWriter, r *http.Request, p httprouter.Params) {
-
-		games := []Game{}
-
-		//	Transation
-		err := exec(&games, p.ByName("id"))
+		err := tb.selectByID(&res, id)
 
 		if err != nil {
 			// TODO
 			log.Fatal(err)
 		}
 
-		//	Response
-		w.WriteHeader(http.StatusOK)
+		return &res
+	}
 
-		sendJSON(w, games)
+	selectAll := func() *[]Game {
+
+		res := []Game{}
+
+		err := tb.selectAll(&res)
+
+		if err != nil {
+			// TODO
+			log.Fatal(err)
+		}
+
+		return &res
+	}
+
+	return func(w http.ResponseWriter, r *http.Request, p httprouter.Params) {
+
+		send := func(res interface{}) {
+			w.WriteHeader(http.StatusOK)
+
+			sendJSON(w, res)
+		}
+
+		if id := p.ByName("id"); id != "" {
+
+			send(selectBy(id))
+
+		} else {
+
+			send(selectAll())
+		}
 	}
 }
 
-func create(db postgres.DB, query string) httprouter.Handle {
-
-	stmt := db.MustPreparex(query)
-
-	exec := func(g *Game) error {
-
-		return db.Transact(func(tx postgres.Tx) error {
-
-			return stmt.QueryRowx(g.Name, g.Href).StructScan(g)
-		})
-	}
+func insert(tb Table) httprouter.Handle {
 
 	return func(w http.ResponseWriter, r *http.Request, p httprouter.Params) {
 
@@ -86,7 +84,7 @@ func create(db postgres.DB, query string) httprouter.Handle {
 		}
 
 		//	Transation
-		err = exec(&game)
+		err = tb.insertOne(&game)
 
 		if err != nil {
 			//TODO

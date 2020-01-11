@@ -1,5 +1,121 @@
 # API_Server
 
+# Games
+
+## `GET /games`
+
+    Find All games
+
+- **Success**
+
+  Code:
+
+  200 Success
+
+  Content:
+
+  ```json
+  [
+    {
+      "id": "<game_id>",
+      "name": "<game_name>",
+      "href": "<game_href>"
+    }
+    ...
+  ]
+  ```
+
+- **Error**
+
+  Code:
+
+  Content:
+
+- **Test**
+
+  ```bash
+  curl -i \
+      http://localhost:8080/games
+  ```
+
+## `GET /games/:id`
+
+    Find game by ID
+
+- **Success**
+
+  Code:
+
+  200 Success
+
+  Content:
+
+  ```json
+  {
+    "id": "<game_id>",
+    "name": "<game_name>",
+    "href": "<game_href>"
+  }
+  ```
+
+- **Error**
+
+  Code:
+
+  Content:
+
+- **Test**
+
+  ```bash
+  curl -i \
+      http://localhost:8080/games/20
+  ```
+
+## `POST /games`
+
+    Create new games
+
+- **Data**
+
+  ```json
+  {
+    "name": "<game_name>",
+    "href": "<game_href>"
+  }``
+  ```
+
+- **Success**
+
+  Code:
+
+  201 Created
+
+  Content:
+
+  ```json
+  {
+    "id": "<game_id>",
+    "name": "<game_name>",
+    "href": "<game_href>"
+  }
+  ```
+
+- **Error**
+
+  Code:
+
+  Content:
+
+- **Test**
+
+  ```bash
+  curl -i \
+      -X POST \
+      -H 'Content-Type: application/json' \
+      -d '{ "name": "test", "href": "http://test.com" }' \
+      http://localhost:8080/games
+  ```
+
 # User
 
 ## `POST /users`
@@ -43,6 +159,6 @@
   curl -i \
       -X POST \
       -H 'Content-Type: application/json' \
-      -d '{"email":"test@gmail.com", "password":"123"}' \
+      -d '{ "email":"test@gmail.com", "password":"123" }' \
       http://localhost:8080/users
   ```

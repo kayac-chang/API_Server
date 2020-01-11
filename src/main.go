@@ -5,7 +5,7 @@ import (
 	"net/http"
 
 	"github.com/KayacChang/API_Server/games"
-	"github.com/KayacChang/API_Server/postgres"
+	"github.com/KayacChang/API_Server/pg"
 
 	"github.com/julienschmidt/httprouter"
 )
@@ -38,7 +38,7 @@ func main() {
 
 	r.GlobalOPTIONS = http.HandlerFunc(cors)
 
-	db := postgres.New("test")
+	db := pg.New("test")
 
 	games.Serve(r, db)
 
