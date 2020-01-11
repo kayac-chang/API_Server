@@ -7,7 +7,18 @@ import (
 	"net/http"
 )
 
-func SendJSON(w http.ResponseWriter, data interface{}) {
+type send func(statusCode int, res interface{})
+
+func Prepare(w http.ResponseWriter) send {
+
+	return func(statusCode int, res interface{}) {
+		w.WriteHeader(statusCode)
+
+		sendJSON(w, res)
+	}
+}
+
+func sendJSON(w http.ResponseWriter, data interface{}) {
 
 	res, err := json.Marshal(data)
 

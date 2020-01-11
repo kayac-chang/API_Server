@@ -6,6 +6,7 @@ import (
 	"net/http"
 
 	"github.com/KayacChang/API_Server/pg"
+	"github.com/KayacChang/API_Server/utils"
 	"github.com/julienschmidt/httprouter"
 )
 
@@ -52,19 +53,16 @@ func read(tb Table) httprouter.Handle {
 
 	return func(w http.ResponseWriter, r *http.Request, p httprouter.Params) {
 
-		send := func(res interface{}) {
-			w.WriteHeader(http.StatusOK)
+		send := utils.Prepare(w)
 
-			sendJSON(w, res)
-		}
-
+		//	Response
 		if id := p.ByName("id"); id != "" {
 
-			send(selectBy(id))
+			send(http.StatusOK, selectBy(id))
 
 		} else {
 
-			send(selectAll())
+			send(http.StatusOK, selectAll())
 		}
 	}
 }
@@ -73,10 +71,12 @@ func insert(tb Table) httprouter.Handle {
 
 	return func(w http.ResponseWriter, r *http.Request, p httprouter.Params) {
 
-		game := Game{}
+		send := utils.Prepare(w)
+
+		res := Game{}
 
 		//	Parse
-		err := json.NewDecoder(r.Body).Decode(&game)
+		err := json.NewDecoder(r.Body).Decode(&res)
 
 		if err != nil {
 			//TODO
@@ -84,7 +84,7 @@ func insert(tb Table) httprouter.Handle {
 		}
 
 		//	Transation
-		err = tb.insertOne(&game)
+		err = tb.insertOne(&res)
 
 		if err != nil {
 			//TODO
@@ -96,11 +96,9 @@ func insert(tb Table) httprouter.Handle {
 		From %s:
 		Insert one record into [ db.postgre.games ]
 		record => %#v
-		`, r.URL.Path, game)
+		`, r.URL.Path, res)
 
 		//	Response
-		w.WriteHeader(http.StatusCreated)
-
-		sendJSON(w, game)
+		send(http.StatusCreated, res)
 	}
 }

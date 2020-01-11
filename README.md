@@ -10,7 +10,7 @@
 
   Code:
 
-  200 Success
+  200 OK
 
   Content:
 
@@ -21,7 +21,8 @@
       "name": "<game_name>",
       "href": "<game_href>"
     }
-    ...
+
+    // ...
   ]
   ```
 
@@ -46,7 +47,7 @@
 
   Code:
 
-  200 Success
+  200 OK
 
   Content:
 
@@ -81,7 +82,7 @@
   {
     "name": "<game_name>",
     "href": "<game_href>"
-  }``
+  }
   ```
 
 - **Success**
