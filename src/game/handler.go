@@ -3,16 +3,16 @@ package game
 import (
 	"net/http"
 
-	"github.com/KayacChang/API_Server/net"
+	"github.com/KayacChang/API_Server/system"
 )
 
-func Mount(app *net.Server) {
+func Mount(app *system.Server) {
 
 	app.Get("/games", fetch)
 	// app.POST("/games", fetch)
 }
 
-func fetch(ctx net.Context) error {
+func fetch(ctx system.Context) error {
 
 	return ctx.String(http.StatusOK, "Hello, World!")
 }

@@ -1,31 +1,26 @@
 package db
 
 import (
-	"database/sql"
+	"log"
 
-	"github.com/jackc/pgx"
-	"github.com/jackc/pgx/stdlib"
+	"github.com/KayacChang/API_Server/entity"
+	_ "github.com/jackc/pgx/stdlib"
+	"github.com/jmoiron/sqlx"
 )
 
 type DB struct {
-	*sql.DB
+	*sqlx.DB
 }
 
-func Run(url string) (*DB, error) {
+func Run(env *entity.Env) (*DB, error) {
 
-	config, err := pgx.ParseURI(url)
-
-	if err != nil {
-		return nil, err
-	}
-
-	db := stdlib.OpenDB(config)
-
-	err = db.Ping()
+	db, err := sqlx.Connect("pgx", env.Postgres.ToURL())
 
 	if err != nil {
-		return nil, err
+		log.Fatalf("Unable to establish connection: %v\n", err)
 	}
+
+	log.Printf("Connect to Postgres success...\n")
 
 	return &DB{db}, nil
 }
