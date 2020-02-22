@@ -18,25 +18,16 @@ type Config struct {
 	Postgres PostgresConfig
 }
 
-// PostgresConfig config for postgresql database
-type PostgresConfig struct {
-	Host     string
-	Port     string
-	User     string
-	Password string
-	DB       string
-}
+type PostgresConfig map[string]string
 
 // ToURL helper func to generate datasource string
 func (cfg PostgresConfig) ToURL() string {
 
-	data := []string{
-		"host=" + cfg.Host,
-		"port=" + cfg.Port,
-		"user=" + cfg.User,
-		"password=" + cfg.Password,
-		"dbname=" + cfg.DB,
-		"sslmode=disable",
+	data := make([]string, len(cfg))
+
+	for key, val := range cfg {
+
+		data = append(data, key+"="+val)
 	}
 
 	return strings.Join(data, " ")
@@ -68,12 +59,12 @@ func init() {
 
 	env := Config{
 
-		Postgres: PostgresConfig{
-			Host:     getEnv("HOST"),
-			Port:     getEnv("PORT"),
-			User:     getEnv("USER"),
-			Password: getEnv("PASSWORD"),
-			DB:       getEnv("DB"),
+		Postgres: map[string]string{
+			"host":     getEnv("DB_HOST"),
+			"port":     getEnv("DB_PORT"),
+			"user":     getEnv("DB_USER"),
+			"password": getEnv("DB_PASSWORD"),
+			"dbname":   getEnv("DB_NAME"),
 		},
 
 		Debug: getEnvAsBool("DEBUG"),

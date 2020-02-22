@@ -1,17 +1,38 @@
 version: "3"
 
 services:
-  db:
-    image: postgres:latest
+  postgres:
+    build:
+      context: "."
+      dockerfile: "./dockerfiles/db/Dockerfile"
     ports:
-      - "5432:5432"
+      - "${DB_PORT}"
+    volumes:
+      - ./.db:/var/lib/postgresql/data
     environment:
-      - POSTGRES_PASSWORD=123456
-      - POSTGRES_DB=test
+      - POSTGRES_USER=${DB_USER}
+      - POSTGRES_PASSWORD=${DB_PASSWORD}
+      - POSTGRES_DB=${DB_NAME}
+      - POSTGRES_HOST=${DB_HOST}
 
-  web:
-    build: .
+  pgadmin:
+    image: dpage/pgadmin4
+    environment:
+      PGADMIN_DEFAULT_EMAIL: ${PGADMIN_EMAIL}
+      PGADMIN_DEFAULT_PASSWORD: ${PGADMIN_PASSWORD}
+    depends_on:
+      - postgres
+    ports:
+      - "${PGADMIN_PORT}:80"
+    logging:
+      driver: none
+
+  service:
+    build:
+      context: "."
+      dockerfile: "./dockerfiles/server/Dockerfile"
     ports:
       - "80:8080"
     depends_on:
-      - db
+      - postgres
+    command: ./wait-for ${DB_HOST}:${DB_PORT} -- ./run

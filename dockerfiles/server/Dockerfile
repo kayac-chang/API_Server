@@ -1,9 +1,10 @@
 # Build
 FROM golang:alpine as builder
 
-COPY ./src /bin
-
 WORKDIR /bin
+
+COPY ./src .
+COPY .env .
 
 RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o run
 
@@ -16,4 +17,8 @@ WORKDIR /root/
 
 COPY --from=builder /bin .
 
-CMD ["./run"]
+ADD https://raw.githubusercontent.com/eficode/wait-for/master/wait-for .
+
+RUN chmod +x wait-for
+
+COPY ./src/sql/init.sql /docker-entrypoint-initdb.d/
