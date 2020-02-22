@@ -16,7 +16,7 @@ func Serve() {
 
 	server.Get("/games", hello())
 
-	log.Fatal(server.Start(":8080"))
+	log.Fatal(server.StartTLS(":8080", ".private/cert.pem", ".private/key.pem"))
 }
 
 func hello() web.HandlerFunc {

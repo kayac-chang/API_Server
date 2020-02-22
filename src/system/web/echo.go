@@ -24,6 +24,7 @@ type HandlerFunc func(ctx Context) error
 
 // ======================================
 
+// NewServer return Server instance
 func NewServer() *Server {
 
 	server := &Server{echo.New()}
@@ -37,6 +38,7 @@ func NewServer() *Server {
 	return server
 }
 
+// Get Wrapper for GET method
 func (it Server) Get(path string, handle HandlerFunc) {
 
 	it.GET(path, func(ctx echo.Context) error {

@@ -1,11 +1,28 @@
 #!/usr/bin/env bash
 
-source "${0%/*}/.env"
+# Parse .env
+export $(grep -v '^#' .env | xargs -0)
 
-docker build -t $PROJECT_NAME . && \
+# Check mkcert
+brew list mkcert || brew install mkcert
 
-docker rmi $(docker images -f "dangling=true" -q) && \
+# Make Cert file
+dir='./src/.private'
 
-docker images && \
+[[ -d $dir ]] || mkdir $dir
+(
+    cd $dir
 
-echo "Build Successed..."
+    if [[ ! -e $keyfile ]] || [[ ! -e $certfile ]]; then
+
+        mkcert -install
+
+        mkcert \
+            -key-file $keyfile \
+            -cert-file $certfile \
+            example.com localhost 127.0.0.1 ::1
+    fi
+)
+
+# Build
+docker-compose up --build
