@@ -1,19 +1,10 @@
 package main
 
 import (
-	"github.com/KayacChang/API_Server/db"
-	"github.com/KayacChang/API_Server/system"
+	"github.com/KayacChang/API_Server/game"
 )
 
 func main() {
 
-	env := system.Env()
-
-	db.Run(env)
-
-	// app := net.New()
-
-	// game.Mount(app)
-
-	// app.Listen(":8080")
+	game.Serve()
 }
