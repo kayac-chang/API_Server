@@ -12,7 +12,7 @@ type DB struct {
 }
 
 // New Create DB instance
-func New(dataSource string) *DB {
+func New(dataSource string) DB {
 
 	db, err := sqlx.Connect("pgx", dataSource)
 
@@ -22,5 +22,5 @@ func New(dataSource string) *DB {
 
 	log.Info("Connect to Postgres success...\n")
 
-	return &DB{db}
+	return DB{db}
 }

@@ -1,6 +1,17 @@
-version: '3'
+version: "3"
+
 services:
-  web:
-    image: "kayacchang/hello"
+  db:
+    image: postgres:latest
     ports:
-      - "80:80"
+      - "5432:5432"
+    environment:
+      - POSTGRES_PASSWORD=123456
+      - POSTGRES_DB=test
+
+  web:
+    build: .
+    ports:
+      - "80:8080"
+    depends_on:
+      - db

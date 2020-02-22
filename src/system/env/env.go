@@ -20,16 +20,23 @@ type Config struct {
 
 // PostgresConfig config for postgresql database
 type PostgresConfig struct {
-	User string
-	DB   string
+	Host     string
+	Port     string
+	User     string
+	Password string
+	DB       string
 }
 
 // ToURL helper func to generate datasource string
 func (cfg PostgresConfig) ToURL() string {
 
 	data := []string{
+		"host=" + cfg.Host,
+		"port=" + cfg.Port,
 		"user=" + cfg.User,
+		"password=" + cfg.Password,
 		"dbname=" + cfg.DB,
+		"sslmode=disable",
 	}
 
 	return strings.Join(data, " ")
@@ -62,8 +69,11 @@ func init() {
 	env := Config{
 
 		Postgres: PostgresConfig{
-			User: getEnv("USER"),
-			DB:   getEnv("DB"),
+			Host:     getEnv("HOST"),
+			Port:     getEnv("PORT"),
+			User:     getEnv("USER"),
+			Password: getEnv("PASSWORD"),
+			DB:       getEnv("DB"),
 		},
 
 		Debug: getEnvAsBool("DEBUG"),
@@ -105,4 +115,17 @@ func getEnvAsBool(key string) bool {
 	}
 
 	return val
+}
+
+func getEnvAsInt(key string) int {
+
+	valStr := getEnv(key)
+
+	val, err := strconv.ParseInt(valStr, 10, 32)
+
+	if err != nil {
+		log.Fatalf("%s=%s in .env is not int value", key, valStr)
+	}
+
+	return int(val)
 }
