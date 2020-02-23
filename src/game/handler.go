@@ -1,18 +1,30 @@
 package game
 
 import (
+	"log"
 	"net/http"
 
-	"github.com/KayacChang/API_Server/net"
+	"github.com/KayacChang/API_Server/system/db"
+	"github.com/KayacChang/API_Server/system/env"
+	"github.com/KayacChang/API_Server/system/web"
 )
 
-func Mount(app *net.Server) {
+// Serve Start game service
+func Serve() {
 
-	app.Get("/games", fetch)
-	// app.POST("/games", fetch)
+	server := web.NewServer()
+
+	server.Get("/games", hello())
+
+	log.Fatal(server.StartTLS(":8080", ".private/cert.pem", ".private/key.pem"))
 }
 
-func fetch(ctx net.Context) error {
+func hello() web.HandlerFunc {
 
-	return ctx.String(http.StatusOK, "Hello, World!")
+	db.New(env.Postgres().ToURL())
+
+	return func(c web.Context) error {
+
+		return c.String(http.StatusOK, "hello")
+	}
 }
