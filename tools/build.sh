@@ -1,28 +1,16 @@
 #!/usr/bin/env bash
+set -e
 
 # Parse .env
 export $(grep -v '^#' .env | xargs -0)
 
-# Check mkcert
-brew list mkcert || brew install mkcert
+# Gen Cert
+./tools/cert-gen.sh \
+    && echo 'Generate certification success...'
 
-# Make Cert file
-dir='./src/.private'
+# Gen nginx.conf
+(cd tools; envsubst < template.conf > nginx.conf) \
+    && echo 'Generate nginx.conf success...'
 
-[[ -d $dir ]] || mkdir $dir
-(
-    cd $dir
-
-    if [[ ! -e $keyfile ]] || [[ ! -e $certfile ]]; then
-
-        mkcert -install
-
-        mkcert \
-            -key-file $keyfile \
-            -cert-file $certfile \
-            example.com localhost 127.0.0.1 ::1
-    fi
-)
-
-# Build
-docker-compose up --build
+docker-compose up --build \
+    && rm ./tools/nginx.conf

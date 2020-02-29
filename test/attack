@@ -1,0 +1,11 @@
+#!/usr/bin/env bash
+
+duration=120s
+rate=2000
+
+vegeta attack \
+	-duration=$duration \
+	-rate=$rate \
+	-targets=target.list \
+       	| tee results.bin \
+       	| vegeta report

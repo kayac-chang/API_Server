@@ -1,4 +1,4 @@
 # Build
-FROM postgres:latest
+FROM postgres:alpine
 
 COPY ./src/sql/init.sql /docker-entrypoint-initdb.d
