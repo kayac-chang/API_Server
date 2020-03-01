@@ -1,0 +1,56 @@
+
+# === First ===
+
+### Normal Case => pass
+POST https://localhost:8081/accounts HTTP/2.0
+content-type: application/json
+
+{
+    "username": "kayac",
+    "email": "egg734631@gmail.com",
+    "password": "123456"
+}
+
+
+
+# === Second ===
+
+### Same username with different email => reject
+POST https://localhost:8081/accounts HTTP/2.0
+content-type: application/json
+
+{
+    "username": "kayac",
+    "email": "egg734@gmail.com",
+    "password": "123456"
+}
+
+### Same username with different password => reject
+POST https://localhost:8081/accounts HTTP/2.0
+content-type: application/json
+
+{
+    "username": "kayac",
+    "email": "egg734631@gmail.com",
+    "password": "123"
+}
+
+### Same email with different username => pass
+POST https://localhost:8081/accounts HTTP/2.0
+content-type: application/json
+
+{
+    "username": "kayac123",
+    "email": "egg734631@gmail.com",
+    "password": "123456"
+}
+
+### Different email with different username => pass
+POST https://localhost:8081/accounts HTTP/2.0
+content-type: application/json
+
+{
+    "username": "kayac123",
+    "email": "egg734@gmail.com",
+    "password": "123456"
+}
