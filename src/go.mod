@@ -4,6 +4,7 @@ go 1.13
 
 require (
 	github.com/bxcodec/go-clean-arch v2.0.1+incompatible
+	github.com/dgrijalva/jwt-go v3.2.0+incompatible
 	github.com/fatih/structs v1.1.0
 	github.com/jackc/fake v0.0.0-20150926172116-812a484cc733 // indirect
 	github.com/jackc/pgx v3.6.2+incompatible
