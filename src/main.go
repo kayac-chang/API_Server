@@ -1,8 +1,8 @@
 package main
 
 import (
-	"github.com/KayacChang/API_Server/accounts"
 	"github.com/KayacChang/API_Server/system/env"
+	"github.com/KayacChang/API_Server/users"
 )
 
 func main() {
@@ -19,5 +19,5 @@ func main() {
 
 	// games.New(cfg)
 
-	accounts.New(cfg)
+	users.New(cfg)
 }

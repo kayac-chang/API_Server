@@ -1,17 +1,23 @@
 
 -- Create
-CREATE TABLE IF NOT EXISTS tokens (
+CREATE TABLE IF NOT EXISTS users (
     -- pk
-    token CHAR(64) PRIMARY KEY,
+    user_id CHAR(32) PRIMARY KEY,
 
     -- properties
+    username VARCHAR(256) NOT NULL UNIQUE,
+    password CHAR(64) NOT NULL,
+
+    -- fk
+    -- role
 
     -- times
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
 -- Drop
-DROP TABLE IF EXISTS accounts;
+DROP TABLE IF EXISTS users;
 
 -- Trigger --
 CREATE OR REPLACE FUNCTION trigger_set_timestamp() RETURNS TRIGGER AS 
@@ -24,6 +30,6 @@ END;
 $ $ LANGUAGE plpgsql;
 
 CREATE TRIGGER set_timestamp 
-    BEFORE UPDATE ON accounts 
+    BEFORE UPDATE ON users 
     FOR EACH ROW 
     EXECUTE PROCEDURE trigger_set_timestamp();

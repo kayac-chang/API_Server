@@ -1,12 +1,11 @@
-package entities
+package model
 
 import (
 	"time"
 )
 
-type Account struct {
-	ID       string `json:"id" db:"account_id"`
-	Email    string `json:"email" db:"email"`
+type User struct {
+	ID       string `json:"id" db:"user_id"`
 	Username string `json:"username" db:"username"`
 	Password string `json:"password" db:"password"`
 

@@ -4,7 +4,7 @@ import (
 	"context"
 	"database/sql"
 
-	"github.com/KayacChang/API_Server/entities"
+	"github.com/KayacChang/API_Server/model"
 	"github.com/KayacChang/API_Server/system"
 	"github.com/KayacChang/API_Server/system/db"
 	"github.com/KayacChang/API_Server/system/env"
@@ -16,8 +16,9 @@ type Repo struct {
 }
 
 type Querys struct {
-	insert   string
-	findByID string
+	insert          string
+	findByID        string
+	findByUserAndPW string
 }
 
 var querys Querys
@@ -25,8 +26,9 @@ var querys Querys
 func New(cfg env.PostgresConfig) *Repo {
 
 	querys = Querys{
-		insert:   utils.Parse("accounts/sql/insert_one.sql"),
-		findByID: utils.Parse("accounts/sql/find_by_id.sql"),
+		insert:          utils.Parse("users/sql/insert_one.sql"),
+		findByID:        utils.Parse("users/sql/find_by_id.sql"),
+		findByUserAndPW: utils.Parse("users/sql/find_by_user_pw.sql"),
 	}
 
 	return &Repo{
@@ -34,14 +36,14 @@ func New(cfg env.PostgresConfig) *Repo {
 	}
 }
 
-func (db *Repo) Insert(ctx context.Context, account *entities.Account) error {
+func (db *Repo) Insert(ctx context.Context, user *model.User) error {
 
 	opt := &sql.TxOptions{Isolation: sql.LevelSerializable}
 
 	tx := db.MustBeginTx(ctx, opt)
 
 	// === Check If Record Exist ===
-	err := tx.Get(account, querys.findByID, account.ID)
+	err := tx.Get(user, querys.findByID, user.ID)
 
 	if err == nil {
 		tx.Rollback()
@@ -50,7 +52,7 @@ func (db *Repo) Insert(ctx context.Context, account *entities.Account) error {
 	}
 
 	// === Insert ===
-	_, err = tx.NamedExec(querys.insert, account)
+	_, err = tx.NamedExec(querys.insert, user)
 
 	if err != nil {
 		tx.Rollback()
@@ -59,7 +61,7 @@ func (db *Repo) Insert(ctx context.Context, account *entities.Account) error {
 	}
 
 	// === Get Inserted Data ===
-	err = tx.Get(account, querys.findByID, account.ID)
+	err = tx.Get(user, querys.findByID, user.ID)
 
 	if err != nil {
 		tx.Rollback()
@@ -68,4 +70,15 @@ func (db *Repo) Insert(ctx context.Context, account *entities.Account) error {
 	}
 
 	return tx.Commit()
+}
+
+func (db *Repo) FindByUserAndPW(ctx context.Context, user *model.User) error {
+
+	return db.GetContext(
+		ctx,
+		user,
+		querys.findByUserAndPW,
+		user.Username,
+		user.Password,
+	)
 }

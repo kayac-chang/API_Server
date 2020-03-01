@@ -9,17 +9,22 @@ import (
 )
 
 var (
-	// ErrInternalServerError will throw if any the Internal Server Error happen
 	ErrInternalServerError = errors.New("Internal Server Error")
+	ErrGenTokenError       = errors.New("Token generation failed")
 
-	// ErrNotFound will throw if the requested item is not exists
 	ErrNotFound = errors.New("Requested Item not found")
 
-	// ErrConflict will throw if the current action already exists
 	ErrConflict = errors.New("Item already exist")
 
-	// ErrBadParamInput will throw if the given request-body or params is not valid
 	ErrBadParamInput = errors.New("Given Param is not valid")
+
+	/*
+		401 Unauthorized
+		the request has not been applied
+		because it lacks valid authentication credentials for the target resource.
+	*/
+	ErrUnauthorized = errors.New("Request requires user authentication")
+	ErrAuthFailure  = errors.New("Authentication Failure")
 )
 
 func GetStatusCode(err error) int {
@@ -36,7 +41,7 @@ func GetStatusCode(err error) int {
 
 	switch err {
 
-	case ErrInternalServerError:
+	case ErrGenTokenError, ErrInternalServerError:
 		return http.StatusInternalServerError
 
 	case ErrNotFound:
@@ -44,6 +49,9 @@ func GetStatusCode(err error) int {
 
 	case ErrConflict:
 		return http.StatusConflict
+
+	case ErrUnauthorized, ErrAuthFailure:
+		return http.StatusUnauthorized
 
 	default:
 		return http.StatusInternalServerError
