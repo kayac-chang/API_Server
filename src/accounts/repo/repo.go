@@ -4,7 +4,7 @@ import (
 	"context"
 	"database/sql"
 
-	"github.com/KayacChang/API_Server/accounts/entity"
+	"github.com/KayacChang/API_Server/entities"
 	"github.com/KayacChang/API_Server/system"
 	"github.com/KayacChang/API_Server/system/db"
 	"github.com/KayacChang/API_Server/system/env"
@@ -34,7 +34,7 @@ func New(cfg env.PostgresConfig) *Repo {
 	}
 }
 
-func (db *Repo) Insert(ctx context.Context, account *entity.Account) error {
+func (db *Repo) Insert(ctx context.Context, account *entities.Account) error {
 
 	opt := &sql.TxOptions{Isolation: sql.LevelSerializable}
 

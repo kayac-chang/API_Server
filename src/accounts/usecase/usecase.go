@@ -4,8 +4,8 @@ import (
 	"context"
 	"time"
 
-	"github.com/KayacChang/API_Server/accounts/entity"
 	"github.com/KayacChang/API_Server/accounts/repo"
+	"github.com/KayacChang/API_Server/entities"
 	"github.com/KayacChang/API_Server/utils"
 )
 
@@ -18,13 +18,14 @@ func New(repo *repo.Repo) *Usecase {
 	return &Usecase{repo}
 }
 
-func (it *Usecase) Store(ctx context.Context, account *entity.Account) error {
+func (it *Usecase) Store(ctx context.Context, account *entities.Account) error {
+
 	// Business
-	account.ID = utils.Hash(
+	account.ID = utils.MD5(
 		account.Email + account.Username,
 	)
 
-	account.Password = utils.HashAndSalt(account.Password)
+	account.Password = utils.Hash(account.Password)
 
 	// Timeout
 	ctx, cancel := context.WithTimeout(ctx, 1*time.Second)

@@ -2,11 +2,11 @@
 -- Create
 CREATE TABLE IF NOT EXISTS accounts (
     -- pk
-    account_id CHAR(64) PRIMARY KEY,
+    account_id CHAR(32) PRIMARY KEY,
 
     -- properties
     username VARCHAR(256) NOT NULL UNIQUE,
-    password VARCHAR(256) NOT NULL,
+    password CHAR(64) NOT NULL,
     email VARCHAR(256) NOT NULL,
 
     -- fk

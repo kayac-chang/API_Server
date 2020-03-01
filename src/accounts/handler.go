@@ -5,9 +5,9 @@ import (
 	"log"
 	"net/http"
 
-	"github.com/KayacChang/API_Server/accounts/entity"
 	"github.com/KayacChang/API_Server/accounts/repo"
 	"github.com/KayacChang/API_Server/accounts/usecase"
+	"github.com/KayacChang/API_Server/entities"
 	"github.com/KayacChang/API_Server/system"
 	"github.com/KayacChang/API_Server/system/env"
 	"github.com/KayacChang/API_Server/system/web"
@@ -29,7 +29,7 @@ func bind(next echo.HandlerFunc) echo.HandlerFunc {
 
 	return func(ctx echo.Context) error {
 
-		var account entity.Account
+		var account entities.Account
 
 		err := ctx.Bind(&account)
 
@@ -59,7 +59,7 @@ func post(logic *usecase.Usecase) echo.HandlerFunc {
 			c = context.Background()
 		}
 
-		account := ctx.Get("account").(*entity.Account)
+		account := ctx.Get("account").(*entities.Account)
 
 		return exec(
 			ctx,
