@@ -2,6 +2,9 @@ package usecase
 
 import (
 	"context"
+	"encoding/json"
+	"fmt"
+	"log"
 	"time"
 
 	"github.com/KayacChang/API_Server/model"
@@ -15,26 +18,6 @@ type Usecase struct {
 	repo *repo.Repo
 }
 
-func New(repo *repo.Repo) *Usecase {
-
-	return &Usecase{repo}
-}
-
-func (it *Usecase) Create(ctx context.Context, user *model.User) error {
-
-	// Timeout
-	ctx, cancel := context.WithTimeout(ctx, 1*time.Second)
-	defer cancel()
-
-	// Business
-	user.ID = utils.MD5(user.Username)
-
-	user.Password = utils.Hash(user.Password)
-
-	// Exec
-	return it.repo.Insert(ctx, user)
-}
-
 const secret = "secret"
 const serviceName = "sunny.com"
 
@@ -44,21 +27,37 @@ type response struct {
 	Expire int64  `json:"expires_in"`
 }
 
+func New(repo *repo.Repo) *Usecase {
+
+	return &Usecase{repo}
+}
+
 func (it *Usecase) Auth(ctx context.Context, user *model.User) (*response, error) {
 
 	// Timeout
 	ctx, cancel := context.WithTimeout(ctx, 1*time.Second)
 	defer cancel()
 
-	// Business
+	// Check
+
+	// if !exist(ctx, user) {
+	// 	return nil, system.ErrAuthFailure
+	// }
+
+	user.ID = utils.MD5(user.Username)
+
 	user.Password = utils.Hash(user.Password)
 
-	// Auth
-	err := it.repo.FindByUserAndPW(ctx, user)
+	err := it.repo.FindByID(ctx, user)
 
 	if err != nil {
 
-		return nil, system.ErrAuthFailure
+		err = it.repo.Insert(ctx, user)
+
+		if err != nil {
+
+			return nil, err
+		}
 	}
 
 	// Generate JWT Token
@@ -86,4 +85,36 @@ func (it *Usecase) Auth(ctx context.Context, user *model.User) (*response, error
 	}
 
 	return res, nil
+}
+
+func exist(ctx context.Context, user *model.User) bool {
+
+	req := utils.Request{
+
+		URL: fmt.Sprintf("/api/tgc/player/check/%s", user.Username),
+
+		Header: map[string]string{
+			"organization_token": serviceName,
+		},
+
+		Context: ctx,
+	}
+
+	res := req.Send()
+
+	defer res.Body.Close()
+
+	var data struct {
+		Status struct {
+			Message string `json:"message"`
+		} `json:"status"`
+	}
+
+	err := json.NewDecoder(res.Body).Decode(&data)
+
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	return data.Status.Message == "Success"
 }

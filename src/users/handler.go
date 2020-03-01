@@ -21,8 +21,6 @@ func New(cfg env.Config) {
 
 	server.Use(web.Bind("user", newUser))
 
-	server.POST("/users", registry(logic))
-
 	server.POST("/token", auth(logic))
 
 	log.Fatal(server.StartTLS(":8081", ".private/cert.pem", ".private/key.pem"))
@@ -31,26 +29,6 @@ func New(cfg env.Config) {
 func newUser() interface{} {
 
 	return &model.User{}
-}
-
-func registry(logic *usecase.Usecase) echo.HandlerFunc {
-
-	handler := func(ctx echo.Context) (interface{}, error) {
-
-		c := ctx.Request().Context()
-
-		if c == nil {
-			c = context.Background()
-		}
-
-		user := ctx.Get("user").(*model.User)
-
-		err := logic.Create(c, user)
-
-		return user, err
-	}
-
-	return web.Send(http.StatusCreated, handler)
 }
 
 func auth(logic *usecase.Usecase) echo.HandlerFunc {

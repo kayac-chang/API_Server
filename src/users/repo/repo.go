@@ -26,9 +26,8 @@ var querys Querys
 func New(cfg env.PostgresConfig) *Repo {
 
 	querys = Querys{
-		insert:          utils.Parse("users/sql/insert_one.sql"),
-		findByID:        utils.Parse("users/sql/find_by_id.sql"),
-		findByUserAndPW: utils.Parse("users/sql/find_by_user_pw.sql"),
+		insert:   utils.Parse("users/sql/insert_one.sql"),
+		findByID: utils.Parse("users/sql/find_by_id.sql"),
 	}
 
 	return &Repo{
@@ -72,13 +71,12 @@ func (db *Repo) Insert(ctx context.Context, user *model.User) error {
 	return tx.Commit()
 }
 
-func (db *Repo) FindByUserAndPW(ctx context.Context, user *model.User) error {
+func (db *Repo) FindByID(ctx context.Context, user *model.User) error {
 
 	return db.GetContext(
 		ctx,
 		user,
-		querys.findByUserAndPW,
-		user.Username,
-		user.Password,
+		querys.findByID,
+		user.ID,
 	)
 }
