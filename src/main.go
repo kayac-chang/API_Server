@@ -1,7 +1,7 @@
 package main
 
 import (
-	"github.com/KayacChang/API_Server/games"
+	"github.com/KayacChang/API_Server/accounts"
 	"github.com/KayacChang/API_Server/system/env"
 )
 
@@ -16,5 +16,7 @@ func main() {
 		},
 	}
 
-	games.New(cfg)
+	// games.New(cfg)
+
+	accounts.New(cfg)
 }
