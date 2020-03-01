@@ -1,3 +1,3 @@
 
 SELECT * FROM games 
-    WHERE game_id = $1
+    WHERE name = $1

@@ -6,7 +6,6 @@ import (
 
 	"github.com/KayacChang/API_Server/games/entity"
 	"github.com/KayacChang/API_Server/games/repo"
-	"github.com/KayacChang/API_Server/utils"
 )
 
 type Usecase struct {
@@ -19,8 +18,6 @@ func New(repo *repo.Repo) *Usecase {
 }
 
 func (it *Usecase) Store(ctx context.Context, game *entity.Game) error {
-	// Business
-	game.ID = utils.MD5(game.Name)
 
 	// Timeout
 	ctx, cancel := context.WithTimeout(ctx, 1*time.Second)

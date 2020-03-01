@@ -3,6 +3,7 @@ package repo
 import (
 	"context"
 	"database/sql"
+	"fmt"
 
 	"github.com/KayacChang/API_Server/games/entity"
 	"github.com/KayacChang/API_Server/system"
@@ -16,9 +17,9 @@ type Repo struct {
 }
 
 type Querys struct {
-	insert   string
-	findByID string
-	findAll  string
+	insert     string
+	findByName string
+	findAll    string
 }
 
 var querys Querys
@@ -26,9 +27,9 @@ var querys Querys
 func New(cfg env.PostgresConfig) *Repo {
 
 	querys = Querys{
-		insert:   utils.Parse("games/sql/insert_one.sql"),
-		findByID: utils.Parse("games/sql/find_by_id.sql"),
-		findAll:  utils.Parse("games/sql/find_all.sql"),
+		insert:     utils.Parse("games/sql/insert_one.sql"),
+		findByName: utils.Parse("games/sql/find_by_name.sql"),
+		findAll:    utils.Parse("games/sql/find_all.sql"),
 	}
 
 	return &Repo{
@@ -43,7 +44,7 @@ func (db *Repo) Insert(ctx context.Context, game *entity.Game) error {
 	tx := db.MustBeginTx(ctx, opt)
 
 	// === Check If Record Exist ===
-	err := tx.Get(game, querys.findByID, game.ID)
+	err := tx.Get(game, querys.findByName, game.Name)
 
 	if err == nil {
 		tx.Rollback()
@@ -55,15 +56,17 @@ func (db *Repo) Insert(ctx context.Context, game *entity.Game) error {
 	_, err = tx.NamedExec(querys.insert, game)
 
 	if err != nil {
+		fmt.Println("this...1")
 		tx.Rollback()
 
 		return err
 	}
 
 	// === Get Inserted Data ===
-	err = tx.Get(game, querys.findByID, game.ID)
+	err = tx.Get(game, querys.findByName, game.Name)
 
 	if err != nil {
+		fmt.Println("this...2")
 		tx.Rollback()
 
 		return err

@@ -20,11 +20,11 @@ func New(repo *repo.Repo) *Usecase {
 
 func (it *Usecase) Store(ctx context.Context, account *entity.Account) error {
 	// Business
-	account.ID = utils.MD5(
+	account.ID = utils.Hash(
 		account.Email + account.Username,
 	)
 
-	account.Password = utils.MD5(account.Password)
+	account.Password = utils.HashAndSalt(account.Password)
 
 	// Timeout
 	ctx, cancel := context.WithTimeout(ctx, 1*time.Second)

@@ -6,8 +6,7 @@ content-type: application/json
 {
     "name": "catpunch",
     "href": "http://google.com",
-    "category": "slot",
-    "state": "1"
+    "category": "slot"
 }
 
 ###
@@ -17,6 +16,5 @@ content-type: application/json
 {
     "name": "alien",
     "href": "http://alien.com",
-    "category": "slot",
-    "state": "1"
+    "category": "slot"
 }

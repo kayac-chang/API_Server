@@ -1,6 +1,6 @@
 
 INSERT INTO games (
-    game_id, name, href, category, state
+    name, href, category
 ) VALUES ( 
-    :game_id, :name, :href, :category, :state
+    :name, :href, :category
 )
