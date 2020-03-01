@@ -38,8 +38,6 @@ func (it *Usecase) Auth(ctx context.Context, user *model.User) (*response, error
 	ctx, cancel := context.WithTimeout(ctx, 1*time.Second)
 	defer cancel()
 
-	// Check
-
 	// if !exist(ctx, user) {
 	// 	return nil, system.ErrAuthFailure
 	// }
@@ -60,7 +58,10 @@ func (it *Usecase) Auth(ctx context.Context, user *model.User) (*response, error
 		}
 	}
 
-	// Generate JWT Token
+	return genToken(user)
+}
+
+func genToken(user *model.User) (*response, error) {
 	exp := time.Now().Add(1 * time.Hour).Unix()
 
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
@@ -69,6 +70,8 @@ func (it *Usecase) Auth(ctx context.Context, user *model.User) (*response, error
 		"iat": time.Now().Unix(),
 
 		"exp": exp,
+
+		"user": user.ID,
 	})
 
 	tokenString, err := token.SignedString([]byte(secret))
