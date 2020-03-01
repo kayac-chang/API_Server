@@ -12,22 +12,16 @@ import (
 
 // ======================================
 
-type Server struct {
-	*echo.Echo
+type ResponseError struct {
+	Message string `json:"message"`
 }
-
-type Context interface {
-	echo.Context
-}
-
-type HandlerFunc func(ctx Context) error
 
 // ======================================
 
 // NewServer return Server instance
-func NewServer() *Server {
+func NewServer() *echo.Echo {
 
-	server := &Server{echo.New()}
+	server := echo.New()
 
 	server.Use(logger)
 
@@ -36,14 +30,6 @@ func NewServer() *Server {
 	server.HTTPErrorHandler = errorHandler
 
 	return server
-}
-
-// Get Wrapper for GET method
-func (it Server) Get(path string, handle HandlerFunc) {
-
-	it.GET(path, func(ctx echo.Context) error {
-		return handle(ctx)
-	})
 }
 
 // ======================================

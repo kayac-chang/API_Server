@@ -49,7 +49,7 @@ func IsDebug() bool {
 }
 
 // === Impl ===
-func init() {
+func Init() {
 
 	err := godotenv.Load()
 

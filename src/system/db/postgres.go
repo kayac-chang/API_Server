@@ -1,7 +1,8 @@
 package db
 
 import (
-	"github.com/KayacChang/API_Server/system/log"
+	"log"
+
 	_ "github.com/jackc/pgx/stdlib"
 	"github.com/jmoiron/sqlx"
 )
@@ -12,7 +13,7 @@ type DB struct {
 }
 
 // New Create DB instance
-func New(dataSource string) DB {
+func New(dataSource string) *DB {
 
 	db, err := sqlx.Connect("pgx", dataSource)
 
@@ -20,7 +21,7 @@ func New(dataSource string) DB {
 		log.Fatalf("Unable to establish connection: %v\n", err)
 	}
 
-	log.Info("Connect to Postgres success...\n")
+	log.Print("Connect to Postgres success...\n")
 
-	return DB{db}
+	return &DB{db}
 }

@@ -15,7 +15,7 @@ type Fields = log.Fields
 // Entry type alias for log.Entry
 type Entry = log.Entry
 
-func init() {
+func Init() {
 
 	if !env.IsDebug() {
 
