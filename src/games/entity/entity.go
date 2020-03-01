@@ -9,7 +9,6 @@ type Game struct {
 	Name     string    `json:"name" db:"name"`
 	Href     string    `json:"href" db:"href"`
 	Category string    `json:"category" db:"category"`
-	State    string    `json:"state" db:"state"`
 	CreateAt time.Time `json:"created_at" db:"created_at"`
 	UpdateAt time.Time `json:"updated_at" db:"updated_at"`
 }

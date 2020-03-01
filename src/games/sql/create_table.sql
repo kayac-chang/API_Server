@@ -7,7 +7,6 @@ CREATE TABLE IF NOT EXISTS games (
     name VARCHAR(256) NOT NULL UNIQUE,
     href VARCHAR NOT NULL UNIQUE,
     category VARCHAR(32) NOT NULL,
-    state CHAR(1) NOT NULL,
 
     -- times
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
