@@ -1,0 +1,20 @@
+
+###
+POST https://localhost:8080/games HTTP/2.0
+content-type: application/json
+
+{
+    "name": "catpunch",
+    "href": "http://google.com",
+    "category": "slot"
+}
+
+###
+POST https://localhost:8080/games HTTP/2.0
+content-type: application/json
+
+{
+    "name": "alien",
+    "href": "http://alien.com",
+    "category": "slot"
+}

@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	"github.com/joho/godotenv"
+	uuid "github.com/satori/go.uuid"
 )
 
 // === Data Structure ===
@@ -16,6 +17,10 @@ type Config struct {
 	Debug bool
 
 	Postgres PostgresConfig
+
+	Domain string
+
+	DomainKey uuid.UUID
 }
 
 type PostgresConfig map[string]string
@@ -35,21 +40,20 @@ func (cfg PostgresConfig) ToURL() string {
 
 // === Export ===
 
-// ENV getter for getting environment variable
-var ENV func() Config
-
 // Postgres getter for getting PostgresConfig
-func Postgres() PostgresConfig {
-	return ENV().Postgres
-}
+var Postgres func() PostgresConfig
 
 // IsDebug flag for bebug mode
-func IsDebug() bool {
-	return ENV().Debug
-}
+var IsDebug func() bool
+
+// Domain return service domain name
+var Domain func() string
+
+// DomainKey return domain key uuid
+var DomainKey func() uuid.UUID
 
 // === Impl ===
-func Init() {
+func init() {
 
 	err := godotenv.Load()
 
@@ -69,15 +73,31 @@ func Init() {
 
 		Debug: getEnvAsBool("DEBUG"),
 
+		Domain: getEnv("DOMAIN"),
+
+		DomainKey: uuid.Must(
+			uuid.FromString(getEnv("DOMAIN_KEY")),
+		),
+
 		// UserRoles: getEnvAsSlice("USER_ROLES", []string{"admin"}, ","),
 
 		// MaxUsers:  getEnvAsInt("MAX_USERS", 1),
 	}
 
-	ENV = func() Config {
-		res := env
+	Postgres = func() PostgresConfig {
+		return env.Postgres
+	}
 
-		return res
+	IsDebug = func() bool {
+		return env.Debug
+	}
+
+	Domain = func() string {
+		return env.Domain
+	}
+
+	DomainKey = func() uuid.UUID {
+		return env.DomainKey
 	}
 
 	log.Printf("Parse .env: %+v\n", env)

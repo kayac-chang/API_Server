@@ -6,6 +6,7 @@ require (
 	github.com/bxcodec/go-clean-arch v2.0.1+incompatible
 	github.com/dgrijalva/jwt-go v3.2.0+incompatible
 	github.com/fatih/structs v1.1.0
+	github.com/gofrs/uuid v3.2.0+incompatible
 	github.com/jackc/fake v0.0.0-20150926172116-812a484cc733 // indirect
 	github.com/jackc/pgx v3.6.2+incompatible
 	github.com/jackc/pgx/v4 v4.4.1
@@ -16,6 +17,7 @@ require (
 	github.com/labstack/echo/v4 v4.1.14
 	github.com/lib/pq v1.2.0
 	github.com/pkg/errors v0.8.1
+	github.com/satori/go.uuid v1.2.0
 	github.com/sirupsen/logrus v1.4.2
 	golang.org/x/crypto v0.0.0-20191227163750-53104e6ec876
 	golang.org/x/net v0.0.0-20191209160850-c0dbc17a3553

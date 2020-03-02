@@ -4,8 +4,17 @@ import (
 	"crypto/md5"
 	"fmt"
 
+	"github.com/KayacChang/API_Server/system/env"
+	uuid "github.com/satori/go.uuid"
 	"golang.org/x/crypto/sha3"
 )
+
+func UUID(name string) string {
+
+	uuid := uuid.NewV5(env.DomainKey(), name)
+
+	return uuid.String()
+}
 
 func MD5(text string) string {
 
