@@ -8,53 +8,15 @@ import (
 	"strings"
 	"time"
 
+	"github.com/go-redis/redis"
 	"github.com/joho/godotenv"
 	uuid "github.com/satori/go.uuid"
 )
 
-// === Data Structure ===
-
-// Config Environment variable struct
-type Config struct {
-	Debug bool
-
-	Postgres PostgresConfig
-
-	Domain string
-
-	DomainKey uuid.UUID
-
-	Redis RedisConfig
-}
-
-type PostgresConfig map[string]string
-
-// ToURL helper func to generate datasource string
-func (cfg PostgresConfig) ToURL() string {
-
-	data := make([]string, len(cfg))
-
-	for key, val := range cfg {
-
-		data = append(data, key+"="+val)
-	}
-
-	return strings.Join(data, " ")
-}
-
-type RedisConfig struct {
-	Addr         string
-	DialTimeout  time.Duration
-	ReadTimeout  time.Duration
-	WriteTimeout time.Duration
-	PoolSize     int
-	PoolTimeout  time.Duration
-}
-
 // === Export ===
 
-// Postgres getter for getting PostgresConfig
-var Postgres func() PostgresConfig
+// Postgres URL
+var Postgres func() string
 
 // IsDebug flag for bebug mode
 var IsDebug func() bool
@@ -65,7 +27,8 @@ var Domain func() string
 // DomainKey return domain key uuid
 var DomainKey func() uuid.UUID
 
-var Redis func() RedisConfig
+// Redis Options
+var Redis func() *redis.Options
 
 // === Impl ===
 func init() {
@@ -73,10 +36,18 @@ func init() {
 	err := godotenv.Load()
 
 	if err != nil {
-		log.Fatalf("No [ .env ] file found...\n")
+		log.Panicf("No [ .env ] file found...\n")
 	}
 
-	env := Config{
+	env := struct {
+		Debug     bool
+		Postgres  map[string]string
+		Redis     map[string]string
+		Domain    string
+		DomainKey uuid.UUID
+	}{
+
+		Debug: getEnvAsBool("DEBUG"),
 
 		Postgres: map[string]string{
 			"host":     getEnv("PG_HOST"),
@@ -86,16 +57,14 @@ func init() {
 			"dbname":   getEnv("PG_NAME"),
 		},
 
-		Redis: RedisConfig{
-			Addr:         getEnv("REDIS_ADDR"),
-			DialTimeout:  getEnvAsTime("REDIS_DIAL_TIMEOUT") * time.Second,
-			ReadTimeout:  getEnvAsTime("REDIS_READ_TIMEOUT") * time.Second,
-			WriteTimeout: getEnvAsTime("REDIS_WRITE_TIMEOUT") * time.Second,
-			PoolSize:     getEnvAsInt("REDIS_POOL_SIZE"),
-			PoolTimeout:  getEnvAsTime("REDIS_POOL_TIMEOUT") * time.Second,
+		Redis: map[string]string{
+			"addr":          getEnv("REDIS_ADDR"),
+			"dial_timeout":  getEnv("REDIS_DIAL_TIMEOUT"),
+			"read_timeout":  getEnv("REDIS_READ_TIMEOUT"),
+			"write_timeout": getEnv("REDIS_WRITE_TIMEOUT"),
+			"pool_size":     getEnv("REDIS_POOL_SIZE"),
+			"pool_timeout":  getEnv("REDIS_POOL_TIMEOUT"),
 		},
-
-		Debug: getEnvAsBool("DEBUG"),
 
 		Domain: getEnv("DOMAIN"),
 
@@ -108,8 +77,18 @@ func init() {
 		// MaxUsers:  getEnvAsInt("MAX_USERS", 1),
 	}
 
-	Postgres = func() PostgresConfig {
-		return env.Postgres
+	Postgres = func() string {
+
+		cfg := env.Postgres
+
+		data := make([]string, len(cfg))
+
+		for key, val := range cfg {
+
+			data = append(data, key+"="+val)
+		}
+
+		return strings.Join(data, " ")
 	}
 
 	IsDebug = func() bool {
@@ -124,8 +103,18 @@ func init() {
 		return env.DomainKey
 	}
 
-	Redis = func() RedisConfig {
-		return env.Redis
+	redisConfig := &redis.Options{
+		Addr:         env.Redis["addr"],
+		DialTimeout:  utils.StrToTime(env.Redis["dial_timeout"], time.Second),
+		ReadTimeout:  utils.StrToTime(env.Redis["read_timeout"], time.Second),
+		WriteTimeout: utils.StrToTime(env.Redis["write_timeout"], time.Second),
+		PoolSize:     utils.Number(env.Redis["pool_size"]),
+		PoolTimeout:  utils.StrToTime(env.Redis["pool_timeout"], time.Second),
+	}
+
+	Redis = func() *redis.Options {
+
+		return redisConfig
 	}
 
 	log.Printf("Parse .env: \n%s\n", utils.Jsonify(env))
@@ -167,11 +156,4 @@ func getEnvAsInt(key string) int {
 	}
 
 	return int(val)
-}
-
-func getEnvAsTime(key string) time.Duration {
-
-	num := getEnvAsInt(key)
-
-	return time.Duration(num)
 }

@@ -14,16 +14,8 @@ import (
 var rdb *redis.Client
 
 func init() {
-	cfg := env.Redis()
 
-	rdb = redis.NewClient(&redis.Options{
-		Addr:         cfg.Addr,
-		DialTimeout:  cfg.DialTimeout,
-		ReadTimeout:  cfg.ReadTimeout,
-		WriteTimeout: cfg.WriteTimeout,
-		PoolSize:     cfg.PoolSize,
-		PoolTimeout:  cfg.PoolTimeout,
-	})
+	rdb = redis.NewClient(env.Redis())
 
 	_, err := rdb.Ping().Result()
 
