@@ -1,20 +1,10 @@
 
 ###
-POST https://localhost:8080/games HTTP/2.0
+POST https://localhost:8080/orders HTTP/2.0
 content-type: application/json
 
 {
-    "name": "catpunch",
-    "href": "http://google.com",
-    "category": "slot"
-}
-
-###
-POST https://localhost:8080/games HTTP/2.0
-content-type: application/json
-
-{
-    "name": "alien",
-    "href": "http://alien.com",
-    "category": "slot"
+    "bet": 10.00,
+    "game_id": 1,
+    "user_id": "db780439d285e8aba7bf64daba277ec8"
 }

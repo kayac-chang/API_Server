@@ -6,6 +6,7 @@ import (
 
 	"github.com/KayacChang/API_Server/model"
 	"github.com/KayacChang/API_Server/orders/repo"
+	"github.com/KayacChang/API_Server/utils"
 )
 
 type Usecase struct {
@@ -17,15 +18,13 @@ func New(repo *repo.Repo) *Usecase {
 	return &Usecase{repo}
 }
 
-const serviceName = "service"
-
 func (it *Usecase) Create(ctx context.Context, order *model.Order) error {
 
 	// Timeout
 	ctx, cancel := context.WithTimeout(ctx, 1*time.Second)
 	defer cancel()
 
-	order.ID = UUID(serviceName)
+	order.ID = utils.UUID()
 
 	order.State = model.Pending
 

@@ -50,6 +50,11 @@ func Info(args ...interface{}) {
 	log.Info(args...)
 }
 
+// Errorf logs a message at level Error on the standard logger.
+func Errorf(format string, args ...interface{}) {
+	log.Errorf(format, args...)
+}
+
 // Fatal logs a message at level Fatal on the standard logger
 // 	then the process will exit with status set to 1.
 func Fatal(args ...interface{}) {

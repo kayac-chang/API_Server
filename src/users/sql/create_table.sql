@@ -16,18 +16,26 @@ CREATE TABLE IF NOT EXISTS users (
     updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
+INSERT INTO users(
+    user_id, username, password
+) VALUES (
+    'db780439d285e8aba7bf64daba277ec8',
+    'kayac',
+    '8d969eef6ecad3c29a3a629280e686cf0c3f5d5a86aff3ca12020c923adc6c92'
+);
+
 -- Drop
 DROP TABLE IF EXISTS users;
 
 -- Trigger --
 CREATE OR REPLACE FUNCTION trigger_set_timestamp() RETURNS TRIGGER AS 
-$ $
+$$
 BEGIN
     NEW.updated_at = NOW();
 
     RETURN NEW;
 END;
-$ $ LANGUAGE plpgsql;
+$$ LANGUAGE plpgsql;
 
 CREATE TRIGGER set_timestamp 
     BEFORE UPDATE ON users 

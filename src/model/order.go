@@ -21,7 +21,7 @@ type Order struct {
 	GameID int    `json:"game_id" db:"game_id"`
 	UserID string `json:"user_id" db:"user_id"`
 
-	CreatedAt   time.Time `json:"created_at" db:"created_at"`
-	UpdatedAt   time.Time `json:"updated_at" db:"updated_at"`
-	CompletedAt time.Time `json:"completed_at" db:"completed_at"`
+	CreatedAt   *time.Time `json:"created_at" db:"created_at"`
+	UpdatedAt   *time.Time `json:"updated_at" db:"updated_at"`
+	CompletedAt *time.Time `json:"completed_at,omitempty" db:"completed_at,omitempty"`
 }

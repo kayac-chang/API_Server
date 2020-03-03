@@ -25,8 +25,8 @@ var querys Querys
 func New(cfg env.PostgresConfig) *Repo {
 
 	querys = Querys{
-		insert:   utils.Parse("users/sql/insert_one.sql"),
-		findByID: utils.Parse("users/sql/find_by_id.sql"),
+		insert:   utils.Parse("orders/sql/insert_one.sql"),
+		findByID: utils.Parse("orders/sql/find_by_id.sql"),
 	}
 
 	return &Repo{

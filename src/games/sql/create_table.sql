@@ -14,6 +14,12 @@ CREATE TABLE IF NOT EXISTS games (
     updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
+INSERT INTO games(
+    name, href, category
+) VALUES (
+    'catpunch', 'google.com', 'slot'
+);
+
 -- Drop
 DROP TABLE IF EXISTS games;
 
