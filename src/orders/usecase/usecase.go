@@ -24,6 +24,8 @@ func (it *Usecase) Create(ctx context.Context, order *model.Order) error {
 	ctx, cancel := context.WithTimeout(ctx, 1*time.Second)
 	defer cancel()
 
+	// TODO: send to /api/v1/tgc/transaction/game/bet, ask for betting
+
 	order.ID = utils.UUID()
 
 	order.State = model.Pending
