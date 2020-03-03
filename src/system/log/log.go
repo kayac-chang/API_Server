@@ -4,7 +4,8 @@ import (
 	"os"
 	"reflect"
 
-	"github.com/KayacChang/API_Server/system/env"
+	"server/system/env"
+
 	"github.com/fatih/structs"
 	log "github.com/sirupsen/logrus"
 )

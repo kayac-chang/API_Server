@@ -3,8 +3,10 @@ package env
 import (
 	"log"
 	"os"
+	"server/utils"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/joho/godotenv"
 	uuid "github.com/satori/go.uuid"
@@ -21,6 +23,8 @@ type Config struct {
 	Domain string
 
 	DomainKey uuid.UUID
+
+	Redis RedisConfig
 }
 
 type PostgresConfig map[string]string
@@ -38,6 +42,15 @@ func (cfg PostgresConfig) ToURL() string {
 	return strings.Join(data, " ")
 }
 
+type RedisConfig struct {
+	Addr         string
+	DialTimeout  time.Duration
+	ReadTimeout  time.Duration
+	WriteTimeout time.Duration
+	PoolSize     int
+	PoolTimeout  time.Duration
+}
+
 // === Export ===
 
 // Postgres getter for getting PostgresConfig
@@ -52,6 +65,8 @@ var Domain func() string
 // DomainKey return domain key uuid
 var DomainKey func() uuid.UUID
 
+var Redis func() RedisConfig
+
 // === Impl ===
 func init() {
 
@@ -64,11 +79,20 @@ func init() {
 	env := Config{
 
 		Postgres: map[string]string{
-			"host":     getEnv("DB_HOST"),
-			"port":     getEnv("DB_PORT"),
-			"user":     getEnv("DB_USER"),
-			"password": getEnv("DB_PASSWORD"),
-			"dbname":   getEnv("DB_NAME"),
+			"host":     getEnv("PG_HOST"),
+			"port":     getEnv("PG_PORT"),
+			"user":     getEnv("PG_USER"),
+			"password": getEnv("PG_PASSWORD"),
+			"dbname":   getEnv("PG_NAME"),
+		},
+
+		Redis: RedisConfig{
+			Addr:         getEnv("REDIS_ADDR"),
+			DialTimeout:  getEnvAsTime("REDIS_DIAL_TIMEOUT") * time.Second,
+			ReadTimeout:  getEnvAsTime("REDIS_READ_TIMEOUT") * time.Second,
+			WriteTimeout: getEnvAsTime("REDIS_WRITE_TIMEOUT") * time.Second,
+			PoolSize:     getEnvAsInt("REDIS_POOL_SIZE"),
+			PoolTimeout:  getEnvAsTime("REDIS_POOL_TIMEOUT") * time.Second,
 		},
 
 		Debug: getEnvAsBool("DEBUG"),
@@ -100,7 +124,11 @@ func init() {
 		return env.DomainKey
 	}
 
-	log.Printf("Parse .env: %+v\n", env)
+	Redis = func() RedisConfig {
+		return env.Redis
+	}
+
+	log.Printf("Parse .env: \n%s\n", utils.Jsonify(env))
 }
 
 // === Func ===
@@ -109,7 +137,7 @@ func getEnv(key string) string {
 	value, exists := os.LookupEnv(key)
 
 	if !exists {
-		log.Fatalf("%s in .env not existed", key)
+		log.Panicf("%s in .env not existed", key)
 	}
 
 	return value
@@ -122,7 +150,7 @@ func getEnvAsBool(key string) bool {
 	val, err := strconv.ParseBool(valStr)
 
 	if err != nil {
-		log.Fatalf("%s=%s in .env is not boolean value", key, valStr)
+		log.Panicf("%s=%s in .env is not boolean value", key, valStr)
 	}
 
 	return val
@@ -135,8 +163,15 @@ func getEnvAsInt(key string) int {
 	val, err := strconv.ParseInt(valStr, 10, 32)
 
 	if err != nil {
-		log.Fatalf("%s=%s in .env is not int value", key, valStr)
+		log.Panicf("%s=%s in .env is not int value", key, valStr)
 	}
 
 	return int(val)
+}
+
+func getEnvAsTime(key string) time.Duration {
+
+	num := getEnvAsInt(key)
+
+	return time.Duration(num)
 }
