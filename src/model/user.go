@@ -7,10 +7,19 @@ import (
 type User struct {
 	ID       string `json:"id" db:"user_id"`
 	Username string `json:"username" db:"username"`
-	Password string `json:"-" db:"password"`
 
 	CreatedAt time.Time `json:"-" db:"created_at"`
 	UpdatedAt time.Time `json:"-" db:"updated_at"`
 
-	Balance float64 `json:"balance" db:"-"`
+	Balance Balance `json:"balance" db:"-"`
+	Token   Token   `json:"token" db:"-"`
+}
+
+type Balance float64
+
+type Token struct {
+	ServiceID   string `json:"service_id"`
+	AccessToken string `json:"access_token"`
+	Type        string `json:"token_type"`
+	Expire      int64  `json:"expires_in"`
 }

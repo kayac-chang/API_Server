@@ -5,23 +5,28 @@ import (
 	"log"
 	"net/http"
 
-	"github.com/KayacChang/API_Server/model"
-	"github.com/KayacChang/API_Server/system/env"
-	"github.com/KayacChang/API_Server/system/web"
-	"github.com/KayacChang/API_Server/users/repo"
-	"github.com/KayacChang/API_Server/users/usecase"
+	"server/model"
+	"server/system/web"
+	"server/users/repo"
+	"server/users/usecase"
+
 	"github.com/labstack/echo/v4"
 )
 
 // New create accounts service
-func New(cfg env.Config) {
+func New() {
 	server := web.NewServer()
 
-	logic := usecase.New(repo.New(cfg.Postgres))
+	logic := usecase.New(repo.New())
 
 	server.Use(web.Bind("user", newUser))
 
 	server.POST("/token", auth(logic))
+
+	// TODO: search token
+	// TODO: cancel the token
+
+	// TODO: GET /users/?access_token=<token>
 
 	log.Fatal(server.StartTLS(":8081", ".private/cert.pem", ".private/key.pem"))
 }

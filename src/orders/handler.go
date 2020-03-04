@@ -4,27 +4,27 @@ import (
 	"context"
 	"net/http"
 
-	"github.com/KayacChang/API_Server/model"
-	"github.com/KayacChang/API_Server/orders/repo"
-	"github.com/KayacChang/API_Server/orders/usecase"
-	"github.com/KayacChang/API_Server/system/env"
-	"github.com/KayacChang/API_Server/system/log"
-	"github.com/KayacChang/API_Server/system/web"
+	"server/model"
+	"server/orders/repo"
+	"server/orders/usecase"
+	"server/system/log"
+	"server/system/web"
+
 	"github.com/labstack/echo/v4"
 )
 
 // New create orders service
-func New(cfg env.Config) {
+func New() {
 
 	server := web.NewServer()
 
-	logic := usecase.New(
-		repo.New(cfg.Postgres),
-	)
+	logic := usecase.New(repo.New())
 
 	server.Use(web.Bind("order", newOrder))
 
 	server.POST("/orders", create(logic))
+
+	// TODO: PUT /orders/:order_id
 
 	log.Fatal(server.StartTLS(":8080", ".private/cert.pem", ".private/key.pem"))
 }
@@ -44,11 +44,11 @@ func create(logic *usecase.Usecase) echo.HandlerFunc {
 			c = context.Background()
 		}
 
-		user := ctx.Get("order").(*model.Order)
+		order := ctx.Get("order").(*model.Order)
 
-		err := logic.Create(c, user)
+		err := logic.Create(c, order)
 
-		return user, err
+		return order, err
 	}
 
 	return web.Send(http.StatusCreated, handler)

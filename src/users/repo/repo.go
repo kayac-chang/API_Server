@@ -4,34 +4,37 @@ import (
 	"context"
 	"database/sql"
 
-	"github.com/KayacChang/API_Server/model"
-	"github.com/KayacChang/API_Server/system"
-	"github.com/KayacChang/API_Server/system/db"
-	"github.com/KayacChang/API_Server/system/env"
-	"github.com/KayacChang/API_Server/utils"
+	"server/model"
+	"server/system"
+	"server/system/db"
+	"server/system/env"
+	"server/utils"
 )
 
 type Repo struct {
 	*db.DB
+
+	sql *querys
 }
 
-type Querys struct {
-	insert          string
-	findByID        string
-	findByUserAndPW string
+type querys struct {
+	insert     string
+	findByID   string
+	findByName string
 }
 
-var querys Querys
+func New() *Repo {
 
-func New(cfg env.PostgresConfig) *Repo {
-
-	querys = Querys{
-		insert:   utils.Parse("users/sql/insert_one.sql"),
-		findByID: utils.Parse("users/sql/find_by_id.sql"),
+	sql := &querys{
+		insert:     utils.ParseFile("users/sql/insert_one.sql"),
+		findByID:   utils.ParseFile("users/sql/find_by_id.sql"),
+		findByName: utils.ParseFile("users/sql/find_by_name.sql"),
 	}
 
 	return &Repo{
-		db.New(cfg.ToURL()),
+		db.New(env.Postgres()),
+
+		sql,
 	}
 }
 
@@ -42,7 +45,7 @@ func (db *Repo) Insert(ctx context.Context, user *model.User) error {
 	tx := db.MustBeginTx(ctx, opt)
 
 	// === Check If Record Exist ===
-	err := tx.Get(user, querys.findByID, user.ID)
+	err := tx.Get(user, db.sql.findByID, user.ID)
 
 	if err == nil {
 		tx.Rollback()
@@ -51,7 +54,7 @@ func (db *Repo) Insert(ctx context.Context, user *model.User) error {
 	}
 
 	// === Insert ===
-	_, err = tx.NamedExec(querys.insert, user)
+	_, err = tx.NamedExec(db.sql.insert, user)
 
 	if err != nil {
 		tx.Rollback()
@@ -60,7 +63,7 @@ func (db *Repo) Insert(ctx context.Context, user *model.User) error {
 	}
 
 	// === Get Inserted Data ===
-	err = tx.Get(user, querys.findByID, user.ID)
+	err = tx.Get(user, db.sql.findByID, user.ID)
 
 	if err != nil {
 		tx.Rollback()
@@ -71,12 +74,12 @@ func (db *Repo) Insert(ctx context.Context, user *model.User) error {
 	return tx.Commit()
 }
 
-func (db *Repo) FindByID(ctx context.Context, user *model.User) error {
+func (db *Repo) FindByName(ctx context.Context, user *model.User) error {
 
 	return db.GetContext(
 		ctx,
 		user,
-		querys.findByID,
-		user.ID,
+		db.sql.findByName,
+		user.Username,
 	)
 }

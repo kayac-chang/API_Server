@@ -6,7 +6,7 @@ import (
 
 	"server/system/env"
 	"server/system/log"
-	"server/utils"
+	utils "server/utils/json"
 
 	"github.com/go-redis/redis"
 )
@@ -26,9 +26,9 @@ func init() {
 
 func Set(name string, value interface{}, expires time.Duration) error {
 
-	json := utils.Stringify(value)
+	data := utils.Stringify(value)
 
-	return rdb.Set(name, json, expires).Err()
+	return rdb.Set(name, data, expires).Err()
 }
 
 func Get(name string, value interface{}) error {

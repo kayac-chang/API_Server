@@ -4,13 +4,13 @@ import (
 	"log"
 	"os"
 	"server/utils"
+	"server/utils/json"
 	"strconv"
 	"strings"
 	"time"
 
 	"github.com/go-redis/redis"
 	"github.com/joho/godotenv"
-	uuid "github.com/satori/go.uuid"
 )
 
 // === Export ===
@@ -24,8 +24,8 @@ var IsDebug func() bool
 // Domain return service domain name
 var Domain func() string
 
-// DomainKey return domain key uuid
-var DomainKey func() uuid.UUID
+// ServiceID return domain key uuid
+var ServiceID func() string
 
 // Redis Options
 var Redis func() *redis.Options
@@ -44,7 +44,7 @@ func init() {
 		Postgres  map[string]string
 		Redis     map[string]string
 		Domain    string
-		DomainKey uuid.UUID
+		ServiceID string
 	}{
 
 		Debug: getEnvAsBool("DEBUG"),
@@ -68,9 +68,7 @@ func init() {
 
 		Domain: getEnv("DOMAIN"),
 
-		DomainKey: uuid.Must(
-			uuid.FromString(getEnv("DOMAIN_KEY")),
-		),
+		ServiceID: getEnv("SERVICE_ID"),
 
 		// UserRoles: getEnvAsSlice("USER_ROLES", []string{"admin"}, ","),
 
@@ -99,8 +97,8 @@ func init() {
 		return env.Domain
 	}
 
-	DomainKey = func() uuid.UUID {
-		return env.DomainKey
+	ServiceID = func() string {
+		return env.ServiceID
 	}
 
 	redisConfig := &redis.Options{
@@ -113,11 +111,10 @@ func init() {
 	}
 
 	Redis = func() *redis.Options {
-
 		return redisConfig
 	}
 
-	log.Printf("Parse .env: \n%s\n", utils.Jsonify(env))
+	log.Printf("Parse .env: \n%s\n", json.Jsonify(env))
 }
 
 // === Func ===

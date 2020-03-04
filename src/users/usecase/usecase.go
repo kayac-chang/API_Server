@@ -2,29 +2,23 @@ package usecase
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
-	"log"
+	"net/http"
 	"time"
 
-	"github.com/KayacChang/API_Server/model"
-	"github.com/KayacChang/API_Server/system"
-	"github.com/KayacChang/API_Server/users/repo"
-	"github.com/KayacChang/API_Server/utils"
+	"server/model"
+	"server/system"
+	"server/system/env"
+	"server/users/repo"
+	"server/utils"
+	"server/utils/json"
+
 	"github.com/dgrijalva/jwt-go"
+	"github.com/labstack/echo/v4"
 )
 
 type Usecase struct {
 	repo *repo.Repo
-}
-
-const secret = "secret"
-const serviceName = "sunny.com"
-
-type response struct {
-	Token  string `json:"access_token"`
-	Type   string `json:"token_type"`
-	Expire int64  `json:"expires_in"`
 }
 
 func New(repo *repo.Repo) *Usecase {
@@ -32,40 +26,52 @@ func New(repo *repo.Repo) *Usecase {
 	return &Usecase{repo}
 }
 
-func (it *Usecase) Auth(ctx context.Context, user *model.User) (*response, error) {
-
+func (it *Usecase) Auth(ctx context.Context, user *model.User) (interface{}, error) {
 	// Timeout
 	ctx, cancel := context.WithTimeout(ctx, 1*time.Second)
 	defer cancel()
 
-	// if !exist(ctx, user) {
-	// 	return nil, system.ErrAuthFailure
+	// err := getUserFromAgency(ctx, user)
+
+	// if err != nil {
+	// 	return nil, err
 	// }
 
-	user.ID = utils.MD5(user.Username)
+	err := it.repo.FindByName(ctx, user)
 
-	user.Password = utils.Hash(user.Password)
+	if err == nil {
+		// If user exist
+		return genToken(user)
+	}
 
-	err := it.repo.FindByID(ctx, user)
+	// user not exist
+	user, err = it.Create(ctx, user)
 
 	if err != nil {
-
-		err = it.repo.Insert(ctx, user)
-
-		if err != nil {
-
-			return nil, err
-		}
+		return nil, err
 	}
 
 	return genToken(user)
 }
 
-func genToken(user *model.User) (*response, error) {
+func (it *Usecase) Create(ctx context.Context, user *model.User) (*model.User, error) {
+
+	user.ID = utils.MD5(user.Username)
+
+	err := it.repo.Insert(ctx, user)
+
+	if err != nil {
+		return nil, err
+	}
+
+	return user, nil
+}
+
+func genToken(user *model.User) (interface{}, error) {
 	exp := time.Now().Add(1 * time.Hour).Unix()
 
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
-		"iss": serviceName,
+		"iss": env.ServiceID(),
 
 		"iat": time.Now().Unix(),
 
@@ -74,30 +80,32 @@ func genToken(user *model.User) (*response, error) {
 		"user": user.ID,
 	})
 
-	tokenString, err := token.SignedString([]byte(secret))
+	tokenString, err := token.SignedString(
+		// TODO: Must change to secret number in .env
+		[]byte(env.ServiceID()),
+	)
 
 	if err != nil {
-
 		return nil, system.ErrGenTokenError
 	}
 
-	res := &response{
-		Token:  tokenString,
-		Type:   "Bearer",
-		Expire: exp,
+	res := &model.Token{
+		ServiceID:   env.ServiceID(),
+		AccessToken: tokenString,
+		Type:        "Bearer",
+		Expire:      exp,
 	}
 
 	return res, nil
 }
 
-func exist(ctx context.Context, user *model.User) bool {
+func getUserFromAgency(ctx context.Context, user *model.User) error {
 
 	req := utils.Request{
-
 		URL: fmt.Sprintf("/api/tgc/player/check/%s", user.Username),
 
 		Header: map[string]string{
-			"organization_token": serviceName,
+			"organization_token": env.ServiceID(),
 		},
 
 		Context: ctx,
@@ -105,19 +113,18 @@ func exist(ctx context.Context, user *model.User) bool {
 
 	res := req.Send()
 
+	if res.StatusCode != http.StatusOK {
+		return echo.ErrNotFound
+	}
+
 	defer res.Body.Close()
 
 	var data struct {
-		Status struct {
-			Message string `json:"message"`
-		} `json:"status"`
 	}
 
-	err := json.NewDecoder(res.Body).Decode(&data)
+	json.Parse(res.Body, &data)
 
-	if err != nil {
-		log.Fatal(err)
-	}
+	// TODO: Assign data to User
 
-	return data.Status.Message == "Success"
+	return nil
 }

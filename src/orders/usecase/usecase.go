@@ -4,9 +4,9 @@ import (
 	"context"
 	"time"
 
-	"github.com/KayacChang/API_Server/model"
-	"github.com/KayacChang/API_Server/orders/repo"
-	"github.com/KayacChang/API_Server/utils"
+	"server/model"
+	"server/orders/repo"
+	"server/utils"
 )
 
 type Usecase struct {
@@ -27,8 +27,8 @@ func (it *Usecase) Create(ctx context.Context, order *model.Order) error {
 	// TODO: send to /api/v1/tgc/transaction/game/bet, ask for betting
 
 	order.ID = utils.UUID()
-
 	order.State = model.Pending
 
+	// TODO: Move to redis
 	return it.repo.Insert(ctx, order)
 }

@@ -5,8 +5,9 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/KayacChang/API_Server/system"
-	"github.com/KayacChang/API_Server/system/log"
+	"server/system"
+	"server/system/log"
+
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
 )
@@ -18,6 +19,8 @@ type ResponseError struct {
 }
 
 type ExecFunc func(ctx echo.Context) (interface{}, error)
+
+type GenFunc func() interface{}
 
 // ======================================
 
@@ -34,8 +37,6 @@ func NewServer() *echo.Echo {
 
 	return server
 }
-
-type GenFunc func() interface{}
 
 func Bind(key string, fn GenFunc) echo.MiddlewareFunc {
 
