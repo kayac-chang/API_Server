@@ -6,9 +6,7 @@ CREATE TABLE IF NOT EXISTS users (
 
     -- properties
     username VARCHAR(256) NOT NULL UNIQUE,
-
-    -- fk
-    -- role
+    access_token CHAR(32),
 
     -- times
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),

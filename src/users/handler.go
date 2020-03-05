@@ -17,7 +17,9 @@ import (
 func New() {
 	server := web.NewServer()
 
-	logic := usecase.New(repo.New())
+	logic := &usecase.Usecase{
+		Repo: repo.New(),
+	}
 
 	server.Use(web.Bind("user", newUser))
 
@@ -32,7 +34,6 @@ func New() {
 }
 
 func newUser() interface{} {
-
 	return &model.User{}
 }
 
@@ -48,7 +49,7 @@ func auth(logic *usecase.Usecase) echo.HandlerFunc {
 
 		user := ctx.Get("user").(*model.User)
 
-		return logic.Auth(c, user)
+		return logic.AuthUser(c, user)
 	}
 
 	return web.Send(http.StatusOK, handler)

@@ -10,12 +10,7 @@ import (
 )
 
 type Usecase struct {
-	repo *repo.Repo
-}
-
-func New(repo *repo.Repo) *Usecase {
-
-	return &Usecase{repo}
+	Repo *repo.Repo
 }
 
 func (it *Usecase) Create(ctx context.Context, order *model.Order) error {
@@ -30,5 +25,5 @@ func (it *Usecase) Create(ctx context.Context, order *model.Order) error {
 	order.State = model.Pending
 
 	// TODO: Move to redis
-	return it.repo.Insert(ctx, order)
+	return it.Repo.Insert(ctx, order)
 }

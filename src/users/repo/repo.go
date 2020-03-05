@@ -18,17 +18,19 @@ type Repo struct {
 }
 
 type querys struct {
-	insert     string
-	findByID   string
-	findByName string
+	insert      string
+	findByID    string
+	findByName  string
+	updateToken string
 }
 
 func New() *Repo {
 
 	sql := &querys{
-		insert:     utils.ParseFile("users/sql/insert_one.sql"),
-		findByID:   utils.ParseFile("users/sql/find_by_id.sql"),
-		findByName: utils.ParseFile("users/sql/find_by_name.sql"),
+		insert:      utils.ParseFile("users/sql/insert_one.sql"),
+		findByID:    utils.ParseFile("users/sql/find_by_id.sql"),
+		findByName:  utils.ParseFile("users/sql/find_by_name.sql"),
+		updateToken: utils.ParseFile("users/sql/update_token.sql"),
 	}
 
 	return &Repo{
@@ -38,14 +40,14 @@ func New() *Repo {
 	}
 }
 
-func (db *Repo) Insert(ctx context.Context, user *model.User) error {
+func (it *Repo) Insert(ctx context.Context, user *model.User) error {
 
 	opt := &sql.TxOptions{Isolation: sql.LevelSerializable}
 
-	tx := db.MustBeginTx(ctx, opt)
+	tx := it.MustBeginTx(ctx, opt)
 
 	// === Check If Record Exist ===
-	err := tx.Get(user, db.sql.findByID, user.ID)
+	err := tx.Get(user, it.sql.findByID, user.ID)
 
 	if err == nil {
 		tx.Rollback()
@@ -54,7 +56,7 @@ func (db *Repo) Insert(ctx context.Context, user *model.User) error {
 	}
 
 	// === Insert ===
-	_, err = tx.NamedExec(db.sql.insert, user)
+	_, err = tx.NamedExec(it.sql.insert, user)
 
 	if err != nil {
 		tx.Rollback()
@@ -63,7 +65,7 @@ func (db *Repo) Insert(ctx context.Context, user *model.User) error {
 	}
 
 	// === Get Inserted Data ===
-	err = tx.Get(user, db.sql.findByID, user.ID)
+	err = tx.Get(user, it.sql.findByID, user.ID)
 
 	if err != nil {
 		tx.Rollback()
@@ -74,12 +76,20 @@ func (db *Repo) Insert(ctx context.Context, user *model.User) error {
 	return tx.Commit()
 }
 
-func (db *Repo) FindByName(ctx context.Context, user *model.User) error {
+func (it *Repo) Update(ctx context.Context, user *model.User) error {
 
-	return db.GetContext(
+	// === Update ===
+	_, err := it.NamedExec(it.sql.updateToken, user)
+
+	return err
+}
+
+func (it *Repo) FindByName(ctx context.Context, user *model.User) error {
+
+	return it.GetContext(
 		ctx,
 		user,
-		db.sql.findByName,
+		it.sql.findByName,
 		user.Username,
 	)
 }

@@ -18,15 +18,12 @@ import (
 )
 
 type Usecase struct {
-	repo *repo.Repo
+	Repo *repo.Repo
 }
 
-func New(repo *repo.Repo) *Usecase {
+// TODO: AuthToken
 
-	return &Usecase{repo}
-}
-
-func (it *Usecase) Auth(ctx context.Context, user *model.User) (interface{}, error) {
+func (it *Usecase) AuthUser(ctx context.Context, user *model.User) (interface{}, error) {
 	// Timeout
 	ctx, cancel := context.WithTimeout(ctx, 1*time.Second)
 	defer cancel()
@@ -37,28 +34,26 @@ func (it *Usecase) Auth(ctx context.Context, user *model.User) (interface{}, err
 	// 	return nil, err
 	// }
 
-	err := it.repo.FindByName(ctx, user)
+	err := it.Repo.FindByName(ctx, user)
 
 	if err == nil {
 		// If user exist
-		return genToken(user)
+		return it.CreateToken(ctx, user)
 	}
 
 	// user not exist
-	user, err = it.Create(ctx, user)
-
-	if err != nil {
+	if _, err = it.CreateUser(ctx, user); err != nil {
 		return nil, err
 	}
 
-	return genToken(user)
+	return it.CreateToken(ctx, user)
 }
 
-func (it *Usecase) Create(ctx context.Context, user *model.User) (*model.User, error) {
+func (it *Usecase) CreateUser(ctx context.Context, user *model.User) (interface{}, error) {
 
 	user.ID = utils.MD5(user.Username)
 
-	err := it.repo.Insert(ctx, user)
+	err := it.Repo.Insert(ctx, user)
 
 	if err != nil {
 		return nil, err
@@ -67,17 +62,31 @@ func (it *Usecase) Create(ctx context.Context, user *model.User) (*model.User, e
 	return user, nil
 }
 
-func genToken(user *model.User) (interface{}, error) {
-	exp := time.Now().Add(1 * time.Hour).Unix()
+func (it *Usecase) UpdateUser(ctx context.Context, user *model.User) (interface{}, error) {
+
+	err := it.Repo.Update(ctx, user)
+
+	if err != nil {
+		return nil, err
+	}
+
+	return user, nil
+}
+
+func (it *Usecase) CreateToken(ctx context.Context, user *model.User) (interface{}, error) {
+
+	user.Token = utils.UUID()
+
+	if _, err := it.UpdateUser(ctx, user); err != nil {
+		return nil, err
+	}
 
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
 		"iss": env.ServiceID(),
 
 		"iat": time.Now().Unix(),
 
-		"exp": exp,
-
-		"user": user.ID,
+		"jti": user.Token,
 	})
 
 	tokenString, err := token.SignedString(
@@ -90,10 +99,8 @@ func genToken(user *model.User) (interface{}, error) {
 	}
 
 	res := &model.Token{
-		ServiceID:   env.ServiceID(),
 		AccessToken: tokenString,
-		Type:        "Bearer",
-		Expire:      exp,
+		CreatedAt:   time.Now(),
 	}
 
 	return res, nil

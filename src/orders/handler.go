@@ -18,7 +18,9 @@ func New() {
 
 	server := web.NewServer()
 
-	logic := usecase.New(repo.New())
+	logic := &usecase.Usecase{
+		Repo: repo.New(),
+	}
 
 	server.Use(web.Bind("order", newOrder))
 
@@ -30,7 +32,6 @@ func New() {
 }
 
 func newOrder() interface{} {
-
 	return &model.Order{}
 }
 
