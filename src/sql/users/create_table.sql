@@ -6,19 +6,11 @@ CREATE TABLE IF NOT EXISTS users (
 
     -- properties
     username VARCHAR(256) NOT NULL UNIQUE,
-    access_token CHAR(32),
+    token CHAR(32),
 
     -- times
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
-);
-
--- Test
-INSERT INTO users(
-    user_id, username
-) VALUES (
-    'db780439d285e8aba7bf64daba277ec8',
-    'kayac'
 );
 
 -- Drop

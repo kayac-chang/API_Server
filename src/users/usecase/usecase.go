@@ -6,7 +6,6 @@ import (
 	"net/http"
 	"time"
 
-	"server/model"
 	"server/system"
 	"server/system/env"
 	"server/users/repo"
@@ -16,6 +15,8 @@ import (
 	"github.com/dgrijalva/jwt-go"
 	"github.com/labstack/echo/v4"
 )
+
+var jwtKey = []byte(env.ServiceID())
 
 type Usecase struct {
 	Repo *repo.Repo
@@ -73,6 +74,30 @@ func (it *Usecase) UpdateUser(ctx context.Context, user *model.User) (interface{
 	return user, nil
 }
 
+func (it *Usecase) AuthToken(tokenStr string) (*jwt.MapClaims, error) {
+
+	token, err := jwt.Parse(tokenStr, func(token *jwt.Token) (interface{}, error) {
+
+		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
+			return nil, fmt.Errorf("Unexpected signing method: %v", token.Header["alg"])
+		}
+
+		return jwtKey, nil
+	})
+
+	if err != nil {
+		return nil, err
+	}
+
+	claims, ok := token.Claims.(jwt.MapClaims)
+
+	if !ok || !token.Valid {
+		return nil, echo.ErrUnauthorized
+	}
+
+	return &claims, nil
+}
+
 func (it *Usecase) CreateToken(ctx context.Context, user *model.User) (interface{}, error) {
 
 	user.Token = utils.UUID()
@@ -89,10 +114,7 @@ func (it *Usecase) CreateToken(ctx context.Context, user *model.User) (interface
 		"jti": user.Token,
 	})
 
-	tokenString, err := token.SignedString(
-		// TODO: Must change to secret number in .env
-		[]byte(env.ServiceID()),
-	)
+	tokenString, err := token.SignedString(jwtKey)
 
 	if err != nil {
 		return nil, system.ErrGenTokenError

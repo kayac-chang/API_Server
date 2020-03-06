@@ -6,6 +6,6 @@ POST https://localhost:8081/token HTTP/1.1
 content-type: application/json
 
 {
-    "username": "kayac",
-    "password": "123456"
+    "game": "catpunch",
+    "username": "kayac"
 }

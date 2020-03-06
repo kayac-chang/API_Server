@@ -13,7 +13,7 @@ const (
 )
 
 type Order struct {
-	ID string `json:"id" db:"order_id"`
+	ID string `json:"order_id" db:"order_id"`
 
 	State State   `json:"state" db:"state"`
 	Bet   float64 `json:"bet" db:"bet"`
