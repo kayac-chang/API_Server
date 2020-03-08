@@ -1,22 +1,36 @@
 package main
 
-import "server/users"
+import (
+	"net/http"
+	"user/api"
+	"user/repo/cache"
+	"user/repo/postgres"
+	"user/usecase"
+	"user/utils/env"
+
+	"github.com/go-chi/chi"
+	"github.com/go-chi/chi/middleware"
+)
 
 func main() {
 
-	// cfg := env.Config{
-	// 	Postgres: env.PostgresConfig{
-	// 		"host":     "localhost",
-	// 		"port":     "5432",
-	// 		"user":     "postgres",
-	// 		"password": "123456",
-	// 		"dbname":   "postgres",
-	// 	},
-	// }
+	e := env.New()
 
-	// games.New(cfg)
+	r := chi.NewRouter()
 
-	users.New()
+	r.Use(middleware.RequestID)
+	r.Use(middleware.RealIP)
+	r.Use(middleware.Logger)
+	r.Use(middleware.Recoverer)
 
-	// orders.New()
+	cache := cache.New()
+	db := postgres.New(e.Postgres.ToURL(), 30)
+
+	logic := usecase.New(db, cache)
+
+	handler := api.New(logic)
+
+	r.Post("/token", handler.POST)
+
+	http.ListenAndServe(":8000", r)
 }
