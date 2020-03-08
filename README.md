@@ -1,165 +1,204 @@
-# API_Server
+# Sunny Gaming API Service
 
-# Games
+# Public API
 
-## `GET /games`
+## Game
 
-    Find All games
+### GET /games
 
-- **Success**
+#### Request
 
-  Code:
+```http
+GET https://<service_domain>/v1/games HTTP/2.0
+```
 
-  200 OK
+#### Respoonse
 
-  Content:
+A successful request returns the HTTP `200 OK` status code.
 
-  ```json
-  [
-    {
-      "id": "<game_id>",
-      "name": "<game_name>",
-      "href": "<game_href>"
-    }
-
-    // ...
-  ]
-  ```
-
-- **Error**
-
-  Code:
-
-  Content:
-
-- **Test**
-
-  ```bash
-  curl -i \
-      http://localhost:8080/games
-  ```
-
-## `GET /games/:id`
-
-    Find game by ID
-
-- **Success**
-
-  Code:
-
-  200 OK
-
-  Content:
-
-  ```json
-  {
-    "id": "<game_id>",
-    "name": "<game_name>",
-    "href": "<game_href>"
+```json
+{
+  "data": {
+    "links": [
+      {
+        "rel": "self",
+        "method": "GET",
+        "href": "https://<service_domain>/v1/games"
+      },
+      {
+        "rel": "<game_name>",
+        "method": "GET",
+        "href": "https://<game_domain>/"
+      }
+      // ...
+    ]
   }
-  ```
+}
+```
 
-- **Error**
+## User
 
-  Code:
+### GET /users
 
-  Content:
+#### Request
 
-- **Test**
+#### Respoonse
 
-  ```bash
-  curl -i \
-      http://localhost:8080/games/20
-  ```
+## Token
 
-## `POST /games`
+### POST /token
 
-    Create new games
+#### Request
 
-- **Data**
+```http
+POST https://<service_domain>/v1/token HTTP/2.0
+content-type: application/json
 
-  ```json
-  {
-    "name": "<game_name>",
-    "href": "<game_href>"
+{
+  "game": "catpunch",
+  "username": "kayac"
+}
+```
+
+| Parameter | Type   | Description                             |
+| --------- | ------ | --------------------------------------- |
+| game      | string | The game which user want to access      |
+| username  | string | The username or email for user identity |
+
+#### Respoonse
+
+A successful request returns the HTTP `200 OK` status code.
+
+```json
+{
+  "data": {
+    "access_token": "<Access_Token>",
+    "token_type": "Bearer",
+    "service_id": "<Service_ID>",
+    "links": [
+      {
+        "rel": "access",
+        "method": "GET",
+        "href": "https://<game_domain>"
+      },
+      {
+        "rel": "reauthorize",
+        "method": "POST",
+        "href": "https://<service_domain>/v1/token"
+      }
+    ]
   }
-  ```
+}
+```
 
-- **Success**
+| Parameter    | Type   | Description                          |
+| ------------ | ------ | ------------------------------------ |
+| access_token | string | The jwt token for authentication     |
+| token_type   | string | The token type                       |
+| service_id   | string | The service if who issued this token |
 
-  Code:
+# Private API
 
-  201 Created
+Private API for game service internal network, use `protobuf`.
 
-  Content:
+## Authentication
 
-  ```json
-  {
-    "id": "<game_id>",
-    "name": "<game_name>",
-    "href": "<game_href>"
-  }
-  ```
+```protobuf
+message User{
+	string userId     = 1;
+	string userName   = 2;
+	int64 balance     = 3;
+}
+```
 
-- **Error**
+| Parameter | Type   | Optional | Description              |
+| --------- | ------ | -------- | ------------------------ |
+| userId    | string | false    | The user's identifier    |
+| username  | string | false    | The user's name          |
+| balance   | int64  | false    | The user current balance |
 
-  Code:
+### GET /auth
 
-  Content:
+#### Request
 
-- **Test**
+```http
+GET https://<service_domain>/v1/auth HTTP/2.0
+authorization: Bearer <Access-Token>
+```
 
-  ```bash
-  curl -i \
-      -X POST \
-      -H 'Content-Type: application/json' \
-      -d '{ "name": "test", "href": "http://test.com" }' \
-      http://localhost:8080/games
-  ```
+#### Respoonse
 
-# User
+A successful request returns the HTTP `200 OK` status code.
+Return `User`
 
-## `POST /users`
+## Orders
 
-    Create new user
+```protobuf
+message Order{
+    string  orderId         =   1;
+    string  state           =   2;
+    int64   bet             =   3;
+    string  gameId          =   4;
+    string  userId          =   5;
+    string  createdAt       =   6;
+    string  updatedAt       =   7;
+    string  completedAt     =   8;
+}
+```
 
-- **Data**
+| Parameter   | Type    | Optional | Description                    |
+| ----------- | ------- | -------- | ------------------------------ |
+| orderId     | string  | true     | The order's identifier         |
+| state       | string  | true     | Current order state            |
+| bet         | float64 | false    | The bet of this order          |
+| gameId      | string  | false    | The game's identifier          |
+| userId      | string  | false    | The user's identifier          |
+| createdAt   | string  | true     | Time when this order created   |
+| updatedAt   | string  | true     | Time when this order updated   |
+| completedAt | string  | true     | Time when this order completed |
 
-  ```json
-  {
-    "email": "<user_email>",
-    "password": "<user_password>"
-  }
-  ```
+### POST /orders
 
-- **Success**
+#### Request
 
-  Code:
+```http
+POST https://<service_domain>/v1/orders HTTP/2.0
+content-type: application/x-google-protobuf
+authorization: Bearer <Access-Token>
+```
 
-  201 Created
+| Parameter | Type   | Description           |
+| --------- | ------ | --------------------- |
+| userId    | string | The user's identifier |
+| gameId    | string | The game's identifier |
+| bet       | int64  | The game bet          |
 
-  Content:
+#### Respoonse
 
-  ```json
-  {
-    "_id": "5e0c7b0ce6e6feac6f21873f",
-    "email": "<user_email>",
-    "password": "<user_password>"
-  }
-  ```
+A successful request returns the HTTP `201 Created` status code.
+Return `Order`
 
-- **Error**
+### PUT /orders/:order_id
 
-  Code:
+#### Request
 
-  Content:
+```http
+PUT https://<service_domain>/v1/orders/:order_id HTTP/2.0
+content-type: application/x-google-protobuf
+authorization: Bearer <Access-Token>
+```
 
-- **Test**
+| Parameter    | Type   | Description                    |
+| ------------ | ------ | ------------------------------ |
+| completed_at | string | Time when this order completed |
 
-  ```bash
-  curl -i \
-      -X POST \
-      -H 'Content-Type: application/json' \
-      -d '{ "email":"test@gmail.com", "password":"123" }' \
-      http://localhost:8080/users
-  ```
+#### Respoonse
+
+A successful request returns the HTTP `202 Accepted` status code.
+Return `Order`
+
+### POST /orders/:order_id/sub_orders/
+
+#### Request
+
+#### Respoonse
