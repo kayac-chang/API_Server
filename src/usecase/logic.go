@@ -30,6 +30,7 @@ type Usecase interface {
 	Store(user *model.User) error
 	Regist(user *model.User) error
 	Sign(user *model.User) (*model.Token, error)
+	Auth(user *model.User) error
 }
 
 func New(db, cache repo.Repository) Usecase {
@@ -62,6 +63,11 @@ func fetch(url string, res interface{}) error {
 	}
 
 	return nil
+}
+
+func (it *usercase) Auth(user *model.User) error {
+
+	return it.cache.FindBy("Token", user)
 }
 
 func (it *usercase) Regist(user *model.User) error {

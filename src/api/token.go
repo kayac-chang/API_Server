@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"errors"
 	"net/http"
+	"strings"
 	"user/model"
 	"user/usecase"
 
@@ -100,6 +101,52 @@ func (it *handler) POST(w http.ResponseWriter, r *http.Request) {
 		Data: data,
 	}
 	send(w, res)
+}
+
+func (it *handler) Auth(w http.ResponseWriter, r *http.Request) {
+
+	token := strings.Split(r.Header.Get("Authorization"), " ")[1]
+
+	if token == "" {
+		res := model.Response{
+
+			Code: http.StatusUnauthorized,
+
+			Error: model.Error{
+				Name:    "Authentication Failed",
+				Message: model.ErrUnauthorized.Error(),
+			},
+		}
+		send(w, res)
+
+		return
+	}
+
+	// == Authentication ==
+	user := &model.User{
+		Token: token,
+	}
+
+	err := it.usecase.Auth(user)
+	if err != nil {
+
+		res := model.Response{
+
+			Code: http.StatusUnauthorized,
+
+			Error: model.Error{
+				Name:    "Authentication Failed",
+				Message: model.ErrUnauthorized.Error(),
+			},
+		}
+		send(w, res)
+
+		return
+	}
+
+	// == Send Response ==
+
+	// Send by protobuf
 }
 
 func send(w http.ResponseWriter, data model.Response) {

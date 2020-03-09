@@ -9,6 +9,7 @@ require (
 	github.com/go-chi/chi v4.0.3+incompatible
 	github.com/go-playground/validator/v10 v10.2.0
 	github.com/go-redis/redis v6.15.7+incompatible
+	github.com/golang/protobuf v1.3.1
 	github.com/jackc/fake v0.0.0-20150926172116-812a484cc733 // indirect
 	github.com/jackc/pgerrcode v0.0.0-20190803225404-afa3381909a6
 	github.com/jackc/pgx v3.6.2+incompatible
