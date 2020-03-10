@@ -1,14 +1,20 @@
-package api
+package user
 
 import (
+	"api/env"
+	"api/model"
+	"api/user/repo/cache"
+	"api/user/repo/postgres"
+	"api/user/usecase"
+
 	"encoding/json"
 	"errors"
 	"net/http"
 	"strings"
-	"user/model"
-	"user/usecase"
 
 	"github.com/fatih/structs"
+	"github.com/go-chi/chi"
+	"github.com/go-chi/chi/middleware"
 )
 
 type handler struct {
@@ -19,9 +25,23 @@ var (
 	ErrUnexpectPayload = errors.New("Unexpected Request Payload")
 )
 
-func New(usecase usecase.Usecase) Handler {
+func New(e *env.Env) {
 
-	return &handler{usecase}
+	r := chi.NewRouter()
+
+	r.Use(middleware.RequestID)
+	r.Use(middleware.RealIP)
+	r.Use(middleware.Logger)
+	r.Use(middleware.Recoverer)
+
+	c := cache.New()
+	db := postgres.New(e.Postgres.ToURL(), 30)
+
+	it := handler{usecase: usecase.New(db, c)}
+
+	r.Post("/token", it.POST)
+
+	http.ListenAndServe(":8000", r)
 }
 
 func (it *handler) POST(w http.ResponseWriter, r *http.Request) {

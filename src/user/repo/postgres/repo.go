@@ -1,12 +1,13 @@
 package postgres
 
 import (
+	"api/model"
+	"api/user/repo"
+	"api/utils"
+
 	"context"
 	"database/sql"
 	"time"
-	"user/model"
-	"user/repo"
-	"user/utils"
 
 	"github.com/jackc/pgerrcode"
 	"github.com/jackc/pgx"
@@ -48,8 +49,8 @@ func New(url string, timeout int) repo.Repository {
 		timeout: _timeout,
 
 		sql: querys{
-			insert:   utils.ParseFile("sql/insert_one.sql"),
-			findByID: utils.ParseFile("sql/find_by_id.sql"),
+			insert:   utils.ParseFile("sql/user/insert_one.sql"),
+			findByID: utils.ParseFile("sql/user/find_by_id.sql"),
 		},
 	}
 }

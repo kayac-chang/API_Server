@@ -1,6 +1,6 @@
 package repo
 
-import "user/model"
+import "api/model"
 
 type Repository interface {
 	Store(user *model.User) error

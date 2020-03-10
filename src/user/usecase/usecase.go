@@ -1,13 +1,14 @@
 package usecase
 
 import (
+	"api/model"
+	"api/user/repo"
+	"api/utils"
+
 	"encoding/json"
 	"fmt"
 	"net/http"
 	"time"
-	"user/model"
-	"user/repo"
-	"user/utils"
 
 	"github.com/dgrijalva/jwt-go"
 	"github.com/labstack/gommon/log"
