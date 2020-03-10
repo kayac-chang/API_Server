@@ -9,6 +9,6 @@ type Error struct {
 
 var (
 	ErrUserNotFound = errors.New("User Not Found")
-
+	ErrUnauthorized = errors.New("The request has not been applied because it lacks valid authentication credentials for the target resource")
 	ErrDBConstraint = errors.New("Integrity Constraint Violation")
 )

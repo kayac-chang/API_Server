@@ -1,11 +1,11 @@
 package env
 
 import (
+	"api/utils/json"
 	"log"
 	"os"
 	"strconv"
 	"strings"
-	"user/utils/json"
 
 	"github.com/joho/godotenv"
 )
@@ -33,7 +33,7 @@ type Env struct {
 	ServiceID string
 }
 
-func New() Env {
+func New() *Env {
 
 	err := godotenv.Load()
 
@@ -41,7 +41,7 @@ func New() Env {
 		log.Panicf("No [ .env ] file found...\n")
 	}
 
-	env := Env{
+	env := &Env{
 
 		Postgres: map[string]string{
 			"host":     getEnv("PG_HOST"),

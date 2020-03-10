@@ -1,8 +1,8 @@
 package cache
 
 import (
-	"user/model"
-	"user/repo"
+	"api/model"
+	"api/user/repo"
 
 	"github.com/patrickmn/go-cache"
 )
