@@ -1,5 +1,9 @@
 # Sunny Gaming API Service
 
+### OK
+
+1. POST /token
+
 # Public API
 
 ## Game
@@ -14,7 +18,7 @@ GET https://<service_domain>/v1/games HTTP/2.0
 
 #### Respoonse
 
-A successful request returns the HTTP `200 OK` status code.
+A successful request returns the HTTP `201 Created` status code.
 
 ```json
 {
@@ -72,9 +76,10 @@ A successful request returns the HTTP `200 OK` status code.
 ```json
 {
   "data": {
-    "access_token": "<Access_Token>",
+    "access_token": "<access_token>",
     "token_type": "Bearer",
-    "service_id": "<Service_ID>",
+    "service_id": "<service_ID>",
+    "issued_at": "<issued_at>",
     "links": [
       {
         "rel": "access",
@@ -101,21 +106,7 @@ A successful request returns the HTTP `200 OK` status code.
 
 Private API for game service internal network, use `protobuf`.
 
-## Authentication
-
-```protobuf
-message User{
-	string userId     = 1;
-	string userName   = 2;
-	int64 balance     = 3;
-}
-```
-
-| Parameter | Type   | Optional | Description              |
-| --------- | ------ | -------- | ------------------------ |
-| userId    | string | false    | The user's identifier    |
-| username  | string | false    | The user's name          |
-| balance   | int64  | false    | The user current balance |
+## User and Authentication
 
 ### GET /auth
 
@@ -128,34 +119,15 @@ authorization: Bearer <Access-Token>
 
 #### Respoonse
 
-A successful request returns the HTTP `200 OK` status code.
-Return `User`
+A successful request returns the HTTP `200 OK` status code. Return `User`
+
+| Parameter | Type   | Description              |
+| --------- | ------ | ------------------------ |
+| user_id   | string | The user's identifier    |
+| username  | string | The user's name          |
+| balance   | uint64 | The user current balance |
 
 ## Orders
-
-```protobuf
-message Order{
-    string  orderId         =   1;
-    string  state           =   2;
-    int64   bet             =   3;
-    string  gameId          =   4;
-    string  userId          =   5;
-    string  createdAt       =   6;
-    string  updatedAt       =   7;
-    string  completedAt     =   8;
-}
-```
-
-| Parameter   | Type    | Optional | Description                    |
-| ----------- | ------- | -------- | ------------------------------ |
-| orderId     | string  | true     | The order's identifier         |
-| state       | string  | true     | Current order state            |
-| bet         | float64 | false    | The bet of this order          |
-| gameId      | string  | false    | The game's identifier          |
-| userId      | string  | false    | The user's identifier          |
-| createdAt   | string  | true     | Time when this order created   |
-| updatedAt   | string  | true     | Time when this order updated   |
-| completedAt | string  | true     | Time when this order completed |
 
 ### POST /orders
 
@@ -169,9 +141,9 @@ authorization: Bearer <Access-Token>
 
 | Parameter | Type   | Description           |
 | --------- | ------ | --------------------- |
-| userId    | string | The user's identifier |
-| gameId    | string | The game's identifier |
-| bet       | int64  | The game bet          |
+| user_id   | string | The user's identifier |
+| game_id   | string | The game's identifier |
+| bet       | uint64 | The game bet          |
 
 #### Respoonse
 
@@ -188,9 +160,9 @@ content-type: application/x-google-protobuf
 authorization: Bearer <Access-Token>
 ```
 
-| Parameter    | Type   | Description                    |
-| ------------ | ------ | ------------------------------ |
-| completed_at | string | Time when this order completed |
+| Parameter    | Type      | Description                    |
+| ------------ | --------- | ------------------------------ |
+| completed_at | Timestamp | Time when this order completed |
 
 #### Respoonse
 
@@ -202,3 +174,84 @@ Return `Order`
 #### Request
 
 #### Respoonse
+
+# Proto3 Schema
+
+## Order
+
+```protobuf
+syntax = "proto3";
+
+import "google/protobuf/timestamp.proto";
+
+message Order {
+    string order_id = 1;
+
+    enum State {
+        Pending = 0;
+        Completed = 1;
+        Rejected = 2;
+    }
+    State state = 2;
+
+    uint64 bet = 3;
+    string game_id = 4;
+    string user_id = 5;
+    google.protobuf.Timestamp created_at = 6;
+    google.protobuf.Timestamp updated_at = 7;
+    google.protobuf.Timestamp completed_at = 8;
+}
+```
+
+| Parameter    | Type      | Optional | Description                    |
+| ------------ | --------- | -------- | ------------------------------ |
+| orderId      | string    | false    | The order's identifier         |
+| state        | State     | false    | Current order state            |
+| bet          | uint64    | false    | The bet of this order          |
+| game_id      | string    | false    | The game's identifier          |
+| user_id      | string    | false    | The user's identifier          |
+| created_at   | Timestamp | true     | Time when this order created   |
+| updated_at   | Timestamp | true     | Time when this order updated   |
+| completed_at | Timestamp | true     | Time when this order completed |
+
+## User
+
+```protobuf
+syntax = "proto3";
+
+import "google/protobuf/timestamp.proto";
+
+message User {
+    string user_id = 1;
+    string username = 2;
+    uint64 balance = 3;
+    google.protobuf.Timestamp created_at = 4;
+    google.protobuf.Timestamp updated_at = 5;
+}
+```
+
+| Parameter  | Type      | Optional | Description                 |
+| ---------- | --------- | -------- | --------------------------- |
+| user_id    | string    | false    | The user's identifier       |
+| username   | string    | false    | The user's name             |
+| balance    | uint64    | false    | The user current balance    |
+| created_at | Timestamp | true     | Time when this user created |
+| updated_at | Timestamp | true     | Time when this user created |
+
+## Error
+
+```protobuf
+syntax = "proto3";
+
+message Error {
+    uint32 code = 1;
+    string name = 2;
+    string message = 3;
+}
+```
+
+| Parameter | Type   | Optional | Description       |
+| --------- | ------ | -------- | ----------------- |
+| code      | uint32 | false    | The error code    |
+| name      | string | false    | The error name    |
+| message   | string | false    | The error message |
