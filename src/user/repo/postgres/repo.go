@@ -55,26 +55,28 @@ func New(url string, timeout int) repo.Repository {
 	}
 }
 
-func (it *repository) findByID(ctx context.Context, user *model.User) error {
+func (it *repository) findByID(ctx context.Context, user *model.User) (*model.User, error) {
 
-	return it.db.GetContext(ctx, user, it.sql.findByID, user.ID)
+	err := it.db.GetContext(ctx, user, it.sql.findByID, user.ID)
+
+	if err == sql.ErrNoRows {
+		return nil, model.ErrUserNotFound
+	}
+
+	return user, err
 }
 
-func (it *repository) FindBy(key string, user *model.User) (err error) {
+func (it *repository) FindBy(key string, user *model.User) (*model.User, error) {
 
 	ctx, cancel := context.WithTimeout(context.Background(), it.timeout)
 	defer cancel()
 
 	switch key {
 	case "ID":
-		err = it.findByID(ctx, user)
+		return it.findByID(ctx, user)
 	}
 
-	if err == sql.ErrNoRows {
-		return model.ErrUserNotFound
-	}
-
-	return err
+	return nil, model.ErrUserNotFound
 }
 
 func (it *repository) Store(user *model.User) error {

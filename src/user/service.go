@@ -3,45 +3,51 @@ package user
 import (
 	"api/env"
 	"api/model"
+	"api/model/pb"
+	"api/model/response"
 	"api/user/repo/cache"
 	"api/user/repo/postgres"
 	"api/user/usecase"
 
 	"encoding/json"
-	"errors"
 	"net/http"
 	"strings"
 
 	"github.com/fatih/structs"
 	"github.com/go-chi/chi"
 	"github.com/go-chi/chi/middleware"
+	"github.com/golang/protobuf/proto"
 )
 
 type handler struct {
 	usecase usecase.Usecase
 }
 
-var (
-	ErrUnexpectPayload = errors.New("Unexpected Request Payload")
-)
+var ()
+
+func NewServer() *chi.Mux {
+
+	server := chi.NewRouter()
+	server.Use(middleware.RequestID)
+	server.Use(middleware.RealIP)
+	server.Use(middleware.Logger)
+	server.Use(middleware.Recoverer)
+
+	return server
+}
 
 func New(e *env.Env) {
 
-	r := chi.NewRouter()
-
-	r.Use(middleware.RequestID)
-	r.Use(middleware.RealIP)
-	r.Use(middleware.Logger)
-	r.Use(middleware.Recoverer)
+	server := NewServer()
 
 	c := cache.New()
 	db := postgres.New(e.Postgres.ToURL(), 30)
+	it := handler{usecase.New(db, c)}
 
-	it := handler{usecase: usecase.New(db, c)}
+	server.Post("/token", it.POST)
+	server.Get("/auth", it.Auth)
 
-	r.Post("/token", it.POST)
-
-	http.ListenAndServe(":8000", r)
+	http.ListenAndServe(":8000", server)
 }
 
 func (it *handler) POST(w http.ResponseWriter, r *http.Request) {
@@ -54,16 +60,16 @@ func (it *handler) POST(w http.ResponseWriter, r *http.Request) {
 	err := json.NewDecoder(r.Body).Decode(&req)
 	if err != nil {
 
-		res := model.Response{
+		res := response.JSON{
 
 			Code: http.StatusBadRequest,
 
 			Error: model.Error{
 				Name:    "Unexpect Payload",
-				Message: ErrUnexpectPayload.Error(),
+				Message: model.ErrUnexpectPayload.Error(),
 			},
 		}
-		send(w, res)
+		sendJSON(w, res)
 
 		return
 	}
@@ -74,7 +80,7 @@ func (it *handler) POST(w http.ResponseWriter, r *http.Request) {
 	}
 	if err := it.usecase.Regist(user); err != nil {
 
-		res := model.Response{
+		res := response.JSON{
 
 			Code: http.StatusUnauthorized,
 
@@ -83,7 +89,7 @@ func (it *handler) POST(w http.ResponseWriter, r *http.Request) {
 				Message: err.Error(),
 			},
 		}
-		send(w, res)
+		sendJSON(w, res)
 
 		return
 	}
@@ -92,7 +98,7 @@ func (it *handler) POST(w http.ResponseWriter, r *http.Request) {
 	token, err := it.usecase.Sign(user)
 	if err != nil {
 
-		res := model.Response{
+		res := response.JSON{
 
 			Code: http.StatusUnauthorized,
 
@@ -101,7 +107,7 @@ func (it *handler) POST(w http.ResponseWriter, r *http.Request) {
 				Message: err.Error(),
 			},
 		}
-		send(w, res)
+		sendJSON(w, res)
 
 		return
 	}
@@ -114,62 +120,77 @@ func (it *handler) POST(w http.ResponseWriter, r *http.Request) {
 		{Relation: "reauthorize", Method: "POST", Href: "https://<service_domain>/v1/token"},
 	}
 
-	res := model.Response{
+	res := response.JSON{
 
-		Code: http.StatusOK,
+		Code: http.StatusCreated,
 
 		Data: data,
 	}
-	send(w, res)
+	sendJSON(w, res)
 }
 
 func (it *handler) Auth(w http.ResponseWriter, r *http.Request) {
 
-	token := strings.Split(r.Header.Get("Authorization"), " ")[1]
+	token := r.Header.Get("Authorization")
 
 	if token == "" {
-		res := model.Response{
+
+		res := response.ProtoBuf{
 
 			Code: http.StatusUnauthorized,
 
-			Error: model.Error{
+			Data: &pb.Error{
+				Code:    http.StatusUnauthorized,
 				Name:    "Authentication Failed",
 				Message: model.ErrUnauthorized.Error(),
 			},
 		}
-		send(w, res)
+		sendProtoBuf(w, res)
 
 		return
 	}
+
+	token = strings.Split(token, " ")[1]
 
 	// == Authentication ==
 	user := &model.User{
 		Token: token,
 	}
 
-	err := it.usecase.Auth(user)
+	user, err := it.usecase.Auth(user)
 	if err != nil {
 
-		res := model.Response{
+		res := response.ProtoBuf{
 
 			Code: http.StatusUnauthorized,
 
-			Error: model.Error{
+			Data: &pb.Error{
+				Code:    http.StatusUnauthorized,
 				Name:    "Authentication Failed",
 				Message: model.ErrUnauthorized.Error(),
 			},
 		}
-		send(w, res)
+		sendProtoBuf(w, res)
 
 		return
 	}
 
 	// == Send Response ==
 
-	// Send by protobuf
+	res := response.ProtoBuf{
+
+		Code: http.StatusOK,
+
+		Data: &pb.User{
+			UserId:   user.ID,
+			Username: user.Username,
+			Balance:  user.Balance,
+		},
+	}
+	sendProtoBuf(w, res)
 }
 
-func send(w http.ResponseWriter, data model.Response) {
+func sendJSON(w http.ResponseWriter, data response.JSON) {
 
 	output, err := json.Marshal(data)
 	if err != nil {
@@ -179,4 +200,16 @@ func send(w http.ResponseWriter, data model.Response) {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(data.Code)
 	w.Write(output)
+}
+
+func sendProtoBuf(w http.ResponseWriter, res response.ProtoBuf) {
+
+	out, err := proto.Marshal(res.Data)
+	if err != nil {
+		w.Write([]byte("Serialization Error"))
+	}
+
+	w.Header().Set("Content-Type", "application/protobuf")
+	w.WriteHeader(res.Code)
+	w.Write(out)
 }

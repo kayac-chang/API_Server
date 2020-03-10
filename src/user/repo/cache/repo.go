@@ -20,31 +20,33 @@ func New() repo.Repository {
 	return &repository{}
 }
 
-func (it *repository) findByID(user *model.User) error {
+func (it *repository) findByID(user *model.User) (*model.User, error) {
 
 	if _user, found := storage.Get(user.ID); found {
 
-		user = _user.(*model.User)
+		if _user, ok := _user.(*model.User); ok {
 
-		return nil
+			return _user, nil
+		}
 	}
 
-	return model.ErrUserNotFound
+	return nil, model.ErrUserNotFound
 }
 
-func (it *repository) findByToken(user *model.User) error {
+func (it *repository) findByToken(user *model.User) (*model.User, error) {
 
 	if _user, found := storage.Get(user.Token); found {
 
-		user = _user.(*model.User)
+		if _user, ok := _user.(*model.User); ok {
 
-		return nil
+			return _user, nil
+		}
 	}
 
-	return model.ErrUserNotFound
+	return nil, model.ErrUserNotFound
 }
 
-func (it *repository) FindBy(key string, user *model.User) error {
+func (it *repository) FindBy(key string, user *model.User) (*model.User, error) {
 
 	switch key {
 	case "ID":
@@ -53,7 +55,7 @@ func (it *repository) FindBy(key string, user *model.User) error {
 		return it.findByToken(user)
 	}
 
-	return model.ErrUserNotFound
+	return nil, model.ErrUserNotFound
 }
 
 func (it *repository) Store(user *model.User) error {
