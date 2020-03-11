@@ -1,6 +1,7 @@
 package postgres
 
 import (
+	"api/framework/postgres"
 	"api/game/repo"
 	"api/model"
 	"api/utils"
@@ -9,15 +10,12 @@ import (
 	"database/sql"
 	"time"
 
-	"github.com/jackc/pgerrcode"
-	"github.com/jackc/pgx"
 	_ "github.com/jackc/pgx/v4/stdlib"
-	"github.com/jmoiron/sqlx"
 	errs "github.com/pkg/errors"
 )
 
 type repository struct {
-	db      *sqlx.DB
+	db      *postgres.DB
 	timeout time.Duration
 	sql     querys
 }
@@ -27,32 +25,22 @@ type querys struct {
 	findByID string
 }
 
-func connect(url string, timeout time.Duration) (*sqlx.DB, error) {
-
-	ctx, cancel := context.WithTimeout(context.Background(), timeout)
-	defer cancel()
-
-	return sqlx.ConnectContext(ctx, "pgx", url)
-}
-
 func New(url string, timeout int) repo.Repository {
 
-	_timeout := time.Duration(timeout) * time.Second
-	db, err := connect(url, _timeout)
-
-	if err != nil {
-		panic(err)
-	}
-
 	return &repository{
-		db:      db,
-		timeout: _timeout,
+		db:      postgres.New(url, timeout),
+		timeout: time.Duration(timeout),
 
 		sql: querys{
 			insert:   utils.ParseFile("sql/game/insert_one.sql"),
 			findByID: utils.ParseFile("sql/game/find_by_id.sql"),
 		},
 	}
+}
+
+func (it *repository) withTimeout() (context.Context, context.CancelFunc) {
+
+	return context.WithTimeout(context.Background(), it.timeout)
 }
 
 func (it *repository) findByID(ctx context.Context, game *model.Game) (*model.Game, error) {
@@ -68,7 +56,7 @@ func (it *repository) findByID(ctx context.Context, game *model.Game) (*model.Ga
 
 func (it *repository) FindBy(key string, game *model.Game) (*model.Game, error) {
 
-	ctx, cancel := context.WithTimeout(context.Background(), it.timeout)
+	ctx, cancel := it.withTimeout()
 	defer cancel()
 
 	switch key {
@@ -81,7 +69,7 @@ func (it *repository) FindBy(key string, game *model.Game) (*model.Game, error) 
 
 func (it *repository) Store(game *model.Game) error {
 
-	ctx, cancel := context.WithTimeout(context.Background(), it.timeout)
+	ctx, cancel := it.withTimeout()
 	defer cancel()
 
 	opt := &sql.TxOptions{Isolation: sql.LevelSerializable}
@@ -95,7 +83,7 @@ func (it *repository) Store(game *model.Game) error {
 	if err != nil {
 		tx.Rollback()
 
-		if isErrIntegrityConstraint(err) {
+		if it.db.IsConstraintErr(err) {
 
 			return errs.WithMessage(model.ErrDBConstraint, err.Error())
 		}
@@ -112,32 +100,4 @@ func (it *repository) Store(game *model.Game) error {
 	}
 
 	return tx.Commit()
-}
-
-func isErrIntegrityConstraint(err error) bool {
-
-	pgerr, ok := err.(pgx.PgError)
-
-	if !ok {
-		return false
-	}
-
-	errlist := [...]string{
-		pgerrcode.IntegrityConstraintViolation,
-		pgerrcode.RestrictViolation,
-		pgerrcode.NotNullViolation,
-		pgerrcode.ForeignKeyViolation,
-		pgerrcode.UniqueViolation,
-		pgerrcode.CheckViolation,
-		pgerrcode.ExclusionViolation,
-	}
-
-	for _, code := range errlist {
-
-		if code == pgerr.Code {
-			return true
-		}
-	}
-
-	return false
 }

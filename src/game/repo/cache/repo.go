@@ -1,79 +1,48 @@
 package cache
 
 import (
+	"api/framework/cache"
+	"api/game/repo"
 	"api/model"
-	"api/user/repo"
-
-	"github.com/patrickmn/go-cache"
 )
 
 type repository struct {
+	*cache.Cache
 }
-
-var storage = cache.New(
-	cache.NoExpiration,
-	cache.NoExpiration,
-)
 
 func New() repo.Repository {
 
-	return &repository{}
+	return &repository{cache.Get()}
 }
 
-func (it *repository) findByID(user *model.User) (*model.User, error) {
+func (it *repository) findByID(game *model.Game) (*model.Game, error) {
 
-	if _user, found := storage.Get(user.ID); found {
+	if _game, found := it.Get(game.ID); found {
 
-		if _user, ok := _user.(*model.User); ok {
+		if _game, ok := _game.(*model.Game); ok {
 
-			return _user, nil
+			return _game, nil
 		}
 	}
 
-	return nil, model.ErrUserNotFound
+	return nil, model.ErrGameNotFound
 }
 
-func (it *repository) findByToken(user *model.User) (*model.User, error) {
-
-	if _user, found := storage.Get(user.Token); found {
-
-		if _user, ok := _user.(*model.User); ok {
-
-			return _user, nil
-		}
-	}
-
-	return nil, model.ErrUserNotFound
-}
-
-func (it *repository) FindBy(key string, user *model.User) (*model.User, error) {
+func (it *repository) FindBy(key string, game *model.Game) (*model.Game, error) {
 
 	switch key {
 	case "ID":
-		return it.findByID(user)
-	case "Token":
-		return it.findByToken(user)
+		return it.findByID(game)
 	}
 
-	return nil, model.ErrUserNotFound
+	return nil, model.ErrGameNotFound
 }
 
-func (it *repository) Store(user *model.User) error {
+func (it *repository) Store(game *model.Game) error {
 
-	storage.SetDefault(user.ID, user)
-	storage.SetDefault(user.Token, user)
+	it.SetDefault(game.ID, game)
 
 	// log.Printf("repository.cache.Store\n%s\n", json.Jsonify(storage.Items()))
-
-	return nil
-}
-
-func (it *repository) Delete(user *model.User) error {
-
-	storage.Delete(user.ID)
-	storage.Delete(user.Token)
-
-	// log.Printf("repository.cache.Delete\n%s\n", json.Jsonify(storage.Items()))
 
 	return nil
 }
