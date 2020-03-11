@@ -1,0 +1,5 @@
+
+INSERT INTO games (
+    
+) VALUES ( 
+);

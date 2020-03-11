@@ -1,8 +1,8 @@
 package postgres
 
 import (
+	"api/game/repo"
 	"api/model"
-	"api/user/repo"
 	"api/utils"
 
 	"context"
@@ -49,37 +49,37 @@ func New(url string, timeout int) repo.Repository {
 		timeout: _timeout,
 
 		sql: querys{
-			insert:   utils.ParseFile("sql/user/insert_one.sql"),
-			findByID: utils.ParseFile("sql/user/find_by_id.sql"),
+			insert:   utils.ParseFile("sql/game/insert_one.sql"),
+			findByID: utils.ParseFile("sql/game/find_by_id.sql"),
 		},
 	}
 }
 
-func (it *repository) findByID(ctx context.Context, user *model.User) (*model.User, error) {
+func (it *repository) findByID(ctx context.Context, game *model.Game) (*model.Game, error) {
 
-	err := it.db.GetContext(ctx, user, it.sql.findByID, user.ID)
+	err := it.db.GetContext(ctx, game, it.sql.findByID, game.ID)
 
 	if err == sql.ErrNoRows {
 		return nil, model.ErrUserNotFound
 	}
 
-	return user, err
+	return game, err
 }
 
-func (it *repository) FindBy(key string, user *model.User) (*model.User, error) {
+func (it *repository) FindBy(key string, game *model.Game) (*model.Game, error) {
 
 	ctx, cancel := context.WithTimeout(context.Background(), it.timeout)
 	defer cancel()
 
 	switch key {
 	case "ID":
-		return it.findByID(ctx, user)
+		return it.findByID(ctx, game)
 	}
 
 	return nil, model.ErrUserNotFound
 }
 
-func (it *repository) Store(user *model.User) error {
+func (it *repository) Store(game *model.Game) error {
 
 	ctx, cancel := context.WithTimeout(context.Background(), it.timeout)
 	defer cancel()
@@ -87,12 +87,11 @@ func (it *repository) Store(user *model.User) error {
 	opt := &sql.TxOptions{Isolation: sql.LevelSerializable}
 	tx, err := it.db.BeginTxx(ctx, opt)
 	if err != nil {
-
 		return err
 	}
 
 	// === Insert ===
-	_, err = tx.NamedExec(it.sql.insert, user)
+	_, err = tx.NamedExec(it.sql.insert, game)
 	if err != nil {
 		tx.Rollback()
 
@@ -105,7 +104,7 @@ func (it *repository) Store(user *model.User) error {
 	}
 
 	// === Get Inserted Data ===
-	err = tx.Get(user, it.sql.findByID, user.ID)
+	err = tx.Get(game, it.sql.findByID, game.ID)
 	if err != nil {
 		tx.Rollback()
 
@@ -113,12 +112,6 @@ func (it *repository) Store(user *model.User) error {
 	}
 
 	return tx.Commit()
-}
-
-func (it *repository) Delete(user *model.User) error {
-	// TODO
-
-	return nil
 }
 
 func isErrIntegrityConstraint(err error) bool {

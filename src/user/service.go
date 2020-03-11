@@ -23,8 +23,6 @@ type handler struct {
 	usecase usecase.Usecase
 }
 
-var ()
-
 func NewServer() *chi.Mux {
 
 	server := chi.NewRouter()
