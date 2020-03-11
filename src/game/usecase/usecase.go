@@ -19,3 +19,13 @@ func New(db, cache repo.Repository) Usecase {
 
 	return &usercase{db, cache}
 }
+
+func (it *usercase) Find(game *model.Game) error {
+
+	return it.db.FindBy("ID", game)
+}
+
+func (it *usercase) Store(game *model.Game) error {
+
+	return it.db.Store(game)
+}

@@ -43,18 +43,18 @@ func (it *repository) withTimeout() (context.Context, context.CancelFunc) {
 	return context.WithTimeout(context.Background(), it.timeout)
 }
 
-func (it *repository) findByID(ctx context.Context, game *model.Game) (*model.Game, error) {
+func (it *repository) findByID(ctx context.Context, game *model.Game) error {
 
 	err := it.db.GetContext(ctx, game, it.sql.findByID, game.ID)
 
 	if err == sql.ErrNoRows {
-		return nil, model.ErrUserNotFound
+		return model.ErrUserNotFound
 	}
 
-	return game, err
+	return err
 }
 
-func (it *repository) FindBy(key string, game *model.Game) (*model.Game, error) {
+func (it *repository) FindBy(key string, game *model.Game) error {
 
 	ctx, cancel := it.withTimeout()
 	defer cancel()
@@ -64,7 +64,7 @@ func (it *repository) FindBy(key string, game *model.Game) (*model.Game, error) 
 		return it.findByID(ctx, game)
 	}
 
-	return nil, model.ErrUserNotFound
+	return model.ErrUserNotFound
 }
 
 func (it *repository) Store(game *model.Game) error {
