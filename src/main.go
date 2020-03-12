@@ -2,12 +2,12 @@ package main
 
 import (
 	"api/env"
-	"api/user"
+	"api/game"
 )
 
 func main() {
 
 	e := env.New()
 
-	user.New(e)
+	game.New(e)
 }

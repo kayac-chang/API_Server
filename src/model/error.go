@@ -10,6 +10,7 @@ type Error struct {
 var (
 	ErrUserNotFound    = errors.New("User Not Found")
 	ErrGameNotFound    = errors.New("Game Not Found")
+	ErrExisted         = errors.New("Resource already existed")
 	ErrUnauthorized    = errors.New("The request has not been applied because it lacks valid authentication credentials for the target resource")
 	ErrDBConstraint    = errors.New("Integrity Constraint Violation")
 	ErrUnexpectPayload = errors.New("Unexpected Request Payload")

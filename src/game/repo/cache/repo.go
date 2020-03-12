@@ -30,6 +30,11 @@ func (it *repository) findByID(game *model.Game) error {
 	return model.ErrGameNotFound
 }
 
+func (it *repository) FindAll(games *[]model.Game) error {
+
+	return nil
+}
+
 func (it *repository) FindBy(key string, game *model.Game) error {
 
 	switch key {

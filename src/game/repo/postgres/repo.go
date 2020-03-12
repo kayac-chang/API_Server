@@ -23,17 +23,19 @@ type repository struct {
 type querys struct {
 	insert   string
 	findByID string
+	findAll  string
 }
 
 func New(url string, timeout int) repo.Repository {
 
 	return &repository{
 		db:      postgres.New(url, timeout),
-		timeout: time.Duration(timeout),
+		timeout: time.Duration(timeout) * time.Second,
 
 		sql: querys{
 			insert:   utils.ParseFile("sql/game/insert_one.sql"),
 			findByID: utils.ParseFile("sql/game/find_by_id.sql"),
+			findAll:  utils.ParseFile("sql/game/find_all.sql"),
 		},
 	}
 }
@@ -46,6 +48,17 @@ func (it *repository) withTimeout() (context.Context, context.CancelFunc) {
 func (it *repository) findByID(ctx context.Context, game *model.Game) error {
 
 	err := it.db.GetContext(ctx, game, it.sql.findByID, game.ID)
+
+	if err == sql.ErrNoRows {
+		return model.ErrUserNotFound
+	}
+
+	return err
+}
+
+func (it *repository) FindAll(games *[]model.Game) error {
+
+	err := it.db.Select(games, it.sql.findAll)
 
 	if err == sql.ErrNoRows {
 		return model.ErrUserNotFound
