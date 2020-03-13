@@ -19,9 +19,9 @@ func (it *repository) findByID(game *model.Game) error {
 
 	if _game, found := it.Get(game.ID); found {
 
-		if _game, ok := _game.(*model.Game); ok {
+		if _game, ok := _game.(model.Game); ok {
 
-			game = _game
+			*game = _game
 
 			return nil
 		}
@@ -47,7 +47,7 @@ func (it *repository) FindBy(key string, game *model.Game) error {
 
 func (it *repository) Store(game *model.Game) error {
 
-	it.SetDefault(game.ID, game)
+	it.SetDefault(game.ID, *game)
 
 	// log.Printf("repository.cache.Store\n%s\n", json.Jsonify(storage.Items()))
 

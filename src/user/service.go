@@ -144,11 +144,11 @@ func (it *handler) Auth(w http.ResponseWriter, r *http.Request) {
 	token = strings.Split(token, " ")[1]
 
 	// == Authentication ==
-	user := &model.User{
+	user := model.User{
 		Token: token,
 	}
 
-	user, err := it.usecase.Auth(user)
+	err := it.usecase.Auth(&user)
 	if err != nil {
 
 		res := response.ProtoBuf{

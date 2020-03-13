@@ -3,11 +3,10 @@
 URL=localhost:8000/auth
 MSG_TYPE=User
 PROTO_FILE=model/pb/user.proto
-TOKEN=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpYXQiOjE1ODM4NTc4ODIsImlzcyI6InNlcnZpY2UiLCJqdGkiOiJiYzAxZDU0Ny01MTQxLTQyYzctOTc0ZC1lYmVlYThjOGVlYWEifQ.OjdDe-rrEe_uIzBJ9UFNqvMlKbVnyoct0EldOEBlc-4
+TOKEN=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpYXQiOjE1ODQxMTcwOTEsImlzcyI6InNlcnZpY2UiLCJqdGkiOiI3ZTE0NzdiMi1iMWRjLTRmMDgtODgwNy00ZmIxYjIxYTViZmYifQ.Tqx2BDfkhfUuokH5hl5K5ms5OyL_IsnpeqRJ81BRZY8
 
 curl \
     --verbose \
-    -X GET \
     -H "Content-Type: application/protobuf" \
     -H "Authorization: Bearer $TOKEN" \
     $URL \

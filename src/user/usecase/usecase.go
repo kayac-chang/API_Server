@@ -27,11 +27,11 @@ type usercase struct {
 }
 
 type Usecase interface {
-	Find(user *model.User) (*model.User, error)
+	Find(user *model.User) error
 	Store(user *model.User) error
 	Regist(user *model.User) error
 	Sign(user *model.User) (*model.Token, error)
-	Auth(user *model.User) (*model.User, error)
+	Auth(user *model.User) error
 }
 
 func New(db, cache repo.Repository) Usecase {
@@ -66,7 +66,7 @@ func fetch(url string, res interface{}) error {
 	return nil
 }
 
-func (it *usercase) Auth(user *model.User) (*model.User, error) {
+func (it *usercase) Auth(user *model.User) error {
 
 	return it.cache.FindBy("Token", user)
 }
@@ -96,7 +96,7 @@ func (it *usercase) Regist(user *model.User) error {
 		return errs.WithMessagef(err, "status: %+v", res.Status)
 	}
 
-	if user, err := it.Find(user); err != nil {
+	if err := it.Find(user); err != nil {
 
 		if err != nil && err != model.ErrUserNotFound {
 			return err
@@ -113,7 +113,7 @@ func (it *usercase) Regist(user *model.User) error {
 	return nil
 }
 
-func (it *usercase) Find(user *model.User) (*model.User, error) {
+func (it *usercase) Find(user *model.User) error {
 
 	user.ID = utils.MD5(user.Username)
 
@@ -130,11 +130,11 @@ func (it *usercase) Store(user *model.User) error {
 
 func (it *usercase) Sign(user *model.User) (*model.Token, error) {
 
-	if user, err := it.cache.FindBy("ID", user); err == nil {
+	if err := it.cache.FindBy("ID", user); err == nil {
 
-		fmt.Println("found user in cache, remove it")
+		log.Printf("found user in cache, remove it\n")
 
-		it.cache.Delete(user)
+		it.cache.Remove(user)
 	}
 
 	createdTime := time.Now()

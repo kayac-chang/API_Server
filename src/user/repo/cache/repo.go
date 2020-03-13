@@ -1,52 +1,51 @@
 package cache
 
 import (
+	"api/framework/cache"
 	"api/model"
 	"api/user/repo"
-
-	"github.com/patrickmn/go-cache"
 )
 
 type repository struct {
+	*cache.Cache
 }
-
-var storage = cache.New(
-	cache.NoExpiration,
-	cache.NoExpiration,
-)
 
 func New() repo.Repository {
 
-	return &repository{}
+	return &repository{cache.Get()}
 }
 
-func (it *repository) findByID(user *model.User) (*model.User, error) {
+func (it *repository) findByID(user *model.User) error {
 
-	if _user, found := storage.Get(user.ID); found {
+	if _user, found := it.Get(user.ID); found {
 
-		if _user, ok := _user.(*model.User); ok {
+		if _user, ok := _user.(model.User); ok {
 
-			return _user, nil
+			*user = _user
+
+			return nil
 		}
 	}
 
-	return nil, model.ErrUserNotFound
+	return model.ErrUserNotFound
 }
 
-func (it *repository) findByToken(user *model.User) (*model.User, error) {
+func (it *repository) findByToken(user *model.User) error {
 
-	if _user, found := storage.Get(user.Token); found {
+	if _user, found := it.Get(user.Token); found {
 
-		if _user, ok := _user.(*model.User); ok {
+		if _user, ok := _user.(model.User); ok {
 
-			return _user, nil
+			*user = _user
+
+			return nil
 		}
 	}
 
-	return nil, model.ErrUserNotFound
+	return model.ErrUserNotFound
 }
 
-func (it *repository) FindBy(key string, user *model.User) (*model.User, error) {
+func (it *repository) FindBy(key string, user *model.User) error {
 
 	switch key {
 	case "ID":
@@ -55,23 +54,23 @@ func (it *repository) FindBy(key string, user *model.User) (*model.User, error) 
 		return it.findByToken(user)
 	}
 
-	return nil, model.ErrUserNotFound
+	return model.ErrUserNotFound
 }
 
 func (it *repository) Store(user *model.User) error {
 
-	storage.SetDefault(user.ID, user)
-	storage.SetDefault(user.Token, user)
+	it.SetDefault(user.ID, *user)
+	it.SetDefault(user.Token, *user)
 
 	// log.Printf("repository.cache.Store\n%s\n", json.Jsonify(storage.Items()))
 
 	return nil
 }
 
-func (it *repository) Delete(user *model.User) error {
+func (it *repository) Remove(user *model.User) error {
 
-	storage.Delete(user.ID)
-	storage.Delete(user.Token)
+	it.Delete(user.ID)
+	it.Delete(user.Token)
 
 	// log.Printf("repository.cache.Delete\n%s\n", json.Jsonify(storage.Items()))
 

@@ -55,18 +55,18 @@ func New(url string, timeout int) repo.Repository {
 	}
 }
 
-func (it *repository) findByID(ctx context.Context, user *model.User) (*model.User, error) {
+func (it *repository) findByID(ctx context.Context, user *model.User) error {
 
 	err := it.db.GetContext(ctx, user, it.sql.findByID, user.ID)
 
 	if err == sql.ErrNoRows {
-		return nil, model.ErrUserNotFound
+		return model.ErrUserNotFound
 	}
 
-	return user, err
+	return err
 }
 
-func (it *repository) FindBy(key string, user *model.User) (*model.User, error) {
+func (it *repository) FindBy(key string, user *model.User) error {
 
 	ctx, cancel := context.WithTimeout(context.Background(), it.timeout)
 	defer cancel()
@@ -76,7 +76,7 @@ func (it *repository) FindBy(key string, user *model.User) (*model.User, error) 
 		return it.findByID(ctx, user)
 	}
 
-	return nil, model.ErrUserNotFound
+	return model.ErrUserNotFound
 }
 
 func (it *repository) Store(user *model.User) error {
@@ -115,7 +115,7 @@ func (it *repository) Store(user *model.User) error {
 	return tx.Commit()
 }
 
-func (it *repository) Delete(user *model.User) error {
+func (it *repository) Remove(user *model.User) error {
 	// TODO
 
 	return nil

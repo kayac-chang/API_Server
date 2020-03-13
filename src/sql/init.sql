@@ -37,7 +37,7 @@ CREATE TABLE IF NOT EXISTS users (
 -- Orders
 CREATE TABLE IF NOT EXISTS orders (
     -- pk
-    order_id CHAR(32) PRIMARY KEY,
+    order_id CHAR(36) PRIMARY KEY,
 
     -- properties
     state CHAR(1) NOT NULL DEFAULT 'P',
