@@ -48,3 +48,8 @@ func (it *repository) Store(order *model.Order) error {
 
 	return nil
 }
+
+func (it *repository) Replace(order *model.Order) error {
+
+	return nil
+}

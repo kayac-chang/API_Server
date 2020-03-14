@@ -11,6 +11,7 @@ import (
 	"encoding/json"
 	"net/http"
 
+	"github.com/go-chi/chi"
 	"github.com/labstack/gommon/log"
 )
 
@@ -32,10 +33,12 @@ func New(e *env.Env) {
 		usecase.New(db, c),
 	}
 
-	s.Post("/games", it.POST)
-	s.Get("/games", it.GET)
+	s.Route("/"+e.API.Version, func(r chi.Router) {
+		s.Post("/games", it.POST)
+		s.Get("/games", it.GET)
+	})
 
-	http.ListenAndServe(":8000", s)
+	http.ListenAndServe(e.API.GamePort, s)
 }
 
 func (it *handler) POST(w http.ResponseWriter, r *http.Request) {

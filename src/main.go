@@ -2,6 +2,7 @@ package main
 
 import (
 	"api/env"
+	"api/game"
 	"api/order"
 	"api/user"
 	"sync"
@@ -12,9 +13,13 @@ func main() {
 
 	var wg sync.WaitGroup
 
-	// game.New(e)
+	wg.Add(3)
 
-	wg.Add(2)
+	go func() {
+		game.New(e)
+
+		wg.Done()
+	}()
 
 	go func() {
 		user.New(e)

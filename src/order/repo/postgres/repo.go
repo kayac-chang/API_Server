@@ -21,8 +21,9 @@ type repository struct {
 }
 
 type querys struct {
-	insert   string
-	findByID string
+	insert     string
+	findByID   string
+	updateByID string
 }
 
 func New(url string, timeout int) repo.Repository {
@@ -32,8 +33,9 @@ func New(url string, timeout int) repo.Repository {
 		timeout: time.Duration(timeout) * time.Second,
 
 		sql: querys{
-			insert:   utils.ParseFile("sql/order/insert_one.sql"),
-			findByID: utils.ParseFile("sql/order/find_by_id.sql"),
+			insert:     utils.ParseFile("sql/order/insert_one.sql"),
+			findByID:   utils.ParseFile("sql/order/find_by_id.sql"),
+			updateByID: utils.ParseFile("sql/order/update_by_id.sql"),
 		},
 	}
 }
@@ -92,7 +94,41 @@ func (it *repository) Store(order *model.Order) error {
 	}
 
 	// === Get Inserted Data ===
-	err = tx.Unsafe().Get(order, it.sql.findByID, order.ID)
+	err = tx.Get(order, it.sql.findByID, order.ID)
+	if err != nil {
+		tx.Rollback()
+
+		return err
+	}
+
+	return tx.Commit()
+}
+
+func (it *repository) Replace(order *model.Order) error {
+
+	ctx, cancel := it.withTimeout()
+	defer cancel()
+
+	opt := &sql.TxOptions{Isolation: sql.LevelSerializable}
+	tx, err := it.db.BeginTxx(ctx, opt)
+	if err != nil {
+		return err
+	}
+
+	_, err = tx.NamedExec(it.sql.updateByID, order)
+	if err != nil {
+		tx.Rollback()
+
+		if it.db.IsConstraintErr(err) {
+
+			return errs.WithMessage(model.ErrDBConstraint, err.Error())
+		}
+
+		return err
+	}
+
+	// === Get Inserted Data ===
+	err = tx.Get(order, it.sql.findByID, order.ID)
 	if err != nil {
 		tx.Rollback()
 

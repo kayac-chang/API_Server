@@ -15,6 +15,7 @@ import (
 	"strings"
 
 	"github.com/fatih/structs"
+	"github.com/go-chi/chi"
 )
 
 type handler struct {
@@ -32,13 +33,15 @@ func New(e *env.Env) {
 
 	it := handler{
 		s,
-		usecase.New(db, c),
+		usecase.New(e, db, c),
 	}
 
-	s.Post("/token", it.POST)
-	s.Get("/auth", it.Auth)
+	s.Route("/"+e.API.Version, func(r chi.Router) {
+		s.Post("/token", it.POST)
+		s.Get("/auth", it.Auth)
+	})
 
-	http.ListenAndServe(":8000", s)
+	http.ListenAndServe(e.API.UserPort, s)
 }
 
 func (it *handler) POST(w http.ResponseWriter, r *http.Request) {

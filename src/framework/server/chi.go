@@ -27,6 +27,11 @@ func New() *Server {
 	return &Server{server}
 }
 
+func (it *Server) URLParam(r *http.Request, key string) string {
+
+	return chi.URLParam(r, key)
+}
+
 func (it *Server) SendJSON(w http.ResponseWriter, data response.JSON) {
 
 	output, err := json.Marshal(data)

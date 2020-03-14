@@ -29,8 +29,28 @@ func (cfg PostgresConfig) ToURL() string {
 // === Env ===
 
 type Env struct {
-	Postgres  PostgresConfig
-	ServiceID string
+	Postgres PostgresConfig
+	Secret   []byte
+	Agent    Agent
+	Service  Service
+	API      API
+}
+
+type Service struct {
+	ID     string
+	Domain string
+}
+
+type API struct {
+	Version   string
+	GamePort  string
+	UserPort  string
+	OrderPort string
+}
+
+type Agent struct {
+	Domain string
+	API    string
 }
 
 func New() *Env {
@@ -51,7 +71,23 @@ func New() *Env {
 			"dbname":   getEnv("PG_NAME"),
 		},
 
-		ServiceID: getEnv("SERVICE_ID"),
+		Service: Service{
+			ID: getEnv("SERVICE_ID"),
+		},
+
+		API: API{
+			Version:   getEnv("API_VERSION"),
+			GamePort:  ":" + getEnv("API_GAME_PORT"),
+			UserPort:  ":" + getEnv("API_USER_PORT"),
+			OrderPort: ":" + getEnv("API_ORDER_PORT"),
+		},
+
+		Secret: []byte(getEnv("SECRET")),
+
+		Agent: Agent{
+			Domain: getEnv("AGENT_DOMAIN"),
+			API:    getEnv("AGENT_API"),
+		},
 	}
 
 	log.Printf("Parse .env: \n%s\n", json.Jsonify(env))

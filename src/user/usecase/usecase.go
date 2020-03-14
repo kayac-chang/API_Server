@@ -1,6 +1,7 @@
 package usecase
 
 import (
+	"api/env"
 	"api/model"
 	"api/user/repo"
 	"api/utils"
@@ -12,16 +13,10 @@ import (
 
 	"github.com/dgrijalva/jwt-go"
 	"github.com/labstack/gommon/log"
-	errs "github.com/pkg/errors"
 )
 
-var hmacSampleSecret = []byte("my_secret_key")
-var service_id = "service"
-
-var agent_domain = "http://localhost:3000"
-var agent_api_root = "/api/v1/tgc"
-
 type usercase struct {
+	env   *env.Env
 	db    repo.Repository
 	cache repo.Repository
 }
@@ -34,9 +29,9 @@ type Usecase interface {
 	Auth(user *model.User) error
 }
 
-func New(db, cache repo.Repository) Usecase {
+func New(env *env.Env, db, cache repo.Repository) Usecase {
 
-	return &usercase{db, cache}
+	return &usercase{env, db, cache}
 }
 
 func fetch(url string, res interface{}) error {
@@ -74,27 +69,31 @@ func (it *usercase) Auth(user *model.User) error {
 func (it *usercase) Regist(user *model.User) error {
 
 	// Send to /api/v1/tgc/player/check/:account
-	url := fmt.Sprintf("%s%s%s%s", agent_domain, agent_api_root, "/player/check/", user.Username)
+	// url := fmt.Sprintf("%s%s%s%s",
+	// 	it.env.Agent.Domain,
+	// 	it.env.Agent.API,
+	// 	"/player/check/",
+	// 	user.Username,
+	// )
 
-	type Res struct {
-		Balance struct {
-			Balance  float64 `json:"balance"`
-			Currency string  `json:"currency"`
-		} `json:"balance"`
+	// type Res struct {
+	// 	Balance struct {
+	// 		Balance  float64 `json:"balance"`
+	// 		Currency string  `json:"currency"`
+	// 	} `json:"balance"`
 
-		Status struct {
-			Code    string    `json:"code"`
-			Message string    `json:"message"`
-			Time    time.Time `json:"datatime"`
-		} `json:"status"`
-	}
+	// 	Status struct {
+	// 		Code    string    `json:"code"`
+	// 		Message string    `json:"message"`
+	// 		Time    time.Time `json:"datatime"`
+	// 	} `json:"status"`
+	// }
 
-	res := &Res{}
+	// res := &Res{}
+	// if err := fetch(url, res); err != nil {
 
-	if err := fetch(url, res); err != nil {
-
-		return errs.WithMessagef(err, "status: %+v", res.Status)
-	}
+	// 	return errs.WithMessagef(err, "status: %+v", res.Status)
+	// }
 
 	if err := it.Find(user); err != nil {
 
@@ -108,7 +107,7 @@ func (it *usercase) Regist(user *model.User) error {
 	}
 
 	// TODO: Transform Balance into game coin
-	user.Balance = uint64(res.Balance.Balance)
+	user.Balance = 600270
 
 	return nil
 }
@@ -131,7 +130,6 @@ func (it *usercase) Store(user *model.User) error {
 func (it *usercase) Sign(user *model.User) (*model.Token, error) {
 
 	if err := it.cache.FindBy("ID", user); err == nil {
-
 		log.Printf("found user in cache, remove it\n")
 
 		it.cache.Remove(user)
@@ -139,14 +137,13 @@ func (it *usercase) Sign(user *model.User) (*model.Token, error) {
 
 	createdTime := time.Now()
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
-		"iss": service_id,
+		"iss": it.env.Service.ID,
 		"iat": createdTime.Unix(),
 		"jti": utils.UUID(),
 	})
 
-	tokenString, err := token.SignedString(hmacSampleSecret)
+	tokenString, err := token.SignedString(it.env.Secret)
 	if err != nil {
-
 		return nil, err
 	}
 
@@ -156,7 +153,7 @@ func (it *usercase) Sign(user *model.User) (*model.Token, error) {
 	res := &model.Token{
 		AccessToken: tokenString,
 		Type:        "Bearer",
-		ServiceID:   service_id,
+		ServiceID:   it.env.Service.ID,
 		CreatedAt:   createdTime,
 	}
 
