@@ -63,7 +63,7 @@ func (it *Handler) POST(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	games, err := it.gameCase.Find(req["game"])
+	game, err := it.gameCase.Find(req["game"])
 	if err != nil {
 
 		it.Send(w, response.JSON{
@@ -78,7 +78,6 @@ func (it *Handler) POST(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	game := games[0]
 	href := it.env.Service.Domain + "/" + it.env.API.Version + "/token"
 
 	res := map[string]interface{}{

@@ -4,7 +4,7 @@ import (
 	"api/env"
 	"api/framework/cache"
 	"api/framework/postgres"
-	"api/user"
+	"api/service/user"
 	"sync"
 )
 

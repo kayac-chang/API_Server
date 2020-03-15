@@ -22,21 +22,9 @@ func New(env *env.Env, db *postgres.DB, c *cache.Cache) *Usecase {
 	}
 }
 
-func (it *Usecase) Find(names ...string) ([]*model.Game, error) {
+func (it *Usecase) Find(name string) (*model.Game, error) {
 
-	ids := make([]string, len(names))
-
-	for _, name := range names {
-		ids = append(ids, utils.MD5(name))
-	}
-
-	games, err := it.repo.FindByID(ids)
-
-	if err != nil {
-		return nil, err
-	}
-
-	return games, nil
+	return it.repo.FindByID(utils.MD5(name))
 }
 
 func (it *Usecase) Store() error {

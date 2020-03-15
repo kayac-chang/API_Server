@@ -29,7 +29,25 @@ func (it *Repo) findCache(ids ...string) ([]string, []*model.Game) {
 	return utils.Diff(ids, finds), games
 }
 
-func (it *Repo) FindByID(ids []string) ([]*model.Game, error) {
+func (it *Repo) FindByID(id string) (*model.Game, error) {
+
+	game := model.Game{}
+
+	if _, games := it.findCache(id); len(games) == 1 {
+		return games[0], nil
+	}
+
+	if err := it.db.Get(&game, it.sql.findByID, id); err != nil {
+		return nil, err
+	}
+
+	// === Save to Cache ===
+	defer it.storeCache(&game)
+
+	return &game, nil
+}
+
+func (it *Repo) FindByIDs(ids []string) ([]*model.Game, error) {
 
 	remains, games := it.findCache(ids...)
 
