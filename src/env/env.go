@@ -52,6 +52,7 @@ type API struct {
 type Agent struct {
 	Domain string
 	API    string
+	Token  string
 }
 
 type SSL struct {
@@ -99,6 +100,7 @@ func New() *Env {
 		Agent: Agent{
 			Domain: getEnv("AGENT_DOMAIN"),
 			API:    getEnv("AGENT_API"),
+			Token:  getEnv("AGENT_TOKEN"),
 		},
 	}
 

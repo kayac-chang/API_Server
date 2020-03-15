@@ -2,46 +2,40 @@ package order
 
 import (
 	"api/env"
+	"api/framework/cache"
+	"api/framework/postgres"
 	"api/framework/server"
 	"api/model"
 	"api/model/pb"
+	"api/model/request"
 	"api/model/response"
-	"api/order/repo/cache"
-	"api/order/repo/postgres"
-	"api/order/usecase"
-	userCache "api/user/repo/cache"
-	"io/ioutil"
+	order "api/usecase/order"
 
 	"net/http"
 
 	"github.com/go-chi/chi"
-	"github.com/golang/protobuf/proto"
 	"github.com/golang/protobuf/ptypes"
-	"github.com/labstack/gommon/log"
 )
 
 type handler struct {
 	*server.Server
-
-	usecase usecase.Usecase
+	env     *env.Env
+	usecase *order.Usecase
 }
 
-func New(e *env.Env) {
+func New(e *env.Env, db *postgres.DB, c *cache.Cache) {
 
 	s := server.New(e)
 
-	c := cache.New()
-	db := postgres.New(e.Postgres.ToURL(), 30)
-	uc := userCache.New()
-
 	it := handler{
 		s,
-		usecase.New(e, db, c, uc),
+		e,
+		order.New(e, db, c),
 	}
 
 	s.Route("/"+e.API.Version, func(s chi.Router) {
-		s.Post("/orders", it.POST)
-		s.Put("/orders/{order_id}", it.PUT)
+		s.With(it.Order).Post("/orders", it.POST)
+		// s.Put("/orders/{order_id}", it.PUT)
 	})
 
 	s.Listen(e.API.OrderPort)
@@ -49,227 +43,56 @@ func New(e *env.Env) {
 
 func (it *handler) POST(w http.ResponseWriter, r *http.Request) {
 
-	reqByte, err := ioutil.ReadAll(r.Body)
+	order := r.Context().Value(request.ORDER).(*model.Order)
+
+	if err := it.usecase.Create(order); err != nil {
+
+		it.Send(w, response.ProtoBuf{
+			Code: http.StatusNotAcceptable,
+
+			Data: &pb.Error{
+				Code:    http.StatusNotAcceptable,
+				Name:    "Create Order Failed",
+				Message: err.Error(),
+			},
+		})
+
+		return
+	}
+
+	// === Send ProtoBuf ===
+	created, err := ptypes.TimestampProto(order.CreatedAt.Time)
 	if err != nil {
-		log.Errorf("%s\n", err.Error())
 
-		res := response.ProtoBuf{
-			Code: http.StatusBadRequest,
-			Data: &pb.Error{
-				Code:    http.StatusBadRequest,
-				Name:    "Unexpect Payload",
-				Message: model.ErrUnexpectPayload.Error(),
-			},
-		}
-
-		it.SendProtoBuf(w, res)
-		return
-	}
-
-	req := pb.Order{}
-
-	if err := proto.Unmarshal(reqByte, &req); err != nil {
-		log.Errorf("%s\n", err.Error())
-
-		res := response.ProtoBuf{
-			Code: http.StatusBadRequest,
-			Data: &pb.Error{
-				Code:    http.StatusBadRequest,
-				Name:    "Unexpect Payload",
-				Message: model.ErrUnexpectPayload.Error(),
-			},
-		}
-
-		it.SendProtoBuf(w, res)
-		return
-	}
-
-	order := model.Order{
-		UserID: req.GetUserId(),
-		GameID: req.GetGameId(),
-		Bet:    req.GetBet(),
-	}
-
-	if err := it.usecase.Store(&order); err != nil {
-		log.Errorf("%s\n", err.Error())
-
-		res := response.ProtoBuf{
+		it.Send(w, response.ProtoBuf{
 			Code: http.StatusInternalServerError,
+
 			Data: &pb.Error{
 				Code:    http.StatusInternalServerError,
 				Name:    "Server Error",
 				Message: err.Error(),
 			},
-		}
+		})
 
-		it.SendProtoBuf(w, res)
 		return
 	}
 
-	states := map[model.State]pb.Order_State{
-		model.Pending:   pb.Order_Pending,
-		model.Completed: pb.Order_Completed,
-		model.Rejected:  pb.Order_Rejected,
-	}
-
-	created, err := ptypes.TimestampProto(*order.CreatedAt)
-	if err != nil {
-		log.Errorf("%s\n", err.Error())
-
-		res := response.ProtoBuf{
-			Code: http.StatusInternalServerError,
-			Data: &pb.Error{
-				Code:    http.StatusInternalServerError,
-				Name:    "Server Error",
-				Message: err.Error(),
-			},
-		}
-
-		it.SendProtoBuf(w, res)
-		return
-	}
-
-	res := response.ProtoBuf{
+	it.Send(w, response.ProtoBuf{
 		Code: http.StatusCreated,
+
 		Data: &pb.Order{
 			OrderId:   order.ID,
 			GameId:    order.GameID,
 			UserId:    order.UserID,
-			State:     states[order.State],
+			State:     order.State.PbState(),
 			Bet:       order.Bet,
 			CreatedAt: created,
 		},
-	}
-
-	it.SendProtoBuf(w, res)
+	})
 }
 
 func (it *handler) PUT(w http.ResponseWriter, r *http.Request) {
 
-	reqByte, err := ioutil.ReadAll(r.Body)
-	if err != nil {
-		log.Errorf("%s\n", err.Error())
+	order := r.Context().Value(request.ORDER).(*model.Order)
 
-		res := response.ProtoBuf{
-			Code: http.StatusBadRequest,
-			Data: &pb.Error{
-				Code:    http.StatusBadRequest,
-				Name:    "Unexpect Payload",
-				Message: model.ErrUnexpectPayload.Error(),
-			},
-		}
-
-		it.SendProtoBuf(w, res)
-		return
-	}
-
-	req := pb.Order{}
-	if err := proto.Unmarshal(reqByte, &req); err != nil {
-		log.Errorf("%s\n", err.Error())
-
-		res := response.ProtoBuf{
-			Code: http.StatusBadRequest,
-			Data: &pb.Error{
-				Code:    http.StatusBadRequest,
-				Name:    "Unexpect Payload",
-				Message: model.ErrUnexpectPayload.Error(),
-			},
-		}
-
-		it.SendProtoBuf(w, res)
-		return
-	}
-
-	order := model.Order{
-		ID: it.URLParam(r, "order_id"),
-	}
-
-	if err := it.usecase.Find(&order); err != nil {
-		log.Errorf("%s\n", err.Error())
-
-		res := response.ProtoBuf{
-			Code: http.StatusNotFound,
-			Data: &pb.Error{
-				Code:    http.StatusNotFound,
-				Name:    "Not Found",
-				Message: err.Error(),
-			},
-		}
-
-		it.SendProtoBuf(w, res)
-		return
-	}
-
-	completed, err := ptypes.Timestamp(req.GetCompletedAt())
-	if err != nil {
-		log.Errorf("%s\n", err.Error())
-
-		res := response.ProtoBuf{
-			Code: http.StatusInternalServerError,
-			Data: &pb.Error{
-				Code:    http.StatusInternalServerError,
-				Name:    "Server Error",
-				Message: err.Error(),
-			},
-		}
-
-		it.SendProtoBuf(w, res)
-		return
-	}
-
-	order.CompletedAt = &completed
-
-	if err := it.usecase.Checkout(&order); err != nil {
-		log.Errorf("%s\n", err.Error())
-
-		res := response.ProtoBuf{
-			Code: http.StatusInternalServerError,
-			Data: &pb.Error{
-				Code:    http.StatusInternalServerError,
-				Name:    "Server Error",
-				Message: err.Error(),
-			},
-		}
-
-		it.SendProtoBuf(w, res)
-		return
-	}
-
-	states := map[model.State]pb.Order_State{
-		model.Pending:   pb.Order_Pending,
-		model.Completed: pb.Order_Completed,
-		model.Rejected:  pb.Order_Rejected,
-	}
-
-	created, err := ptypes.TimestampProto(*order.CreatedAt)
-	if err != nil {
-		log.Errorf("%s\n", err.Error())
-
-		res := response.ProtoBuf{
-			Code: http.StatusInternalServerError,
-			Data: &pb.Error{
-				Code:    http.StatusInternalServerError,
-				Name:    "Server Error",
-				Message: err.Error(),
-			},
-		}
-
-		it.SendProtoBuf(w, res)
-		return
-	}
-
-	res := response.ProtoBuf{
-		Code: http.StatusAccepted,
-		Data: &pb.Order{
-			OrderId:     order.ID,
-			GameId:      order.GameID,
-			UserId:      order.UserID,
-			State:       states[order.State],
-			Bet:         order.Bet,
-			CreatedAt:   created,
-			CompletedAt: req.GetCompletedAt(),
-		},
-	}
-
-	it.SendProtoBuf(w, res)
 }

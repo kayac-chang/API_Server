@@ -1,13 +1,13 @@
 #!/usr/bin/env bash
 
-URL=localhost:8001/orders
+URL=https://localhost:8003/v1/orders
 MSG_TYPE=Order
 PROTO_FILE=model/pb/order.proto
-TOKEN=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpYXQiOjE1ODQxNTY5NTksImlzcyI6InNlcnZpY2UiLCJqdGkiOiI4YjRmZjMzMC03OTFkLTQwYmItYTJiZC0zNTAyYjU5OThkN2YifQ.HegLldSNYMJCngANxjCM9PCjemqY5g03EfYGBLeVFt8
+TOKEN=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpYXQiOjE1ODQyOTEzNTEsImlzcyI6IjhkNzAwODUyLTliMGEtNDA5Zi1hZjFkLWE4NDFkNWNhN2Y0MCIsImp0aSI6ImUxMzczNzJhLTM5ZjItNDM5OC05NjRlLWM3MjJjNWI0ODM1MiJ9.NHFLbWC1QaZtqRuLapjy6VLutjgIgNSbS0W-zd2ro3o
 
 user_id=db780439d285e8aba7bf64daba277ec8
 game_id=b5ac49be5d3f76cb878671003dbb62ed
-bet=600270
+bet=10
 
 req=$(
 cat << EOF
@@ -20,7 +20,6 @@ EOF
 echo $req \
     | protoc --encode=$MSG_TYPE $PROTO_FILE \
     | curl \
-        -X POST \
         -H "Content-Type: application/protobuf" \
         -H "Authorization: Bearer $TOKEN" \
         --data-binary @- \

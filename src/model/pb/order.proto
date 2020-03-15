@@ -9,6 +9,7 @@ message Order {
         Pending = 0;
         Completed = 1;
         Rejected = 2;
+        Issue = 3;
     }
     State state = 2;
 

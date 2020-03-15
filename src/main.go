@@ -4,6 +4,7 @@ import (
 	"api/env"
 	"api/framework/cache"
 	"api/framework/postgres"
+	"api/service/order"
 	"api/service/user"
 	"sync"
 )
@@ -30,11 +31,11 @@ func main() {
 		wg.Done()
 	}()
 
-	// go func() {
-	// 	order.New(e)
+	go func() {
+		order.New(e, db, c)
 
-	// 	wg.Done()
-	// }()
+		wg.Done()
+	}()
 
 	wg.Wait()
 }

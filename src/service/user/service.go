@@ -37,7 +37,7 @@ func New(e *env.Env, db *postgres.DB, c *cache.Cache) {
 
 	s.Route("/"+e.API.Version, func(s chi.Router) {
 		s.With(it.ParseJSON).Post("/token", it.POST)
-		s.Get("/auth", it.Auth)
+		s.With(it.User).Get("/auth", it.Auth)
 	})
 
 	s.Listen(e.API.UserPort)
@@ -47,8 +47,25 @@ func (it *Handler) POST(w http.ResponseWriter, r *http.Request) {
 
 	req := r.Context().Value(request.JSON).(map[string]string)
 
+	session := r.Header.Get("session")
+
+	if session == "" {
+		it.Send(w, response.JSON{
+			Code: http.StatusBadRequest,
+
+			Error: model.Error{
+				Name:    "Missing Session Id",
+				Message: "Required header session id for authentication",
+			},
+		})
+
+		return
+	}
+
 	// == Registration ==
-	token, err := it.userCase.Regist(req["username"])
+	username := req["username"]
+
+	token, err := it.userCase.Regist(username, session)
 	if err != nil {
 
 		it.Send(w, response.JSON{

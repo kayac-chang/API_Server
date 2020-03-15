@@ -7,12 +7,17 @@ import (
 	"api/model/request"
 	"api/model/response"
 	"context"
+	"database/sql"
 	"encoding/json"
+	"io/ioutil"
 	"log"
 	"net/http"
 	"strings"
 
 	"github.com/go-chi/chi"
+	"github.com/golang/protobuf/proto"
+	"github.com/golang/protobuf/ptypes"
+	"github.com/golang/protobuf/ptypes/timestamp"
 )
 
 func (it *Server) URLParam(r *http.Request, key string) string {
@@ -54,7 +59,7 @@ func (it *Server) User(next http.Handler) http.Handler {
 
 		auth := strings.SplitN(r.Header.Get("Authorization"), " ", 2)
 
-		if len(auth) != 2 || auth[0] != "Bearer" {
+		if len(auth) != 2 {
 
 			it.Send(w, response.ProtoBuf{
 				Code: http.StatusUnauthorized,
@@ -80,7 +85,7 @@ func (it *Server) User(next http.Handler) http.Handler {
 				Data: &pb.Error{
 					Code:    http.StatusUnauthorized,
 					Name:    "Authentication Failed",
-					Message: model.ErrUnauthorized.Error(),
+					Message: err.Error(),
 				},
 			})
 
@@ -91,6 +96,77 @@ func (it *Server) User(next http.Handler) http.Handler {
 	}
 
 	return http.HandlerFunc(fn)
+}
+
+func (it *Server) Order(next http.Handler) http.Handler {
+
+	fn := func(w http.ResponseWriter, r *http.Request) {
+
+		reqByte, err := ioutil.ReadAll(r.Body)
+		if err != nil {
+
+			it.Send(w, response.ProtoBuf{
+				Code: http.StatusBadRequest,
+
+				Data: &pb.Error{
+					Code:    http.StatusBadRequest,
+					Name:    "Unexpect Payload",
+					Message: err.Error(),
+				},
+			})
+
+			return
+		}
+
+		req := pb.Order{}
+		if err := proto.Unmarshal(reqByte, &req); err != nil {
+
+			it.Send(w, response.ProtoBuf{
+				Code: http.StatusBadRequest,
+
+				Data: &pb.Error{
+					Code:    http.StatusBadRequest,
+					Name:    "Unexpect Payload",
+					Message: err.Error(),
+				},
+			})
+
+			return
+		}
+
+		order := model.Order{
+			ID: req.GetOrderId(),
+
+			GameID: req.GetGameId(),
+			UserID: req.GetUserId(),
+
+			State: model.ToState(req.GetState()),
+			Bet:   req.GetBet(),
+
+			CreatedAt:   Time(req.GetCreatedAt()),
+			UpdatedAt:   Time(req.GetUpdatedAt()),
+			CompletedAt: Time(req.GetCompletedAt()),
+		}
+
+		next.ServeHTTP(w, bind(r, &order))
+	}
+
+	return http.HandlerFunc(fn)
+}
+
+func Time(ts *timestamp.Timestamp) sql.NullTime {
+
+	if ts == nil {
+		return sql.NullTime{}
+	}
+
+	time, err := ptypes.Timestamp(ts)
+
+	if err != nil {
+		panic(err)
+	}
+
+	return sql.NullTime{time, true}
 }
 
 func findByToken(cache *cache.Cache, user *model.User) error {
@@ -119,6 +195,9 @@ func bind(r *http.Request, val interface{}) *http.Request {
 
 	case *model.User:
 		ctx = context.WithValue(ctx, request.USER, val)
+
+	case *model.Order:
+		ctx = context.WithValue(ctx, request.ORDER, val)
 
 	default:
 		log.Fatalf("Unsupport Type: %t\n", val)

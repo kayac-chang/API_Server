@@ -5,7 +5,7 @@ go 1.13
 require (
 	github.com/bxcodec/go-clean-arch v2.0.1+incompatible // indirect
 	github.com/dgrijalva/jwt-go v3.2.0+incompatible
-	github.com/fatih/structs v1.1.0
+	github.com/fatih/structs v1.1.0 // indirect
 	github.com/go-chi/chi v4.0.3+incompatible
 	github.com/go-chi/cors v1.0.0
 	github.com/go-playground/validator/v10 v10.2.0 // indirect
@@ -28,5 +28,5 @@ require (
 	github.com/satori/go.uuid v1.2.0
 	github.com/tensor-programming/hex-microservice v0.0.0-20191024074311-1ffbdc8a3813 // indirect
 	golang.org/x/crypto v0.0.0-20191227163750-53104e6ec876
-	google.golang.org/appengine v1.6.5
+	google.golang.org/appengine v1.6.5 // indirect
 )

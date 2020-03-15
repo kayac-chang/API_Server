@@ -1,90 +1,167 @@
-package usecase
+package order
 
 import (
 	"api/env"
+	"api/framework/cache"
+	"api/framework/postgres"
 	"api/model"
-	"api/order/repo"
-	userRepo "api/user/repo"
-	"encoding/json"
+	gamerepo "api/repo/game"
+	orderrepo "api/repo/order"
+	userrepo "api/repo/user"
+	"api/utils"
+	"api/utils/json"
+	"database/sql"
 	"fmt"
-	"net/http"
-	"net/url"
-	"strings"
-	"time"
 
-	"github.com/labstack/gommon/log"
+	"time"
 )
 
-type usercase struct {
-	env       *env.Env
-	db        repo.Repository
-	cache     repo.Repository
-	userCache userRepo.Repository
+type Usecase struct {
+	env   *env.Env
+	order *orderrepo.Repo
+	user  *userrepo.Repo
+	game  *gamerepo.Repo
 }
 
-type Usecase interface {
-	Find(order *model.Order) error
-	Store(order *model.Order) error
-	Checkout(order *model.Order) error
-}
+func New(env *env.Env, db *postgres.DB, c *cache.Cache) *Usecase {
 
-func New(env *env.Env, db, cache repo.Repository, userCache userRepo.Repository) Usecase {
-
-	return &usercase{env, db, cache, userCache}
-}
-
-func (it *usercase) Find(order *model.Order) error {
-
-	return it.db.FindBy("ID", order)
-}
-
-func (it *usercase) Store(order *model.Order) error {
-
-	order.State = model.Pending
-
-	time := time.Now()
-	order.CreatedAt = &time
-
-	return it.db.Store(order)
-}
-
-func (it *usercase) Checkout(order *model.Order) error {
-
-	order.State = model.Completed
-
-	return it.db.Replace(order)
-}
-
-func post(url string, req url.Values, res interface{}) error {
-
-	client := &http.Client{
-		Timeout: 10 * time.Second,
+	return &Usecase{
+		env:   env,
+		order: orderrepo.New(db, c),
+		user:  userrepo.New(db, c),
+		game:  gamerepo.New(db, c),
 	}
+}
 
-	request, err := http.NewRequest(http.MethodPost, url, strings.NewReader(req.Encode()))
-	if err != nil {
-		log.Errorf("Error: %s\n", err.Error())
+func (it *Usecase) sendBet(order *model.Order) error {
 
+	user := model.User{
+		ID: order.UserID,
+	}
+	if err := it.user.FindBy("ID", &user); err != nil {
 		return err
 	}
 
-	// TODO: request.Header.Set("organization_token" , value)
-
-	resp, err := client.Do(request)
+	game, err := it.game.FindByID(order.GameID)
 	if err != nil {
-		log.Errorf("Error: %s\n", err.Error())
+		return err
+	}
 
+	url := it.env.Agent.Domain + it.env.Agent.API + "/transaction/game/bet"
+
+	req := map[string]interface{}{
+		"account":    user.Username,
+		"created_at": order.CreatedAt.Time,
+		"gamename":   game.Name,
+		"roundid":    order.ID,
+		"amount":     order.Bet,
+	}
+
+	headers := map[string]string{
+		"Content-Type":       "application/json",
+		"organization_token": it.env.Agent.Token,
+		"session":            user.Session,
+	}
+
+	resp, err := utils.Post(url, req, headers)
+	if err != nil {
 		return err
 	}
 
 	defer resp.Body.Close()
 
-	err = json.NewDecoder(resp.Body).Decode(res)
-	if err != nil {
-		log.Errorf("Error: %s\n", err.Error())
+	res := map[string]interface{}{}
+	json.Parse(resp.Body, &res)
 
-		return fmt.Errorf("Can't deserialize response: %s", url)
+	if resp.StatusCode != 200 {
+		status := res["status"].(map[string]interface{})
+
+		return fmt.Errorf("%s", status["message"])
+	}
+
+	data := res["data"].(map[string]interface{})
+	balance := data["balance"].(float64)
+
+	user.Balance = uint64(balance)
+
+	if err := it.user.Store("Cache", &user); err != nil {
+		return err
 	}
 
 	return nil
+}
+
+func (it *Usecase) Create(order *model.Order) error {
+
+	order.ID = utils.UUID()
+	order.State = model.Pending
+	order.CreatedAt = sql.NullTime{time.Now(), true}
+
+	if err := it.sendBet(order); err != nil {
+		return err
+	}
+
+	return it.order.Store("Cache", order)
+}
+
+func (it *Usecase) sendEndRound(order *model.Order) error {
+
+	user := model.User{
+		ID: order.UserID,
+	}
+	if err := it.user.FindBy("ID", &user); err != nil {
+		return err
+	}
+
+	game, err := it.game.FindByID(order.GameID)
+	if err != nil {
+		return err
+	}
+
+	url := it.env.Agent.Domain + it.env.Agent.API + "/transaction/game/endround"
+
+	req := map[string]interface{}{
+		"account":      user.Username,
+		"created_at":   time.Now(),
+		"gamename":     game.Name,
+		"roundid":      order.ID,
+		"completed_at": order.CompletedAt,
+	}
+
+	headers := map[string]string{
+		"Content-Type":       "application/json",
+		"organization_token": it.env.Agent.Token,
+		"session":            user.Session,
+	}
+
+	resp, err := utils.Post(url, req, headers)
+	if err != nil {
+		return err
+	}
+
+	defer resp.Body.Close()
+
+	res := map[string]interface{}{}
+	json.Parse(resp.Body, &res)
+
+	if resp.StatusCode != 200 {
+		status := res["status"].(map[string]interface{})
+
+		return fmt.Errorf("%s", status["message"])
+	}
+
+	data := res["data"].(map[string]interface{})
+	balance := data["balance"].(float64)
+
+	user.Balance = uint64(balance)
+
+	if err := it.user.Store("Cache", &user); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (it *Usecase) Checkout(order *model.Order) error {
+
 }

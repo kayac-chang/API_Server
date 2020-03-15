@@ -2,21 +2,40 @@ package order
 
 import (
 	"api/model"
+	"time"
 
 	errs "github.com/pkg/errors"
 )
 
-func (it *Repo) Store(order *model.Order) error {
+func (it *Repo) Store(dest string, order *model.Order) error {
 
-	return it.store(it.sql.insert, order)
+	switch dest {
+
+	case "DB":
+		return it.storeDB(it.sql.insert, order)
+
+	case "Cache":
+		return it.storeCache(order)
+	}
+
+	return nil
+}
+
+func (it *Repo) storeCache(order *model.Order) error {
+
+	it.cache.Set(order.ID, order, 1*time.Hour)
+
+	// fmt.Printf("%s\n", json.Jsonify(it.cache.Items()))
+
+	return nil
 }
 
 func (it *Repo) Replace(order *model.Order) error {
 
-	return it.store(it.sql.updateByID, order)
+	return it.storeDB(it.sql.updateByID, order)
 }
 
-func (it *Repo) store(sql string, order *model.Order) error {
+func (it *Repo) storeDB(sql string, order *model.Order) error {
 
 	tx, err := it.db.Beginx()
 	if err != nil {

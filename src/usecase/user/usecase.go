@@ -27,9 +27,30 @@ func New(env *env.Env, db *postgres.DB, c *cache.Cache) *Usecase {
 	}
 }
 
-func (it *Usecase) Regist(username string) (*model.Token, error) {
+func (it *Usecase) sendToCheckPlayer(username string) (uint64, error) {
 
-	// Send to /api/v1/tgc/player/check/:account
+	url := it.env.Agent.Domain + it.env.Agent.API + "/player/check/" + username
+
+	res, err := utils.Fetch(url)
+
+	if err != nil {
+		return 0, err
+	}
+
+	data := res["data"].(map[string]interface{})
+	balance := data["balance"].(map[string]interface{})
+	amount := balance["balance"].(float64)
+
+	return uint64(amount), nil
+}
+
+func (it *Usecase) Regist(username string, session string) (*model.Token, error) {
+
+	// Send to
+	balance, err := it.sendToCheckPlayer(username)
+	if err != nil {
+		return nil, err
+	}
 
 	user := model.User{
 		ID:       utils.MD5(username),
@@ -58,9 +79,8 @@ func (it *Usecase) Regist(username string) (*model.Token, error) {
 	}
 
 	user.Token = token.AccessToken
-
-	// TODO: Transform Balance into game coin
-	user.Balance = 600270
+	user.Balance = balance
+	user.Session = session
 
 	it.repo.Store("Cache", &user)
 
