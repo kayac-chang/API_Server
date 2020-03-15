@@ -2,176 +2,107 @@ package user
 
 import (
 	"api/env"
+	"api/framework/cache"
+	"api/framework/postgres"
 	"api/framework/server"
 	"api/model"
 	"api/model/pb"
+	"api/model/request"
 	"api/model/response"
-	"api/user/repo/cache"
-	"api/user/repo/postgres"
-	"api/user/usecase"
+	game "api/usecase/game"
+	user "api/usecase/user"
 
-	"encoding/json"
 	"net/http"
-	"strings"
 
-	"github.com/fatih/structs"
 	"github.com/go-chi/chi"
 )
 
-type handler struct {
+type Handler struct {
 	*server.Server
-
-	usecase usecase.Usecase
+	env      *env.Env
+	userCase *user.Usecase
+	gameCase *game.Usecase
 }
 
-func New(e *env.Env) {
+func New(e *env.Env, db *postgres.DB, c *cache.Cache) {
 
-	s := server.New()
+	s := server.New(e)
 
-	c := cache.New()
-	db := postgres.New(e.Postgres.ToURL(), 30)
-
-	it := handler{
+	it := Handler{
 		s,
-		usecase.New(e, db, c),
+		e,
+		user.New(e, db, c),
+		game.New(e, db, c),
 	}
 
-	s.Route("/"+e.API.Version, func(r chi.Router) {
-		s.Post("/token", it.POST)
+	s.Route("/"+e.API.Version, func(s chi.Router) {
+		s.With(it.ParseJSON).Post("/token", it.POST)
 		s.Get("/auth", it.Auth)
 	})
 
-	http.ListenAndServe(e.API.UserPort, s)
+	s.Listen(e.API.UserPort)
 }
 
-func (it *handler) POST(w http.ResponseWriter, r *http.Request) {
+func (it *Handler) POST(w http.ResponseWriter, r *http.Request) {
 
-	// == Parse Payload ==
-	req := &struct {
-		Game     string `json:"game"`
-		Username string `json:"username"`
-	}{}
-	err := json.NewDecoder(r.Body).Decode(&req)
-	if err != nil {
-
-		res := response.JSON{
-
-			Code: http.StatusBadRequest,
-
-			Error: model.Error{
-				Name:    "Unexpect Payload",
-				Message: model.ErrUnexpectPayload.Error(),
-			},
-		}
-		it.SendJSON(w, res)
-
-		return
-	}
+	req := r.Context().Value(request.JSON).(map[string]string)
 
 	// == Registration ==
-	user := &model.User{
-		Username: req.Username,
-	}
-	if err := it.usecase.Regist(user); err != nil {
+	token, err := it.userCase.Regist(req["username"])
+	if err != nil {
 
-		res := response.JSON{
-
+		it.Send(w, response.JSON{
 			Code: http.StatusUnauthorized,
 
 			Error: model.Error{
 				Name:    "User Registration Failed",
 				Message: err.Error(),
 			},
-		}
-		it.SendJSON(w, res)
+		})
 
 		return
 	}
 
-	// == Sign Token ==
-	token, err := it.usecase.Sign(user)
+	games, err := it.gameCase.Find(req["game"])
 	if err != nil {
 
-		res := response.JSON{
-
-			Code: http.StatusUnauthorized,
+		it.Send(w, response.JSON{
+			Code: http.StatusInternalServerError,
 
 			Error: model.Error{
-				Name:    "User Sign Token Failed",
+				Name:    "Server Error",
 				Message: err.Error(),
 			},
-		}
-		it.SendJSON(w, res)
+		})
 
 		return
 	}
 
-	// == Send Response ==
-	data := structs.Map(token)
+	game := games[0]
+	href := it.env.Service.Domain + "/" + it.env.API.Version + "/token"
 
-	data["links"] = []model.Link{
-		{Relation: "access", Method: "GET", Href: "https://<game_domain>"},
-		{Relation: "reauthorize", Method: "POST", Href: "https://<service_domain>/v1/token"},
+	res := map[string]interface{}{
+		"token": token,
+		"links": [...]response.Link{
+			{Relation: "access", Method: "GET", Href: game.Href},
+			{Relation: "reauthorize", Method: "POST", Href: href},
+		},
 	}
 
-	res := response.JSON{
-
+	// == Send Response ==
+	it.Send(w, response.JSON{
 		Code: http.StatusCreated,
 
-		Data: data,
-	}
-	it.SendJSON(w, res)
+		Data: res,
+	})
 }
 
-func (it *handler) Auth(w http.ResponseWriter, r *http.Request) {
+func (it *Handler) Auth(w http.ResponseWriter, r *http.Request) {
 
-	token := r.Header.Get("Authorization")
-
-	if token == "" {
-
-		res := response.ProtoBuf{
-
-			Code: http.StatusUnauthorized,
-
-			Data: &pb.Error{
-				Code:    http.StatusUnauthorized,
-				Name:    "Authentication Failed",
-				Message: model.ErrUnauthorized.Error(),
-			},
-		}
-		it.SendProtoBuf(w, res)
-
-		return
-	}
-
-	token = strings.Split(token, " ")[1]
-
-	// == Authentication ==
-	user := model.User{
-		Token: token,
-	}
-
-	err := it.usecase.Auth(&user)
-	if err != nil {
-
-		res := response.ProtoBuf{
-
-			Code: http.StatusUnauthorized,
-
-			Data: &pb.Error{
-				Code:    http.StatusUnauthorized,
-				Name:    "Authentication Failed",
-				Message: model.ErrUnauthorized.Error(),
-			},
-		}
-		it.SendProtoBuf(w, res)
-
-		return
-	}
+	user := r.Context().Value(request.USER).(*model.User)
 
 	// == Send Response ==
-
-	res := response.ProtoBuf{
+	it.Send(w, response.ProtoBuf{
 
 		Code: http.StatusOK,
 
@@ -180,6 +111,5 @@ func (it *handler) Auth(w http.ResponseWriter, r *http.Request) {
 			Username: user.Username,
 			Balance:  user.Balance,
 		},
-	}
-	it.SendProtoBuf(w, res)
+	})
 }

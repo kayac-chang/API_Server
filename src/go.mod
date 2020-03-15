@@ -7,6 +7,7 @@ require (
 	github.com/dgrijalva/jwt-go v3.2.0+incompatible
 	github.com/fatih/structs v1.1.0
 	github.com/go-chi/chi v4.0.3+incompatible
+	github.com/go-chi/cors v1.0.0
 	github.com/go-playground/validator/v10 v10.2.0 // indirect
 	github.com/go-redis/redis v6.15.7+incompatible // indirect
 	github.com/golang/protobuf v1.3.1

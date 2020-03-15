@@ -28,7 +28,7 @@ type handler struct {
 
 func New(e *env.Env) {
 
-	s := server.New()
+	s := server.New(e)
 
 	c := cache.New()
 	db := postgres.New(e.Postgres.ToURL(), 30)
@@ -39,12 +39,12 @@ func New(e *env.Env) {
 		usecase.New(e, db, c, uc),
 	}
 
-	s.Route("/"+e.API.Version, func(r chi.Router) {
+	s.Route("/"+e.API.Version, func(s chi.Router) {
 		s.Post("/orders", it.POST)
 		s.Put("/orders/{order_id}", it.PUT)
 	})
 
-	http.ListenAndServe(e.API.OrderPort, s)
+	s.Listen(e.API.OrderPort)
 }
 
 func (it *handler) POST(w http.ResponseWriter, r *http.Request) {

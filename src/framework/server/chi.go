@@ -1,57 +1,47 @@
 package server
 
 import (
-	"api/model/response"
+	"api/env"
+	"log"
 
-	"encoding/json"
 	"net/http"
 
 	"github.com/go-chi/chi"
 	"github.com/go-chi/chi/middleware"
-	"github.com/golang/protobuf/proto"
+	"github.com/go-chi/cors"
 )
 
 type Server struct {
 	*chi.Mux
+	env *env.Env
 }
 
-func New() *Server {
+func New(e *env.Env) *Server {
 
 	server := chi.NewRouter()
+
+	cors := cors.New(cors.Options{
+		// AllowedOrigins: []string{"https://foo.com"},
+		AllowedOrigins:   []string{"*"},
+		AllowedMethods:   []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
+		AllowedHeaders:   []string{"Accept", "Authorization", "Content-Type", "X-CSRF-Token"},
+		ExposedHeaders:   []string{"Link"},
+		AllowCredentials: true,
+		MaxAge:           300,
+	})
+	server.Use(cors.Handler)
 
 	server.Use(middleware.RequestID)
 	server.Use(middleware.RealIP)
 	server.Use(middleware.Logger)
 	server.Use(middleware.Recoverer)
 
-	return &Server{server}
+	return &Server{server, e}
 }
 
-func (it *Server) URLParam(r *http.Request, key string) string {
+func (it *Server) Listen(port string) {
 
-	return chi.URLParam(r, key)
-}
-
-func (it *Server) SendJSON(w http.ResponseWriter, data response.JSON) {
-
-	output, err := json.Marshal(data)
-	if err != nil {
-		w.Write([]byte("Serialization Error"))
-	}
-
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(data.Code)
-	w.Write(output)
-}
-
-func (it *Server) SendProtoBuf(w http.ResponseWriter, res response.ProtoBuf) {
-
-	out, err := proto.Marshal(res.Data)
-	if err != nil {
-		w.Write([]byte("Serialization Error"))
-	}
-
-	w.Header().Set("Content-Type", "application/protobuf")
-	w.WriteHeader(res.Code)
-	w.Write(out)
+	log.Fatal(
+		http.ListenAndServeTLS(port, it.env.SSL.Cert, it.env.SSL.Key, it),
+	)
 }

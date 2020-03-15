@@ -34,6 +34,7 @@ type Env struct {
 	Agent    Agent
 	Service  Service
 	API      API
+	SSL      SSL
 }
 
 type Service struct {
@@ -51,6 +52,11 @@ type API struct {
 type Agent struct {
 	Domain string
 	API    string
+}
+
+type SSL struct {
+	Cert string
+	Key  string
 }
 
 func New() *Env {
@@ -72,7 +78,8 @@ func New() *Env {
 		},
 
 		Service: Service{
-			ID: getEnv("SERVICE_ID"),
+			ID:     getEnv("SERVICE_ID"),
+			Domain: getEnv("SERVICE_DOMAIN"),
 		},
 
 		API: API{
@@ -80,6 +87,11 @@ func New() *Env {
 			GamePort:  ":" + getEnv("API_GAME_PORT"),
 			UserPort:  ":" + getEnv("API_USER_PORT"),
 			OrderPort: ":" + getEnv("API_ORDER_PORT"),
+		},
+
+		SSL: SSL{
+			Cert: getEnv("CERT"),
+			Key:  getEnv("KEY"),
 		},
 
 		Secret: []byte(getEnv("SECRET")),

@@ -1,0 +1,8 @@
+#
+POST https://localhost:8002/v1/token
+Content-Type: application/json
+
+{
+    "game": "catpunch",
+    "username": "kayac"
+}
