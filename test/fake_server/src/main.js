@@ -2,6 +2,7 @@ const restify = require("restify");
 
 const account = require("./account");
 const bet = require("./bet");
+const endround = require("./endround");
 
 function main() {
   const server = restify.createServer();
@@ -13,6 +14,7 @@ function main() {
 
   server.get(`${prefix}/player/check/:account`, account);
   server.post(`${prefix}/transaction/game/bet`, bet);
+  server.post(`${prefix}/transaction/game/endround`, endround);
 
   // === start ===
   server.listen(3000, function() {

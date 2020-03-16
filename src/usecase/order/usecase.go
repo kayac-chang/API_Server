@@ -122,10 +122,9 @@ func (it *Usecase) sendEndRound(order *model.Order) error {
 
 	req := map[string]interface{}{
 		"account":      user.Username,
-		"created_at":   time.Now(),
 		"gamename":     game.Name,
 		"roundid":      order.ID,
-		"completed_at": order.CompletedAt,
+		"completed_at": order.CompletedAt.Time,
 	}
 
 	headers := map[string]string{
@@ -162,6 +161,41 @@ func (it *Usecase) sendEndRound(order *model.Order) error {
 	return nil
 }
 
-func (it *Usecase) Checkout(order *model.Order) error {
+func (it *Usecase) Checkout(orderID string) (*model.Order, error) {
 
+	order, err := it.order.FindByID(orderID)
+	if err != nil {
+		return nil, err
+	}
+
+	order.State = model.Completed
+	order.CompletedAt = sql.NullTime{time.Now(), true}
+
+	// send end round
+	if err := it.sendEndRound(order); err != nil {
+
+		order.State = model.Issue
+
+		it.order.Store("Cache", order)
+
+		return nil, err
+	}
+
+	if err := it.Store(order); err != nil {
+
+		return nil, err
+	}
+
+	return order, nil
+}
+
+func (it *Usecase) Store(order *model.Order) error {
+
+	if err := it.order.Store("DB", order); err != nil {
+		return err
+	}
+
+	it.order.RemoveCache(order)
+
+	return nil
 }

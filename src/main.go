@@ -4,38 +4,41 @@ import (
 	"api/env"
 	"api/framework/cache"
 	"api/framework/postgres"
+	"api/framework/server"
+	"api/service/game"
 	"api/service/order"
 	"api/service/user"
-	"sync"
+
+	"github.com/go-chi/chi"
 )
 
 func main() {
-	e := env.New()
 
-	c := cache.Get()
-	db := postgres.New(e.Postgres.ToURL(), 30)
+	// === Framework ===
+	env := env.New()
+	cache := cache.Get()
+	db := postgres.New(env.Postgres.ToURL(), 30)
+	it := server.New(env)
 
-	var wg sync.WaitGroup
+	// === Handler ===
+	game := game.New(it, env, db, cache)
+	user := user.New(it, env, db, cache)
+	order := order.New(it, env, db, cache)
 
-	wg.Add(3)
+	it.Route("/"+env.API.Version, func(server chi.Router) {
+		// === Game ===
+		server.Get("/games", game.GET)
 
-	// go func() {
-	// 	game.New(e)
+		// === User ===
+		server.With(it.ParseJSON).Post("/token", user.POST)
+		server.With(it.User).Get("/auth", user.Auth)
 
-	// 	wg.Done()
-	// }()
+		// === Order ===
+		server.Route("/orders", func(server chi.Router) {
+			server.With(it.Order).Post("/orders", order.POST)
+			server.With(it.Order).Put("/orders/{order_id}", order.PUT)
+		})
+	})
 
-	go func() {
-		user.New(e, db, c)
-
-		wg.Done()
-	}()
-
-	go func() {
-		order.New(e, db, c)
-
-		wg.Done()
-	}()
-
-	wg.Wait()
+	it.Listen(env.Service.Port)
 }

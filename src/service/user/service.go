@@ -13,8 +13,6 @@ import (
 	user "api/usecase/user"
 
 	"net/http"
-
-	"github.com/go-chi/chi"
 )
 
 type Handler struct {
@@ -24,23 +22,14 @@ type Handler struct {
 	gameCase *game.Usecase
 }
 
-func New(e *env.Env, db *postgres.DB, c *cache.Cache) {
+func New(s *server.Server, e *env.Env, db *postgres.DB, c *cache.Cache) *Handler {
 
-	s := server.New(e)
-
-	it := Handler{
+	return &Handler{
 		s,
 		e,
 		user.New(e, db, c),
 		game.New(e, db, c),
 	}
-
-	s.Route("/"+e.API.Version, func(s chi.Router) {
-		s.With(it.ParseJSON).Post("/token", it.POST)
-		s.With(it.User).Get("/auth", it.Auth)
-	})
-
-	s.Listen(e.API.UserPort)
 }
 
 func (it *Handler) POST(w http.ResponseWriter, r *http.Request) {

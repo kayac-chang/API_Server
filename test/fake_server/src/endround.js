@@ -1,6 +1,6 @@
 const user = require("./user");
 
-function bet(req, res, next) {
+function endround(req, res, next) {
   const session = req.header("session");
   const org_token = req.header("organization_token");
 
@@ -21,15 +21,12 @@ function bet(req, res, next) {
   const {
     //
     account,
-    created_at,
+    completed_at,
     gamename,
-    roundid,
-    amount
+    roundid
   } = req.body;
 
   console.table(req.body);
-
-  user.balance -= amount;
 
   const respond = {
     data: {
@@ -46,4 +43,4 @@ function bet(req, res, next) {
   return next();
 }
 
-module.exports = bet;
+module.exports = endround;

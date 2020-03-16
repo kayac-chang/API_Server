@@ -75,3 +75,17 @@ func (it *Repo) FindByIDs(ids []string) ([]*model.Game, error) {
 
 	return games, nil
 }
+
+func (it *Repo) FindAll() ([]*model.Game, error) {
+
+	games := []*model.Game{}
+
+	if err := it.db.Select(&games, it.sql.findAll); err != nil {
+		return nil, err
+	}
+
+	// === Save to Cache ===
+	defer it.storeCache(games...)
+
+	return games, nil
+}

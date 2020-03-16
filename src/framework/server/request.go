@@ -144,7 +144,6 @@ func (it *Server) Order(next http.Handler) http.Handler {
 			Bet:   req.GetBet(),
 
 			CreatedAt:   Time(req.GetCreatedAt()),
-			UpdatedAt:   Time(req.GetUpdatedAt()),
 			CompletedAt: Time(req.GetCompletedAt()),
 		}
 

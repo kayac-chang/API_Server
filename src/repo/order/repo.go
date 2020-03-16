@@ -13,9 +13,8 @@ type Repo struct {
 }
 
 type querys struct {
-	insert     string
-	findByID   string
-	updateByID string
+	insert   string
+	findByID string
 }
 
 func New(db *postgres.DB, c *cache.Cache) *Repo {
@@ -24,9 +23,8 @@ func New(db *postgres.DB, c *cache.Cache) *Repo {
 		db:    db,
 		cache: c,
 		sql: querys{
-			insert:     utils.ParseFile("sql/order/insert_one.sql"),
-			findByID:   utils.ParseFile("sql/order/find_by_id.sql"),
-			updateByID: utils.ParseFile("sql/order/update_by_id.sql"),
+			insert:   utils.ParseFile("sql/order/insert_one.sql"),
+			findByID: utils.ParseFile("sql/order/find_by_id.sql"),
 		},
 	}
 }

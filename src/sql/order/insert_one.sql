@@ -6,6 +6,7 @@ INSERT INTO orders (
     bet, 
     game_id, 
     user_id,
+    created_at,
     completed_at
 ) VALUES (
     :order_id, 
@@ -13,5 +14,6 @@ INSERT INTO orders (
     :bet, 
     :game_id, 
     :user_id,
+    :created_at,
     :completed_at
 )

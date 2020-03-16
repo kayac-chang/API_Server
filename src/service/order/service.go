@@ -17,31 +17,22 @@ import (
 	"github.com/golang/protobuf/ptypes"
 )
 
-type handler struct {
+type Handler struct {
 	*server.Server
 	env     *env.Env
 	usecase *order.Usecase
 }
 
-func New(e *env.Env, db *postgres.DB, c *cache.Cache) {
+func New(s *server.Server, e *env.Env, db *postgres.DB, c *cache.Cache) *Handler {
 
-	s := server.New(e)
-
-	it := handler{
+	return &Handler{
 		s,
 		e,
 		order.New(e, db, c),
 	}
-
-	s.Route("/"+e.API.Version, func(s chi.Router) {
-		s.With(it.Order).Post("/orders", it.POST)
-		// s.Put("/orders/{order_id}", it.PUT)
-	})
-
-	s.Listen(e.API.OrderPort)
 }
 
-func (it *handler) POST(w http.ResponseWriter, r *http.Request) {
+func (it *Handler) POST(w http.ResponseWriter, r *http.Request) {
 
 	order := r.Context().Value(request.ORDER).(*model.Order)
 
@@ -91,8 +82,84 @@ func (it *handler) POST(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
-func (it *handler) PUT(w http.ResponseWriter, r *http.Request) {
+func (it *Handler) PUT(w http.ResponseWriter, r *http.Request) {
 
 	order := r.Context().Value(request.ORDER).(*model.Order)
 
+	order.ID = chi.URLParam(r, "order_id")
+
+	var err error
+
+	switch order.State {
+
+	case model.Completed:
+		order, err = it.usecase.Checkout(order.ID)
+
+	case model.Rejected:
+		// TODO
+
+	default:
+		// TODO
+	}
+
+	if err != nil {
+		it.Send(w, response.ProtoBuf{
+			Code: http.StatusNotAcceptable,
+
+			Data: &pb.Error{
+				Code:    http.StatusNotAcceptable,
+				Name:    "Error",
+				Message: err.Error(),
+			},
+		})
+
+		return
+	}
+
+	// === Send ProtoBuf ===
+	completed, err := ptypes.TimestampProto(order.CompletedAt.Time)
+	if err != nil {
+
+		it.Send(w, response.ProtoBuf{
+			Code: http.StatusInternalServerError,
+
+			Data: &pb.Error{
+				Code:    http.StatusInternalServerError,
+				Name:    "Server Error",
+				Message: err.Error(),
+			},
+		})
+
+		return
+	}
+
+	created, err := ptypes.TimestampProto(order.CreatedAt.Time)
+	if err != nil {
+
+		it.Send(w, response.ProtoBuf{
+			Code: http.StatusInternalServerError,
+
+			Data: &pb.Error{
+				Code:    http.StatusInternalServerError,
+				Name:    "Server Error",
+				Message: err.Error(),
+			},
+		})
+
+		return
+	}
+
+	it.Send(w, response.ProtoBuf{
+		Code: http.StatusCreated,
+
+		Data: &pb.Order{
+			OrderId:     order.ID,
+			GameId:      order.GameID,
+			UserId:      order.UserID,
+			State:       order.State.PbState(),
+			Bet:         order.Bet,
+			CreatedAt:   created,
+			CompletedAt: completed,
+		},
+	})
 }

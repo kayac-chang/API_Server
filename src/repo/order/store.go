@@ -25,14 +25,7 @@ func (it *Repo) storeCache(order *model.Order) error {
 
 	it.cache.Set(order.ID, order, 1*time.Hour)
 
-	// fmt.Printf("%s\n", json.Jsonify(it.cache.Items()))
-
 	return nil
-}
-
-func (it *Repo) Replace(order *model.Order) error {
-
-	return it.storeDB(it.sql.updateByID, order)
 }
 
 func (it *Repo) storeDB(sql string, order *model.Order) error {

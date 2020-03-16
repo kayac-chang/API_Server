@@ -3,6 +3,7 @@
 DROP TABLE IF EXISTS games CASCADE;
 DROP TABLE IF EXISTS users CASCADE;
 DROP TABLE IF EXISTS orders CASCADE;
+DROP TABLE IF EXISTS sub_orders CASCADE;
 
 -- Tables
 
@@ -53,6 +54,23 @@ CREATE TABLE IF NOT EXISTS orders (
     completed_at TIMESTAMPTZ
 );
 
+-- Sub Orders
+CREATE TABLE IF NOT EXISTS sub_orders (
+    -- pk
+    sub_order_id CHAR(36) PRIMARY KEY,
+
+    -- properties
+    state CHAR(1) NOT NULL DEFAULT 'P',
+    bet NUMERIC NOT NULL DEFAULT 0,
+    
+    -- fk
+    order_id CHAR(36) NOT NULL REFERENCES orders,
+
+    -- times
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
 -- Triggers
 CREATE OR REPLACE FUNCTION trigger_set_timestamp() RETURNS TRIGGER AS 
 $$
@@ -76,5 +94,12 @@ DROP TRIGGER IF EXISTS set_timestamp ON orders;
 
 CREATE TRIGGER set_timestamp 
     BEFORE UPDATE ON orders
+    FOR EACH ROW 
+    EXECUTE PROCEDURE trigger_set_timestamp();
+
+DROP TRIGGER IF EXISTS set_timestamp ON sub_orders;
+
+CREATE TRIGGER set_timestamp 
+    BEFORE UPDATE ON sub_orders
     FOR EACH ROW 
     EXECUTE PROCEDURE trigger_set_timestamp();

@@ -20,17 +20,15 @@ type Order struct {
 }
 
 type SubOrder struct {
-	ID string `json:"order_id" db:"order_id"`
+	ID string `json:"sub_order_id" db:"sub_order_id"`
 
-	GameID string `json:"game_id" db:"game_id"`
-	UserID string `json:"user_id" db:"user_id"`
+	OrderID string `json:"order_id" db:"order_id"`
 
 	State State  `json:"state" db:"state"`
 	Bet   uint64 `json:"bet" db:"bet"`
 
-	CreatedAt   sql.NullTime `json:"created_at" db:"created_at"`
-	CompletedAt sql.NullTime `json:"completed_at" db:"completed_at,omitempty"`
-	UpdatedAt   sql.NullTime `json:"updated_at" db:"updated_at"`
+	CreatedAt sql.NullTime `json:"created_at" db:"created_at"`
+	UpdatedAt sql.NullTime `json:"updated_at" db:"updated_at"`
 }
 
 type State string
@@ -57,7 +55,6 @@ func (it State) PbState() pb.Order_State {
 
 	case Issue:
 		return pb.Order_Issue
-
 	}
 
 	return -1
@@ -78,7 +75,6 @@ func ToState(state pb.Order_State) State {
 
 	case pb.Order_Issue:
 		return Issue
-
 	}
 
 	return ""

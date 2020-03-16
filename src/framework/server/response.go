@@ -3,6 +3,7 @@ package server
 import (
 	"api/model/response"
 	"encoding/json"
+	"fmt"
 	"log"
 	"net/http"
 
@@ -40,6 +41,8 @@ func sendJSON(w http.ResponseWriter, res response.JSON) {
 }
 
 func sendProtoBuf(w http.ResponseWriter, res response.ProtoBuf) {
+
+	fmt.Printf("%v\n", res)
 
 	out, err := proto.Marshal(res.Data)
 	if err != nil {

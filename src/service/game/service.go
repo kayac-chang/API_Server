@@ -2,174 +2,144 @@ package game
 
 import (
 	"api/env"
+	"api/framework/cache"
+	"api/framework/postgres"
 	"api/framework/server"
-	"api/game/repo/cache"
-	"api/game/repo/postgres"
-	"api/game/usecase"
 	"api/model"
 	"api/model/response"
-	"encoding/json"
-	"net/http"
+	game "api/usecase/game"
 
-	"github.com/go-chi/chi"
-	"github.com/labstack/gommon/log"
+	"net/http"
 )
 
-type handler struct {
+type Handler struct {
 	*server.Server
-
-	usecase usecase.Usecase
+	env  *env.Env
+	game *game.Usecase
 }
 
-func New(e *env.Env) {
+func New(s *server.Server, e *env.Env, db *postgres.DB, c *cache.Cache) *Handler {
 
-	s := server.New(e)
-
-	c := cache.New()
-	db := postgres.New(e.Postgres.ToURL(), 30)
-
-	it := handler{
+	return &Handler{
 		s,
-		usecase.New(db, c),
+		e,
+		game.New(e, db, c),
 	}
 
-	s.Route("/"+e.API.Version, func(s chi.Router) {
-		s.Post("/games", it.POST)
-		s.Get("/games", it.GET)
-	})
-
-	s.Listen(e.API.GamePort)
 }
 
-func (it *handler) POST(w http.ResponseWriter, r *http.Request) {
+// func (it *handler) POST(w http.ResponseWriter, r *http.Request) {
 
-	// == Parse Payload ==
-	game := model.Game{}
+// 	// == Parse Payload ==
+// 	game := model.Game{}
 
-	err := json.NewDecoder(r.Body).Decode(&game)
+// 	err := json.NewDecoder(r.Body).Decode(&game)
+// 	if err != nil {
+
+// 		log.Errorf("%s\n", err.Error())
+
+// 		res := response.JSON{
+
+// 			Code: http.StatusBadRequest,
+
+// 			Error: model.Error{
+// 				Name:    "Unexpect Payload",
+// 				Message: model.ErrUnexpectPayload.Error(),
+// 			},
+// 		}
+// 		it.SendJSON(w, res)
+
+// 		return
+// 	}
+
+// 	err = it.usecase.Store(&game)
+// 	if err != nil {
+
+// 		log.Errorf("%s\n", err.Error())
+
+// 		var res response.JSON
+
+// 		switch err {
+
+// 		case model.ErrExisted:
+// 			res = response.JSON{
+// 				Code: http.StatusConflict,
+
+// 				Error: model.Error{
+// 					Name:    "Existed",
+// 					Message: err.Error(),
+// 				},
+// 			}
+
+// 		default:
+// 			res = response.JSON{
+// 				Code: http.StatusInternalServerError,
+
+// 				Error: model.Error{
+// 					Name:    "Server Error",
+// 					Message: err.Error(),
+// 				},
+// 			}
+// 		}
+
+// 		it.SendJSON(w, res)
+
+// 		return
+// 	}
+
+// 	// == Send Response ==
+// 	res := response.JSON{
+
+// 		Code: http.StatusCreated,
+
+// 		Data: game,
+// 	}
+// 	it.SendJSON(w, res)
+// }
+
+func (it *Handler) GET(w http.ResponseWriter, r *http.Request) {
+
+	games, err := it.game.FindAll()
 	if err != nil {
 
-		log.Errorf("%s\n", err.Error())
-
-		res := response.JSON{
-
-			Code: http.StatusBadRequest,
+		it.Send(w, response.JSON{
+			Code: http.StatusInternalServerError,
 
 			Error: model.Error{
-				Name:    "Unexpect Payload",
-				Message: model.ErrUnexpectPayload.Error(),
+				Name:    "Server Error",
+				Message: err.Error(),
 			},
-		}
-		it.SendJSON(w, res)
-
-		return
-	}
-
-	err = it.usecase.Store(&game)
-	if err != nil {
-
-		log.Errorf("%s\n", err.Error())
-
-		var res response.JSON
-
-		switch err {
-
-		case model.ErrExisted:
-			res = response.JSON{
-				Code: http.StatusConflict,
-
-				Error: model.Error{
-					Name:    "Existed",
-					Message: err.Error(),
-				},
-			}
-
-		default:
-			res = response.JSON{
-				Code: http.StatusInternalServerError,
-
-				Error: model.Error{
-					Name:    "Server Error",
-					Message: err.Error(),
-				},
-			}
-		}
-
-		it.SendJSON(w, res)
+		})
 
 		return
 	}
 
 	// == Send Response ==
-	res := response.JSON{
-
-		Code: http.StatusCreated,
-
-		Data: game,
-	}
-	it.SendJSON(w, res)
-}
-
-func (it *handler) GET(w http.ResponseWriter, r *http.Request) {
-
-	games := []model.Game{}
-
-	err := it.usecase.FindAll(&games)
-	if err != nil {
-
-		log.Errorf("%s\n", err.Error())
-
-		var res response.JSON
-
-		switch err {
-
-		default:
-			res = response.JSON{
-				Code: http.StatusInternalServerError,
-
-				Error: model.Error{
-					Name:    "Server Error",
-					Message: err.Error(),
-				},
-			}
-		}
-
-		it.SendJSON(w, res)
-
-		return
-	}
-
-	// == Send Response ==
-
-	data := map[string]interface{}{}
-
-	links := []model.Link{}
-
-	// self Links
-	links = append(links, model.Link{
-		Relation: "self",
-		Method:   "GET",
-		Href:     "/games",
-	})
-
+	links := []response.Link{}
 	for _, game := range games {
 
-		link := model.Link{
+		links = append(links, response.Link{
 			Relation: game.Name,
 			Method:   "GET",
 			Href:     game.Href,
-		}
-
-		links = append(links, link)
+		})
 	}
 
-	data["links"] = &links
+	href := it.env.Service.Domain + "/" + it.env.API.Version + "/games"
+	links = append(links, response.Link{
+		Relation: "self",
+		Method:   "GET",
+		Href:     href,
+	})
 
-	res := response.JSON{
+	res := map[string]interface{}{
+		"links": links,
+	}
 
+	// == Send Response ==
+	it.Send(w, response.JSON{
 		Code: http.StatusCreated,
 
-		Data: data,
-	}
-	it.SendJSON(w, res)
+		Data: res,
+	})
 }

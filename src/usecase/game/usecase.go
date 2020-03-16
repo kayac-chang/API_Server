@@ -27,6 +27,11 @@ func (it *Usecase) Find(name string) (*model.Game, error) {
 	return it.repo.FindByID(utils.MD5(name))
 }
 
+func (it *Usecase) FindAll() ([]*model.Game, error) {
+
+	return it.repo.FindAll()
+}
+
 func (it *Usecase) Store() error {
 
 	return nil
