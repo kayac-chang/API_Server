@@ -42,6 +42,7 @@ func New(e *env.Env) *Server {
 func (it *Server) Listen(port string) {
 
 	log.Fatal(
-		http.ListenAndServeTLS(port, it.env.SSL.Cert, it.env.SSL.Key, it),
+		http.ListenAndServe(port, it),
+		// http.ListenAndServeTLS(port, it.env.SSL.Cert, it.env.SSL.Key, it),
 	)
 }

@@ -2,13 +2,9 @@ version: "3"
 
 services:
   postgres:
-    build:
-      context: "."
-      dockerfile: "./dockerfiles/db/Dockerfile"
+    image: kayacchang/api_pg
     ports:
       - "${PG_PORT}"
-    volumes:
-      - ./.db:/var/lib/postgresql/data
     environment:
       - POSTGRES_USER=${PG_USER}
       - POSTGRES_PASSWORD=${PG_PASSWORD}
@@ -16,9 +12,7 @@ services:
       - POSTGRES_HOST=${PG_HOST}
 
   service:
-    build:
-      context: "."
-      dockerfile: "./dockerfiles/server/Dockerfile"
+    image: kayacchang/api_service
     ports:
       - "${SERVICE_PORT}:${SERVICE_PORT}"
     depends_on:
@@ -26,8 +20,6 @@ services:
     command: ./wait-for postgres:${PG_PORT} -- ./run
 
   fake_agent:
-    build:
-      context: "."
-      dockerfile: "./dockerfiles/fake_server/Dockerfile"
+    image: kayacchang/fake_agent
     ports:
       - "${AGENT_PORT}"

@@ -9,7 +9,7 @@ Session: abcd1234
 }
 
 ### Game
-POST https://localhost:8000/v1/games
+POST http://localhost:8000/v1/games
 Content-Type: application/json
 
 {
@@ -17,3 +17,6 @@ Content-Type: application/json
     "href": "https://catpunch",
     "category": "slot"
 }
+
+### Game
+GET http://localhost:8000/v1/games
