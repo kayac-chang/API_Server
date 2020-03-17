@@ -1,4 +1,4 @@
-# Token
+### Token
 POST https://localhost:8000/v1/token
 Content-Type: application/json
 Session: abcd1234
@@ -6,4 +6,14 @@ Session: abcd1234
 {
     "game": "catpunch",
     "username": "kayac"
+}
+
+### Game
+POST https://localhost:8000/v1/games
+Content-Type: application/json
+
+{
+    "name": "catpunch",
+    "href": "https://catpunch",
+    "category": "slot"
 }

@@ -82,6 +82,14 @@ END;
 $$ LANGUAGE plpgsql;
 
 -- Users
+DROP TRIGGER IF EXISTS set_timestamp ON games;
+
+CREATE TRIGGER set_timestamp 
+    BEFORE UPDATE ON games 
+    FOR EACH ROW 
+    EXECUTE PROCEDURE trigger_set_timestamp();
+
+-- Users
 DROP TRIGGER IF EXISTS set_timestamp ON users;
 
 CREATE TRIGGER set_timestamp 
@@ -97,9 +105,15 @@ CREATE TRIGGER set_timestamp
     FOR EACH ROW 
     EXECUTE PROCEDURE trigger_set_timestamp();
 
+-- Sub Orders
 DROP TRIGGER IF EXISTS set_timestamp ON sub_orders;
 
 CREATE TRIGGER set_timestamp 
     BEFORE UPDATE ON sub_orders
     FOR EACH ROW 
     EXECUTE PROCEDURE trigger_set_timestamp();
+
+SELECT * FROM games;
+SELECT * FROM users;
+SELECT * FROM orders;
+SELECT * FROM sub_orders;

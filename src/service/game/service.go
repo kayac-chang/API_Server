@@ -6,6 +6,7 @@ import (
 	"api/framework/postgres"
 	"api/framework/server"
 	"api/model"
+	"api/model/request"
 	"api/model/response"
 	game "api/usecase/game"
 
@@ -28,74 +29,33 @@ func New(s *server.Server, e *env.Env, db *postgres.DB, c *cache.Cache) *Handler
 
 }
 
-// func (it *handler) POST(w http.ResponseWriter, r *http.Request) {
+func (it *Handler) POST(w http.ResponseWriter, r *http.Request) {
 
-// 	// == Parse Payload ==
-// 	game := model.Game{}
+	req := r.Context().Value(request.JSON).(map[string]string)
 
-// 	err := json.NewDecoder(r.Body).Decode(&game)
-// 	if err != nil {
+	// == Parse Payload ==
+	game, err := it.game.Store(req["name"], req["href"], req["category"])
+	if err != nil {
 
-// 		log.Errorf("%s\n", err.Error())
+		it.Send(w, response.JSON{
+			Code: http.StatusInternalServerError,
 
-// 		res := response.JSON{
+			Error: model.Error{
+				Name:    "Game Create Error",
+				Message: err.Error(),
+			},
+		})
 
-// 			Code: http.StatusBadRequest,
+		return
+	}
 
-// 			Error: model.Error{
-// 				Name:    "Unexpect Payload",
-// 				Message: model.ErrUnexpectPayload.Error(),
-// 			},
-// 		}
-// 		it.SendJSON(w, res)
+	// == Send Response ==
+	it.Send(w, response.JSON{
+		Code: http.StatusCreated,
 
-// 		return
-// 	}
-
-// 	err = it.usecase.Store(&game)
-// 	if err != nil {
-
-// 		log.Errorf("%s\n", err.Error())
-
-// 		var res response.JSON
-
-// 		switch err {
-
-// 		case model.ErrExisted:
-// 			res = response.JSON{
-// 				Code: http.StatusConflict,
-
-// 				Error: model.Error{
-// 					Name:    "Existed",
-// 					Message: err.Error(),
-// 				},
-// 			}
-
-// 		default:
-// 			res = response.JSON{
-// 				Code: http.StatusInternalServerError,
-
-// 				Error: model.Error{
-// 					Name:    "Server Error",
-// 					Message: err.Error(),
-// 				},
-// 			}
-// 		}
-
-// 		it.SendJSON(w, res)
-
-// 		return
-// 	}
-
-// 	// == Send Response ==
-// 	res := response.JSON{
-
-// 		Code: http.StatusCreated,
-
-// 		Data: game,
-// 	}
-// 	it.SendJSON(w, res)
-// }
+		Data: game,
+	})
+}
 
 func (it *Handler) GET(w http.ResponseWriter, r *http.Request) {
 

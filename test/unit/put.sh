@@ -1,11 +1,11 @@
 #!/usr/bin/env bash
 
-order_id=9ee9a7bb-f2ae-4ec0-bf17-c2142faa861c
+order_id=9053fe45-1e64-4cf5-a35c-d173327a3b5a
 
-URL=https://localhost:8003/v1/orders/$order_id
+URL=https://localhost:8000/v1/orders/$order_id
 MSG_TYPE=Order
 PROTO_FILE=model/pb/order.proto
-TOKEN=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpYXQiOjE1ODQzNzM0ODgsImlzcyI6IjhkNzAwODUyLTliMGEtNDA5Zi1hZjFkLWE4NDFkNWNhN2Y0MCIsImp0aSI6IjU5M2VmYjFkLTIyMDAtNGUxMi05ODVjLWY3NmFjMTgzZGIxZiJ9.na_OexBCcGZamPhfOTZgCTR8wiaJN7c2WB7vMbSCqkM
+TOKEN=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpYXQiOjE1ODQ0NTkwNDIsImlzcyI6IjhkNzAwODUyLTliMGEtNDA5Zi1hZjFkLWE4NDFkNWNhN2Y0MCIsImp0aSI6IjM5MTUyYTM0LWRiM2ItNGIxOC05ZmY3LTFiMmYwZjZlY2QyOCJ9.bPkmXjCdWdXpTQITqT9XOh5lzvTfV6cEQ9Nm7kbvXyM
 
 
 req=$(

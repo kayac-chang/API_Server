@@ -7,6 +7,7 @@ import (
 	"api/model"
 	repo "api/repo/game"
 	"api/utils"
+	"time"
 )
 
 type Usecase struct {
@@ -32,7 +33,21 @@ func (it *Usecase) FindAll() ([]*model.Game, error) {
 	return it.repo.FindAll()
 }
 
-func (it *Usecase) Store() error {
+func (it *Usecase) Store(name, href, category string) (*model.Game, error) {
 
-	return nil
+	game := model.Game{
+		ID: utils.MD5(name),
+
+		Name:     name,
+		Href:     href,
+		Category: category,
+
+		CreatedAt: time.Now(),
+	}
+
+	if err := it.repo.Store(&game); err != nil {
+		return nil, err
+	}
+
+	return &game, nil
 }

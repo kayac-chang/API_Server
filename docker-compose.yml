@@ -6,21 +6,29 @@ services:
       context: "."
       dockerfile: "./dockerfiles/db/Dockerfile"
     ports:
-      - "${DB_PORT}"
+      - "${PG_PORT}"
     volumes:
+      - ./src/sql/init.sql:/docker-entrypoint-initdb.d/init.sql
       - ./.db:/var/lib/postgresql/data
     environment:
-      - POSTGRES_USER=${DB_USER}
-      - POSTGRES_PASSWORD=${DB_PASSWORD}
-      - POSTGRES_DB=${DB_NAME}
-      - POSTGRES_HOST=${DB_HOST}
+      - POSTGRES_USER=${PG_USER}
+      - POSTGRES_PASSWORD=${PG_PASSWORD}
+      - POSTGRES_DB=${PG_NAME}
+      - POSTGRES_HOST=${PG_HOST}
 
   service:
     build:
       context: "."
       dockerfile: "./dockerfiles/server/Dockerfile"
     ports:
-      - "${PORT}:8080"
+      - "${SERVICE_PORT}:${SERVICE_PORT}"
     depends_on:
       - postgres
-    command: ./wait-for ${DB_HOST}:${DB_PORT} -- ./run
+    command: ./wait-for postgres:${PG_PORT} -- ./run
+
+  fake_agent:
+    build:
+      context: "."
+      dockerfile: "./dockerfiles/fake_server/Dockerfile"
+    ports:
+      - "${AGENT_PORT}"

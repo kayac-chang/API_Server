@@ -1,9 +1,6 @@
 package postgres
 
 import (
-	"context"
-	"time"
-
 	"github.com/jackc/pgerrcode"
 	"github.com/jackc/pgx"
 	_ "github.com/jackc/pgx/v4/stdlib"
@@ -14,18 +11,9 @@ type DB struct {
 	*sqlx.DB
 }
 
-func New(url string, timeout int) *DB {
+func New(url string) *DB {
 
-	_timeout := time.Duration(timeout) * time.Second
-
-	ctx, cancel := context.WithTimeout(context.Background(), _timeout)
-	defer cancel()
-
-	db, err := sqlx.ConnectContext(ctx, "pgx", url)
-
-	if err != nil {
-		panic(err)
-	}
+	db := sqlx.MustOpen("pgx", url)
 
 	return &DB{db}
 }

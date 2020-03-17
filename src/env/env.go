@@ -94,7 +94,7 @@ func New() *Env {
 		Secret: []byte(getEnv("SECRET")),
 
 		Agent: Agent{
-			Domain: getEnv("AGENT_DOMAIN"),
+			Domain: "http://" + getEnv("AGENT_DOMAIN") + ":" + getEnv("AGENT_PORT"),
 			API:    getEnv("AGENT_API"),
 			Token:  getEnv("AGENT_TOKEN"),
 		},

@@ -73,10 +73,10 @@ func (it *Handler) POST(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 
 		it.Send(w, response.JSON{
-			Code: http.StatusInternalServerError,
+			Code: http.StatusNotFound,
 
 			Error: model.Error{
-				Name:    "Server Error",
+				Name:    game.Name + " Not Found",
 				Message: err.Error(),
 			},
 		})

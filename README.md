@@ -40,6 +40,34 @@ A successful request returns the HTTP `201 Created` status code.
 }
 ```
 
+### POST /games
+
+#### Request
+
+```http
+POST https://<service_domain>/v1/games HTTP/2.0
+content-type: application/json
+
+{
+  "name": "catpunch",
+  "href": "https://catpunch.com",
+  "category": "slot"
+}
+```
+
+#### Respoonse
+
+A successful request returns the HTTP `201 Created` status code.
+
+```json
+{
+  "game_id": "b5ac49be5d3f76cb878671003dbb62ed",
+  "name": "catpunch",
+  "href": "https://catpunch",
+  "category": "slot"
+}
+```
+
 ## User
 
 ### GET /users
@@ -57,12 +85,21 @@ A successful request returns the HTTP `201 Created` status code.
 ```http
 POST https://<service_domain>/v1/token HTTP/2.0
 content-type: application/json
+session: <session_id>
 
 {
   "game": "catpunch",
   "username": "kayac"
 }
 ```
+
+- Header
+
+| Parameter | Type   | Description          |
+| --------- | ------ | -------------------- |
+| session   | string | The session identity |
+
+- Body
 
 | Parameter | Type   | Description                             |
 | --------- | ------ | --------------------------------------- |
@@ -71,15 +108,11 @@ content-type: application/json
 
 #### Respoonse
 
-A successful request returns the HTTP `200 OK` status code.
+A successful request returns the HTTP `201 Created` status code.
 
 ```json
 {
   "data": {
-    "access_token": "<access_token>",
-    "token_type": "Bearer",
-    "service_id": "<service_ID>",
-    "issued_at": "<issued_at>",
     "links": [
       {
         "rel": "access",
@@ -91,7 +124,13 @@ A successful request returns the HTTP `200 OK` status code.
         "method": "POST",
         "href": "https://<service_domain>/v1/token"
       }
-    ]
+    ],
+    "token": {
+      "access_token": "<access_token>",
+      "token_type": "Bearer",
+      "service_id": "<service_ID>",
+      "issued_at": "<issued_at>"
+    }
   }
 }
 ```
@@ -101,6 +140,7 @@ A successful request returns the HTTP `200 OK` status code.
 | access_token | string | The jwt token for authentication     |
 | token_type   | string | The token type                       |
 | service_id   | string | The service if who issued this token |
+| issued_at    | string | Time when this token created         |
 
 # Private API
 

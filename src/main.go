@@ -17,7 +17,7 @@ func main() {
 	// === Framework ===
 	env := env.New()
 	cache := cache.Get()
-	db := postgres.New(env.Postgres.ToURL(), 30)
+	db := postgres.New(env.Postgres.ToURL())
 	it := server.New(env)
 
 	// === Handler ===
@@ -28,6 +28,7 @@ func main() {
 	it.Route("/"+env.API.Version, func(server chi.Router) {
 		// === Game ===
 		server.Get("/games", game.GET)
+		server.With(it.ParseJSON).Post("/games", game.POST)
 
 		// === User ===
 		server.With(it.ParseJSON).Post("/token", user.POST)
@@ -35,8 +36,8 @@ func main() {
 
 		// === Order ===
 		server.Route("/orders", func(server chi.Router) {
-			server.With(it.Order).Post("/orders", order.POST)
-			server.With(it.Order).Put("/orders/{order_id}", order.PUT)
+			server.With(it.Order).Post("/", order.POST)
+			server.With(it.Order).Put("/{order_id}", order.PUT)
 		})
 	})
 

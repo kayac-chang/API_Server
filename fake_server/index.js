@@ -1,8 +1,8 @@
 const restify = require("restify");
 
-const account = require("./account");
-const bet = require("./bet");
-const endround = require("./endround");
+const account = require("./src/account");
+const bet = require("./src/bet");
+const endround = require("./src/endround");
 
 function main() {
   const server = restify.createServer();

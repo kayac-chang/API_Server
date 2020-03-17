@@ -28,5 +28,5 @@ require (
 	github.com/satori/go.uuid v1.2.0
 	github.com/tensor-programming/hex-microservice v0.0.0-20191024074311-1ffbdc8a3813 // indirect
 	golang.org/x/crypto v0.0.0-20191227163750-53104e6ec876
-	google.golang.org/appengine v1.6.5 // indirect
+	google.golang.org/appengine v1.6.5
 )
