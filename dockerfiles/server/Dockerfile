@@ -18,4 +18,3 @@ COPY --from=builder /bin .
 
 ADD https://raw.githubusercontent.com/eficode/wait-for/master/wait-for .
 RUN chmod +x wait-for
-COPY ./src/sql/init.sql /docker-entrypoint-initdb.d/

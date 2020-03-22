@@ -1,0 +1,25 @@
+version: "3"
+
+services:
+  postgres:
+    image: kayacchang/api_pg
+    ports:
+      - "${PG_PORT}"
+    environment:
+      - POSTGRES_USER=${PG_USER}
+      - POSTGRES_PASSWORD=${PG_PASSWORD}
+      - POSTGRES_DB=${PG_NAME}
+      - POSTGRES_HOST=${PG_HOST}
+
+  service:
+    image: kayacchang/api_service
+    ports:
+      - "${SERVICE_PORT}:${SERVICE_PORT}"
+    depends_on:
+      - postgres
+    command: ./wait-for postgres:${PG_PORT} -- ./run
+
+  fake_agent:
+    image: kayacchang/fake_agent
+    ports:
+      - "${AGENT_PORT}"
