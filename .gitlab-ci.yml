@@ -1,0 +1,91 @@
+variables:
+  AWS_REGISTRY: "450402518498.dkr.ecr.ap-northeast-1.amazonaws.com"
+  PROJECT_TOKEN: "e7c36da80d5c9b219f0e306b39c0aa"
+  PROJECT_ID: "66"
+  RunnerToken: "PRIVATE-TOKEN: fgE1u5KAaFFgKBR-rTvN"
+
+stages:
+  - env
+  - trigger
+  - sql_build
+  - check
+
+Setup_env:
+  stage: env
+  tags:
+    - game
+  script:
+    - echo $CI_BUILDS_DIR
+    - echo $CI_COMMIT_SHA
+    - echo $CI_PROJECT_PATH
+    - echo $CI_PROJECT_NAME
+    - echo $CI_COMMIT_REF_NAME
+    - echo $GITLAB_USER_NAME
+
+Trigger_api_build:
+  stage: trigger
+  only:
+    - dev
+    - stg
+    - tags
+  tags:
+    - game
+  before_script:
+    - RELEASE=$CI_COMMIT_REF_NAME
+  script:
+    - echo "===== Trigger deploy pipeline ====="
+    - curl -X POST -F "token=${PROJECT_TOKEN}" -F "ref=master" -F "variables[RELEASE]=${CI_COMMIT_REF_NAME}" "https://gitlab.fbk168.com/api/v4/projects/${PROJECT_ID}/trigger/pipeline/"
+    - 'PipelineID=`curl -H "${RunnerToken}" "https://gitlab.fbk168.com/api/v4/projects/${PROJECT_ID}/pipelines" | docker run -i --rm mbentley/jq .[0].id`'
+    - 'echo "PipelineID: ${PipelineID}"'
+    - 'PipelineStatus=`curl -H "${RunnerToken}" "https://gitlab.fbk168.com/api/v4/projects/${PROJECT_ID}/pipelines/${PipelineID}" | docker run -i --rm mbentley/jq .status`'
+    - 'echo "PipelineStatus: ${PipelineStatus}"'
+
+Build_sql:
+  stage: sql_build
+  only:
+    changes:
+      - src/sql/init.sql
+  tags:
+    - game
+  before_script:
+    - echo "===== Login Elastic Container Registry ====="
+    - $(aws ecr get-login --region ap-northeast-1 --no-include-email)
+    - echo "===== Environment ====="
+    - SQL_NAME="game_postgresql"
+  script:
+    - echo "===== New schema and run build ====="
+    - docker build -t $AWS_REGISTRY/$SQL_NAME:latest -f ./dockerfiles/db/Dockerfile .
+    - echo "===== Run push image to Elastic Container Registry ====="
+    - docker push $AWS_REGISTRY/$SQL_NAME:latest
+
+Check_remote_pipeline:
+  stage: check
+  tags:
+    - game
+  only:
+    - dev
+    - stg
+    - tags
+  script:
+    - 'PipelineID=`curl -H "${RunnerToken}" "https://gitlab.fbk168.com/api/v4/projects/${PROJECT_ID}/pipelines" | docker run -i --rm mbentley/jq .[0].id`'
+    - 'echo "PipelineID: ${PipelineID}"'
+    - 'PipelineStatus=`curl -H "${RunnerToken}" "https://gitlab.fbk168.com/api/v4/projects/${PROJECT_ID}/pipelines/${PipelineID}" | docker run -i --rm mbentley/jq .status`'
+    - 'echo "PipelineStatus: ${PipelineStatus}"'
+    - 'RetryTime=0'
+    - | 
+      until [ "${PipelineStatus}" == '"success"' ]
+      do
+        PipelineStatus=`curl -H "${RunnerToken}" "https://gitlab.fbk168.com/api/v4/projects/${PROJECT_ID}/pipelines/${PipelineID}" | docker run -i --rm mbentley/jq .status`
+        echo "Remote pipeline status:${PipelineStatus}"
+        if [ "${PipelineStatus}" == '"failed"' ];then
+          echo "Pipeline: ${PipelineStatus}"
+          exit 1
+        elif [ "${RetryTime}" -ge 150 ];then
+          echo "Expired ${RereyTime}"
+          exit 1
+        else
+          sleep 3
+          RetryTime=$((RetryTime+3))
+        fi
+      done
+    - 'echo "Remote Pipeline Success"'
