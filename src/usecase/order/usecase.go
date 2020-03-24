@@ -10,9 +10,10 @@ import (
 	userrepo "api/repo/user"
 	"api/utils"
 	"api/utils/json"
+
 	"database/sql"
 	"fmt"
-
+	"log"
 	"time"
 )
 
@@ -33,64 +34,6 @@ func New(env *env.Env, db *postgres.DB, c *cache.Cache) *Usecase {
 	}
 }
 
-func (it *Usecase) sendBet(order *model.Order) error {
-
-	user := model.User{
-		ID: order.UserID,
-	}
-	if err := it.user.FindBy("ID", &user); err != nil {
-		return err
-	}
-
-	game, err := it.game.FindByID(order.GameID)
-	if err != nil {
-		return err
-	}
-
-	url := it.env.Agent.Domain + it.env.Agent.API + "/transaction/game/bet"
-
-	req := map[string]interface{}{
-		"account":    user.Username,
-		"created_at": order.CreatedAt.Time,
-		"gamename":   game.Name,
-		"roundid":    order.ID,
-		"amount":     order.Bet,
-	}
-
-	headers := map[string]string{
-		"Content-Type":       "application/json",
-		"organization_token": it.env.Agent.Token,
-		"session":            user.Session,
-	}
-
-	resp, err := utils.Post(url, req, headers)
-	if err != nil {
-		return err
-	}
-
-	defer resp.Body.Close()
-
-	res := map[string]interface{}{}
-	json.Parse(resp.Body, &res)
-
-	if resp.StatusCode != 200 {
-		status := res["status"].(map[string]interface{})
-
-		return fmt.Errorf("%s", status["message"])
-	}
-
-	data := res["data"].(map[string]interface{})
-	balance := data["balance"].(float64)
-
-	user.Balance = uint64(balance)
-
-	if err := it.user.Store("Cache", &user); err != nil {
-		return err
-	}
-
-	return nil
-}
-
 func (it *Usecase) Create(order *model.Order) error {
 
 	order.ID = utils.UUID()
@@ -102,63 +45,6 @@ func (it *Usecase) Create(order *model.Order) error {
 	}
 
 	return it.order.Store("Cache", order)
-}
-
-func (it *Usecase) sendEndRound(order *model.Order) error {
-
-	user := model.User{
-		ID: order.UserID,
-	}
-	if err := it.user.FindBy("ID", &user); err != nil {
-		return err
-	}
-
-	game, err := it.game.FindByID(order.GameID)
-	if err != nil {
-		return err
-	}
-
-	url := it.env.Agent.Domain + it.env.Agent.API + "/transaction/game/endround"
-
-	req := map[string]interface{}{
-		"account":      user.Username,
-		"gamename":     game.Name,
-		"roundid":      order.ID,
-		"completed_at": order.CompletedAt.Time,
-	}
-
-	headers := map[string]string{
-		"Content-Type":       "application/json",
-		"organization_token": it.env.Agent.Token,
-		"session":            user.Session,
-	}
-
-	resp, err := utils.Post(url, req, headers)
-	if err != nil {
-		return err
-	}
-
-	defer resp.Body.Close()
-
-	res := map[string]interface{}{}
-	json.Parse(resp.Body, &res)
-
-	if resp.StatusCode != 200 {
-		status := res["status"].(map[string]interface{})
-
-		return fmt.Errorf("%s", status["message"])
-	}
-
-	data := res["data"].(map[string]interface{})
-	balance := data["balance"].(float64)
-
-	user.Balance = uint64(balance)
-
-	if err := it.user.Store("Cache", &user); err != nil {
-		return err
-	}
-
-	return nil
 }
 
 func (it *Usecase) Checkout(orderID string) (*model.Order, error) {
@@ -196,6 +82,133 @@ func (it *Usecase) Store(order *model.Order) error {
 	}
 
 	it.order.RemoveCache(order)
+
+	return nil
+}
+
+// === Private ===
+
+func (it *Usecase) sendBet(order *model.Order) error {
+	api := "/transaction/game/bet"
+
+	user := model.User{
+		ID: order.UserID,
+	}
+	if err := it.user.FindBy("ID", &user); err != nil {
+		return err
+	}
+
+	game, err := it.game.FindByID(order.GameID)
+	if err != nil {
+		return err
+	}
+
+	url := it.env.Agent.Domain + it.env.Agent.API + api
+
+	req := map[string]interface{}{
+		"account":    user.Username,
+		"created_at": order.CreatedAt.Time,
+		"gamename":   game.Name,
+		"roundid":    order.ID,
+		"amount":     order.Bet,
+	}
+
+	headers := map[string]string{
+		"Content-Type":       "application/json",
+		"organization-token": it.env.Agent.Token,
+		"session":            user.Session,
+	}
+
+	resp, err := utils.Post(url, req, headers)
+	if err != nil {
+		return err
+	}
+
+	defer resp.Body.Close()
+
+	res := map[string]interface{}{}
+	json.Parse(resp.Body, &res)
+
+	if resp.StatusCode != 200 {
+		log.Printf("Agent: [ %s ] Failed...\n Error:\n %s", api, json.Jsonify(res))
+
+		err := res["error"].(map[string]interface{})
+
+		return fmt.Errorf("%s", err["message"])
+	}
+
+	log.Printf("Agent: [ %s ] Success !!!\nResponse:\n %s", api, json.Jsonify(res))
+
+	data := res["data"].(map[string]interface{})
+	balance := data["balance"].(float64)
+
+	user.Balance = uint64(balance)
+
+	if err := it.user.Store("Cache", &user); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (it *Usecase) sendEndRound(order *model.Order) error {
+	api := "/transaction/game/endround"
+
+	user := model.User{
+		ID: order.UserID,
+	}
+	if err := it.user.FindBy("ID", &user); err != nil {
+		return err
+	}
+
+	game, err := it.game.FindByID(order.GameID)
+	if err != nil {
+		return err
+	}
+
+	url := it.env.Agent.Domain + it.env.Agent.API + api
+
+	req := map[string]interface{}{
+		"account":      user.Username,
+		"gamename":     game.Name,
+		"roundid":      order.ID,
+		"completed_at": order.CompletedAt.Time,
+	}
+
+	headers := map[string]string{
+		"Content-Type":       "application/json",
+		"organization-token": it.env.Agent.Token,
+		"session":            user.Session,
+	}
+
+	resp, err := utils.Post(url, req, headers)
+	if err != nil {
+		return err
+	}
+
+	defer resp.Body.Close()
+
+	res := map[string]interface{}{}
+	json.Parse(resp.Body, &res)
+
+	if resp.StatusCode != 200 {
+		log.Printf("Agent: [ %s ] Failed...\n Error:\n %s", api, json.Jsonify(res))
+
+		err := res["error"].(map[string]interface{})
+
+		return fmt.Errorf("%s", err["message"])
+	}
+
+	log.Printf("Agent: [ %s ] Success !!!\nResponse:\n %s", api, json.Jsonify(res))
+
+	data := res["data"].(map[string]interface{})
+	balance := data["balance"].(float64)
+
+	user.Balance = uint64(balance)
+
+	if err := it.user.Store("Cache", &user); err != nil {
+		return err
+	}
 
 	return nil
 }
