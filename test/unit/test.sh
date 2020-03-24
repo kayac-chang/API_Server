@@ -1,5 +1,7 @@
 #!/usr/bin/env bash
 
+source $(dirname $0)/var.sh
+
 URL=$HOST/v1/auth
 MSG_TYPE=User
 PROTO_FILE=model/pb/user.proto
