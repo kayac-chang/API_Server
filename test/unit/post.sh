@@ -1,12 +1,12 @@
 #!/usr/bin/env bash
 
-source $(dirname $0)/var
+source $(dirname $0)/var.sh
 
 URL=$HOST/v1/orders
 MSG_TYPE=Order
 PROTO_FILE=model/pb/order.proto
 
-user_id=43b8a2640bc945a0f6b311e3d626d942
+user_id=db780439d285e8aba7bf64daba277ec8
 game_id=b5ac49be5d3f76cb878671003dbb62ed
 bet=10
 
