@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
 
-source $(dirname $0)/var
+source $(dirname $0)/var.sh
 
-order_id=21d75b9d-060d-4798-87e9-5b1abbbb087c
+order_id=c1a7d09c-b539-4a2c-98de-435cb0effce2
 
 URL=$HOST/v1/orders/$order_id
 MSG_TYPE=Order

@@ -5,6 +5,9 @@ import (
 	"api/framework/cache"
 	"api/framework/postgres"
 	"api/model"
+	"api/utils/json"
+	"fmt"
+	"log"
 
 	repo "api/repo/user"
 	"api/utils"
@@ -27,27 +30,10 @@ func New(env *env.Env, db *postgres.DB, c *cache.Cache) *Usecase {
 	}
 }
 
-func (it *Usecase) sendToCheckPlayer(username string) (uint64, error) {
-
-	url := it.env.Agent.Domain + it.env.Agent.API + "/player/check/" + username
-
-	res, err := utils.Fetch(url)
-
-	if err != nil {
-		return 0, err
-	}
-
-	data := res["data"].(map[string]interface{})
-	balance := data["balance"].(map[string]interface{})
-	amount := balance["balance"].(float64)
-
-	return uint64(amount), nil
-}
-
 func (it *Usecase) Regist(username string, session string) (*model.Token, error) {
 
 	// Send to
-	balance, err := it.sendToCheckPlayer(username)
+	balance, err := it.sendToCheckPlayer(username, session)
 	if err != nil {
 		return nil, err
 	}
@@ -87,6 +73,8 @@ func (it *Usecase) Regist(username string, session string) (*model.Token, error)
 	return token, nil
 }
 
+// === Private ===
+
 func (it *Usecase) sign(user *model.User) (*model.Token, error) {
 
 	createdTime := time.Now()
@@ -109,4 +97,43 @@ func (it *Usecase) sign(user *model.User) (*model.Token, error) {
 	}
 
 	return &res, nil
+}
+
+func (it *Usecase) sendToCheckPlayer(username string, session string) (uint64, error) {
+	api := "/player/check/" + username
+
+	url := it.env.Agent.Domain + it.env.Agent.API + api
+
+	req := map[string]interface{}{}
+
+	headers := map[string]string{
+		"Content-Type":       "application/json",
+		"organization-token": it.env.Agent.Token,
+		"session":            session,
+	}
+
+	resp, err := utils.Post(url, req, headers)
+	if err != nil {
+		return 0, err
+	}
+	defer resp.Body.Close()
+
+	res := map[string]interface{}{}
+	json.Parse(resp.Body, &res)
+
+	if resp.StatusCode != 200 {
+		log.Printf("Agent: [ %s ] Failed...\n Error:\n %s", api, json.Jsonify(res))
+
+		err := res["error"].(map[string]interface{})
+
+		return 0, fmt.Errorf("%s", err["message"])
+	}
+
+	log.Printf("Agent: [ %s ] Success !!!\nResponse:\n %s", api, json.Jsonify(res))
+
+	data := res["data"].(map[string]interface{})
+	balance := data["balance"].(map[string]interface{})
+	amount := balance["balance"].(float64)
+
+	return uint64(amount), nil
 }
