@@ -1,5 +1,5 @@
 ### Token
-POST http://localhost:8000/v1/token
+POST http://34.94.53.107:9000/v1/token
 Content-Type: application/json
 Session: abcd1234
 
@@ -19,4 +19,4 @@ Content-Type: application/json
 }
 
 ### Game
-GET http://localhost:8000/v1/games
+GET http://34.94.53.107:9000/v1/games
