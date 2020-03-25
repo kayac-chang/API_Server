@@ -132,8 +132,7 @@ func (it *Usecase) sendToCheckPlayer(username string, session string) (uint64, e
 	log.Printf("Agent: [ %s ] Success !!!\nResponse:\n %s", api, json.Jsonify(res))
 
 	data := res["data"].(map[string]interface{})
-	balance := data["balance"].(map[string]interface{})
-	amount := balance["balance"].(float64)
+	amount := data["balance"].(float64)
 
 	return uint64(amount), nil
 }
