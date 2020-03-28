@@ -21,7 +21,6 @@ func New(e *env.Env) *Server {
 	server := chi.NewRouter()
 
 	cors := cors.New(cors.Options{
-		// AllowedOrigins: []string{"https://foo.com"},
 		AllowedOrigins:   []string{"*"},
 		AllowedMethods:   []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
 		AllowedHeaders:   []string{"Accept", "Authorization", "Content-Type", "X-CSRF-Token"},
@@ -29,8 +28,8 @@ func New(e *env.Env) *Server {
 		AllowCredentials: true,
 		MaxAge:           300,
 	})
-	server.Use(cors.Handler)
 
+	server.Use(cors.Handler)
 	server.Use(middleware.RequestID)
 	server.Use(middleware.RealIP)
 	server.Use(middleware.Logger)
@@ -43,6 +42,5 @@ func (it *Server) Listen(port string) {
 
 	log.Fatal(
 		http.ListenAndServe(port, it),
-		// http.ListenAndServeTLS(port, it.env.SSL.Cert, it.env.SSL.Key, it),
 	)
 }

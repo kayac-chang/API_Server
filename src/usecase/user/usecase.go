@@ -5,13 +5,12 @@ import (
 	"api/framework/cache"
 	"api/framework/postgres"
 	"api/model"
-	"api/utils/json"
-	"fmt"
-	"log"
-
 	repo "api/repo/user"
 	"api/utils"
+	"api/utils/json"
 
+	"fmt"
+	"log"
 	"time"
 
 	"github.com/dgrijalva/jwt-go"
