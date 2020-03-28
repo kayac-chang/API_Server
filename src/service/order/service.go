@@ -7,7 +7,6 @@ import (
 	"api/framework/server"
 	"api/model"
 	"api/model/pb"
-	"api/model/request"
 	"api/model/response"
 	order "api/usecase/order"
 
@@ -34,7 +33,21 @@ func New(s *server.Server, e *env.Env, db *postgres.DB, c *cache.Cache) *Handler
 
 func (it *Handler) POST(w http.ResponseWriter, r *http.Request) {
 
-	order := r.Context().Value(request.ORDER).(*model.Order)
+	order, err := it.usecase.Parse(r.Body)
+	if err != nil {
+
+		it.Send(w, response.ProtoBuf{
+			Code: http.StatusBadRequest,
+
+			Data: &pb.Error{
+				Code:    http.StatusBadRequest,
+				Name:    "Unexpect Payload",
+				Message: err.Error(),
+			},
+		})
+
+		return
+	}
 
 	if err := it.usecase.Create(order); err != nil {
 
@@ -84,11 +97,23 @@ func (it *Handler) POST(w http.ResponseWriter, r *http.Request) {
 
 func (it *Handler) PUT(w http.ResponseWriter, r *http.Request) {
 
-	order := r.Context().Value(request.ORDER).(*model.Order)
+	order, err := it.usecase.Parse(r.Body)
+	if err != nil {
+
+		it.Send(w, response.ProtoBuf{
+			Code: http.StatusBadRequest,
+
+			Data: &pb.Error{
+				Code:    http.StatusBadRequest,
+				Name:    "Unexpect Payload",
+				Message: err.Error(),
+			},
+		})
+
+		return
+	}
 
 	order.ID = chi.URLParam(r, "order_id")
-
-	var err error
 
 	switch order.State {
 
