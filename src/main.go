@@ -28,16 +28,16 @@ func main() {
 	it.Route("/"+env.API.Version, func(server chi.Router) {
 		// === Game ===
 		server.Get("/games", game.GET)
-		server.With(it.ParseJSON).Post("/games", game.POST)
+		server.Post("/games", game.POST)
 
 		// === User ===
-		server.With(it.ParseJSON).Post("/token", user.POST)
-		server.With(it.User).Get("/auth", user.Auth)
+		server.Post("/token", user.POST)
+		server.Get("/auth", user.Auth)
 
 		// === Order ===
 		server.Route("/orders", func(server chi.Router) {
-			server.With(it.Order).Post("/", order.POST)
-			server.With(it.Order).Put("/{order_id}", order.PUT)
+			server.Post("/", order.POST)
+			server.Put("/{order_id}", order.PUT)
 		})
 	})
 

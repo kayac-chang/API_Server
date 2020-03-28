@@ -25,8 +25,7 @@ Setup_env:
 Trigger_api_build:
   stage: trigger
   only:
-    - dev
-    - stg
+    - master
     - tags
   tags:
     - game
@@ -63,8 +62,7 @@ Check_remote_pipeline:
   tags:
     - game
   only:
-    - dev
-    - stg
+    - master
     - tags
   script:
     - 'PipelineID=`curl -H "${RunnerToken}" "https://gitlab.fbk168.com/api/v4/projects/${PROJECT_ID}/pipelines" | docker run -i --rm mbentley/jq .[0].id`'
