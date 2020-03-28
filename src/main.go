@@ -31,6 +31,7 @@ func main() {
 			server.Get("/", game.GET_ALL)
 			server.Get("/{name}", game.GET)
 			server.Post("/", game.POST)
+			server.Put("/{name}", game.PUT)
 		})
 
 		// === User ===
