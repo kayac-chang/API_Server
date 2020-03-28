@@ -27,8 +27,11 @@ func main() {
 
 	it.Route("/"+env.API.Version, func(server chi.Router) {
 		// === Game ===
-		server.Get("/games", game.GET)
-		server.Post("/games", game.POST)
+		server.Route("/games", func(server chi.Router) {
+			server.Get("/", game.GET_ALL)
+			server.Get("/{name}", game.GET)
+			server.Post("/", game.POST)
+		})
 
 		// === User ===
 		server.Post("/token", user.POST)
