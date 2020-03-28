@@ -9,7 +9,32 @@ import (
 
 func (it *Handler) GET(w http.ResponseWriter, r *http.Request) {
 
-	// Find All Games
+	name := it.URLParam(r, "name")
+	game, err := it.usecase.Find(name)
+	if err != nil {
+
+		it.Send(w, response.JSON{
+			Code: http.StatusNotFound,
+
+			Error: model.Error{
+				Name:    "Game not found",
+				Message: err.Error(),
+			},
+		})
+
+		return
+	}
+
+	// == Send Response ==
+	it.Send(w, response.JSON{
+		Code: http.StatusOK,
+
+		Data: game,
+	})
+}
+
+func (it *Handler) GET_ALL(w http.ResponseWriter, r *http.Request) {
+
 	games, err := it.usecase.FindAll()
 	if err != nil {
 
@@ -49,7 +74,7 @@ func (it *Handler) GET(w http.ResponseWriter, r *http.Request) {
 
 	// == Send Response ==
 	it.Send(w, response.JSON{
-		Code: http.StatusCreated,
+		Code: http.StatusOK,
 
 		Data: res,
 	})

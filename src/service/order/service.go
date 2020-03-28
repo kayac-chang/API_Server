@@ -12,7 +12,6 @@ import (
 
 	"net/http"
 
-	"github.com/go-chi/chi"
 	"github.com/golang/protobuf/ptypes"
 )
 
@@ -113,7 +112,7 @@ func (it *Handler) PUT(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	order.ID = chi.URLParam(r, "order_id")
+	order.ID = it.URLParam(r, "order_id")
 
 	switch order.State {
 
