@@ -35,7 +35,7 @@ func (it *Repo) Update(game *model.Game) error {
 	}
 
 	// === Save to Cache ===
-	defer it.storeCache(game)
+	// TODO
 
 	return tx.Commit()
 }
