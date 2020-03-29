@@ -1,5 +1,5 @@
-@hostname = localhost
-@port = 8000
+@hostname = 34.94.53.107
+@port = 9000
 @host = {{hostname}}:{{port}}
 
 ### Create Admin
