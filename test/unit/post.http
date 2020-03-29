@@ -1,57 +1,14 @@
-@token = eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpYXQiOjE1ODU0ODI5NDIsImlzcyI6IjhkNzAwODUyLTliMGEtNDA5Zi1hZjFkLWE4NDFkNWNhN2Y0MCIsImp0aSI6IjAyMGQzZGZkLTVjZWUtNDdhOS04YzdmLTg3NTgwMTg1N2I4OCJ9.HhlrNr64vvmsXKLbeqVE05eT6AG4PmbGt-838OF4r58
-@username = kayac
-@password = Test123456.
-@organization = sunny
-@secret = my_secret_key
-@email = egg734631@gmail.com
-@game = catpunch
-@href = https://catpunch
-@category = slot
 @hostname = localhost
 @port = 8000
 @host = {{hostname}}:{{port}}
 
-### Token
-POST http://{{host}}/v1/tokens
-Content-Type: application/json
-Session: abcd1234
-
-{
-    "game": {{game}},
-    "username": {{username}}
-}
-
-### Get Game Links
-GET http://{{host}}/v1/games
-
-
-### Create Game
-POST http://{{host}}/v1/games
-Content-Type: application/json
-Authorization: Bearer {{token}}
-
-{
-    "game": {{game}},
-    "href": {{href}},
-    "category": {{category}}
-}
-
-### Find Game
-GET http://{{host}}/v1/games/{{game}}
-Authorization: Bearer {{token}}
-
-### Update Game
-PUT http://{{host}}/v1/games/{{game}}
-Content-Type: application/json
-Authorization: Bearer {{token}}
-
-{
-    "name": {{game}},
-    "href": {{href}},
-    "category": {{category}}
-}
-
 ### Create Admin
+@username = "kayac"
+@password = "Test123456."
+@organization = "sunny"
+@secret = "my_secret_key"
+@email = "egg734631@gmail.com"
+
 POST http://{{host}}/v1/admins
 Content-Type: application/json
 
@@ -64,11 +21,68 @@ Content-Type: application/json
 }
 
 ### Create Admin Token
+@password = "Test123456."
+@secret = "my_secret_key"
+@email = "egg734631@gmail.com"
+# @name adminToken
 POST http://{{host}}/v1/admins/tokens
 Content-Type: application/json
 
 {
     "secret": {{secret}},
     "email": {{email}},
-    "password": {{password}},
+    "password": {{password}}
+}
+
+###
+@authToken = {{adminToken.response.body.$.data.access_token}}
+
+### Find Game
+@gameurl = catpunch
+
+GET http://{{host}}/v1/games/{{gameurl}}
+Authorization: Bearer {{authToken}}
+
+### Get Game Links
+GET http://{{host}}/v1/games
+
+### Create Game
+@gamename = "catpunch"
+@href = "https://catpunch"
+@category = "slot"
+POST http://{{host}}/v1/games
+Content-Type: application/json
+Authorization: Bearer {{authToken}}
+
+{
+    "name": {{gamename}},
+    "href": {{href}},
+    "category": {{category}}
+}
+
+### Update Game
+@gamename = "catpunch"
+@href = "https://catpunch"
+@category = "slot"
+PUT http://{{host}}/v1/games/{{gameurl}}
+Content-Type: application/json
+Authorization: Bearer {{authToken}}
+
+{
+    "name": {{gamename}},
+    "href": {{href}},
+    "category": {{category}}
+}
+
+### Token
+@session = abcd1234
+@game = "catpunch"
+@username = "kayac"
+POST http://{{host}}/v1/tokens
+Content-Type: application/json
+Session: {{session}}
+
+{
+    "game": {{game}},
+    "username": {{username}}
 }
