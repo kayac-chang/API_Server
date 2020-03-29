@@ -1,5 +1,5 @@
 ### Token
-POST http://34.94.53.107:9000/v1/token
+POST http://localhost:8000/v1/token
 Content-Type: application/json
 Session: abcd1234
 
@@ -8,8 +8,8 @@ Session: abcd1234
     "username": "kayac"
 }
 
-### Game
-POST http://34.94.53.107:9000/v1/games
+### Create Game
+POST http://localhost:8000/v1/games
 Content-Type: application/json
 
 {
@@ -18,15 +18,15 @@ Content-Type: application/json
     "category": "slot"
 }
 
-### Game
+### Find Game
 GET http://localhost:8000/v1/games/catpunch
 
-### Game
+### Update Game
 PUT http://localhost:8000/v1/games/catpunch
 Content-Type: application/json
 
 {
     "name": "catpunch",
-    "href": "https://catpunch.io",
+    "href": "https://catpunch",
     "category": "slot"
 }

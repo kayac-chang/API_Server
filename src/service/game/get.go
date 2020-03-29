@@ -10,7 +10,7 @@ import (
 func (it *Handler) GET(w http.ResponseWriter, r *http.Request) {
 
 	name := it.URLParam(r, "name")
-	game, err := it.usecase.Find(name)
+	game, err := it.usecase.FindByName(name)
 	if err != nil {
 
 		it.Send(w, response.JSON{

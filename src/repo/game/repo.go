@@ -15,6 +15,7 @@ type Repo struct {
 type querys struct {
 	insert      string
 	findByID    string
+	findByName  string
 	findWhereID string
 	findAll     string
 	updateByID  string
@@ -28,6 +29,7 @@ func New(db *postgres.DB, c *cache.Cache) *Repo {
 		sql: querys{
 			insert:      utils.ParseFile("sql/game/insert_one.sql"),
 			findByID:    utils.ParseFile("sql/game/find_by_id.sql"),
+			findByName:  utils.ParseFile("sql/game/find_by_name.sql"),
 			findWhereID: utils.ParseFile("sql/game/find_where_id.sql"),
 			findAll:     utils.ParseFile("sql/game/find_all.sql"),
 			updateByID:  utils.ParseFile("sql/game/update_one.sql"),
