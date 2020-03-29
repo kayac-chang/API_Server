@@ -3,6 +3,7 @@ package user
 import (
 	"api/env"
 	"api/framework/cache"
+	"api/framework/jwt"
 	"api/framework/postgres"
 	"api/model"
 	repo "api/repo/user"
@@ -12,8 +13,6 @@ import (
 	"fmt"
 	"log"
 	"time"
-
-	"github.com/dgrijalva/jwt-go"
 )
 
 type Usecase struct {
@@ -58,7 +57,7 @@ func (it *Usecase) Regist(username string, session string) (*model.Token, error)
 	// == Sign Token ==
 	it.repo.RemoveCache(&user)
 
-	token, err := it.sign(&user)
+	token, err := jwt.Sign(it.env)
 	if err != nil {
 		return nil, err
 	}
@@ -73,30 +72,6 @@ func (it *Usecase) Regist(username string, session string) (*model.Token, error)
 }
 
 // === Private ===
-
-func (it *Usecase) sign(user *model.User) (*model.Token, error) {
-
-	createdTime := time.Now()
-	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
-		"iss": it.env.Service.ID,
-		"iat": createdTime.Unix(),
-		"jti": utils.UUID(),
-	})
-
-	tokenString, err := token.SignedString(it.env.Secret)
-	if err != nil {
-		return nil, err
-	}
-
-	res := model.Token{
-		AccessToken: tokenString,
-		Type:        "Bearer",
-		ServiceID:   it.env.Service.ID,
-		CreatedAt:   createdTime,
-	}
-
-	return &res, nil
-}
 
 func (it *Usecase) sendToCheckPlayer(username string, session string) (uint64, error) {
 	api := "/player/check/" + username
