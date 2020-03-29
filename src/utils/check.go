@@ -8,7 +8,7 @@ import (
 
 func CheckMail(email string) error {
 
-	err := checkmail.ValidateHost(email)
+	err := checkmail.ValidateFormat(email)
 
 	if smtpErr, ok := err.(checkmail.SmtpError); ok && err != nil {
 
