@@ -9,7 +9,7 @@
 #### Request
 
 ```http
-GET https://<service_domain>/v1/games HTTP/2.0
+GET http://{{host}}/v1/games HTTP/2.0
 ```
 
 #### Respoonse
@@ -41,7 +41,7 @@ A successful request returns the HTTP `200 OK` status code.
 #### Request
 
 ```http
-GET https://<service_domain>/v1/games/:name HTTP/2.0
+GET http://{{host}}/v1/games/{{game}} HTTP/2.0
 ```
 
 #### Respoonse
@@ -59,18 +59,19 @@ A successful request returns the HTTP `200 OK` status code.
 }
 ```
 
-### Create One Game
+### Create Game
 
 #### Request
 
 ```http
-POST https://<service_domain>/v1/games HTTP/2.0
-content-type: application/json
+POST http://{{host}}/v1/games
+Content-Type: application/json
+Authorization: Bearer {{token}}
 
 {
-  "name": "catpunch",
-  "href": "https://catpunch.com",
-  "category": "slot"
+    "name": {{game}},
+    "href": {{href}},
+    "category": {{category}}
 }
 ```
 
@@ -94,13 +95,14 @@ A successful request returns the HTTP `201 Created` status code.
 #### Request
 
 ```http
-PUT https://<service_domain>/v1/games/:name HTTP/2.0
+PUT http://{{host}}/v1/games/{{game}}
 Content-Type: application/json
+Authorization: Bearer {{token}}
 
 {
-    "name": "catpunch",
-    "href": "https://catpunch.io",
-    "category": "slot"
+    "name": {{game}},
+    "href": {{href}},
+    "category": {{category}}
 }
 ```
 
@@ -126,13 +128,13 @@ A successful request returns the HTTP `202 Accepted` status code.
 #### Request
 
 ```http
-POST https://<service_domain>/v1/tokens HTTP/2.0
-content-type: application/json
-session: <session_id>
+POST http://{{host}}/v1/tokens
+Content-Type: application/json
+Session: {{session}}
 
 {
-  "game": "catpunch",
-  "username": "kayac"
+    "game": {{game}},
+    "username": {{username}}
 }
 ```
 
@@ -185,9 +187,107 @@ A successful request returns the HTTP `201 Created` status code.
 | service_id   | string | The service if who issued this token |
 | issued_at    | string | Time when this token created         |
 
-# Private API
+## Admin
 
-Private API for game service internal network, use `protobuf`.
+### Create an Admin account
+
+#### Request
+
+```http
+POST http://{{host}}/v1/admins
+Content-Type: application/json
+
+{
+    "secret": {{secret}},
+    "email": {{email}},
+    "username": {{username}},
+    "password": {{password}},
+    "organization": {{organization}}
+}
+```
+
+- Header
+
+| Parameter    | Type   | Description                             |
+| ------------ | ------ | --------------------------------------- |
+| Content-Type | string | indicate the media type of the resource |
+
+- Body
+
+| Parameter    | Type   | Description                                    |
+| ------------ | ------ | ---------------------------------------------- |
+| secret       | string | The secret key dispatch by game provider       |
+| email        | string | The account's email                            |
+| username     | string | The account's username                         |
+| password     | string | The account's password                         |
+| organization | string | The organization which the account attached to |
+
+#### Respoonse
+
+A successful request returns the HTTP `201 Created` status code.
+
+```json
+{
+  "data": {
+    "admin_id": "04773c00cef59479d30bf9f026c8fed9",
+    "email": "egg734631@gmail.com",
+    "username": "kayac",
+    "organization": "sunny"
+  }
+}
+```
+
+- data
+
+| Parameter    | Type   | Description                                    |
+| ------------ | ------ | ---------------------------------------------- |
+| admin_id     | string | The account's id                               |
+| email        | string | The account's email                            |
+| username     | string | The account's username                         |
+| organization | string | The organization which the account attached to |
+
+### Create Admin Token
+
+#### Request
+
+```http
+POST http://{{host}}/v1/admins/tokens
+Content-Type: application/json
+
+{
+    "secret": {{secret}},
+    "email": {{email}},
+    "password": {{password}},
+}
+```
+
+#### Respoonse
+
+A successful request returns the HTTP `201 Created` status code.
+
+```json
+{
+  "data": {
+    "access_token": "<access_token>",
+    "token_type": "Bearer",
+    "service_id": "<service_ID>",
+    "issued_at": "<issued_at>"
+  }
+}
+```
+
+- data
+
+| Parameter    | Type   | Description                          |
+| ------------ | ------ | ------------------------------------ |
+| access_token | string | The jwt token for authentication     |
+| token_type   | string | The token type                       |
+| service_id   | string | The service if who issued this token |
+| issued_at    | string | Time when this token created         |
+
+# Internal API
+
+Internal API for game service internal network, use `protobuf` for transform.
 
 ## Token
 
@@ -196,7 +296,8 @@ Private API for game service internal network, use `protobuf`.
 #### Request
 
 ```http
-GET https://<service_domain>/v1/tokens/:token HTTP/2.0
+GET http://{{host}}/v1/tokens/{{token}}
+Content-Type: application/protobuf
 ```
 
 #### Respoonse
@@ -216,9 +317,9 @@ A successful request returns the HTTP `200 OK` status code. Return `User`
 #### Request
 
 ```http
-POST https://<service_domain>/v1/orders HTTP/2.0
+POST http://{{host}}/v1/orders
 content-type: application/protobuf
-authorization: Bearer <Access-Token>
+authorization: Bearer {{token}}
 ```
 
 | Parameter | Type   | Description           |
@@ -237,9 +338,9 @@ Return `Order`
 #### Request
 
 ```http
-PUT https://<service_domain>/v1/orders/:order_id HTTP/2.0
+PUT http://{{host}}/v1/orders/{{order_id}}
 content-type: application/protobuf
-authorization: Bearer <Access-Token>
+authorization: Bearer {{token}}
 ```
 
 | Parameter    | Type      | Description                    |
