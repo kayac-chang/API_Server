@@ -59,7 +59,7 @@ func (it *Handler) POST(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	game, err := it.gameCase.Find(req["game"])
+	game, err := it.gameCase.FindByName(req["game"])
 	if err != nil {
 
 		it.Send(w, response.JSON{
