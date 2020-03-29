@@ -7,7 +7,7 @@ import (
 	"api/framework/server"
 	"api/service/game"
 	"api/service/order"
-	"api/service/user"
+	"api/service/token"
 
 	"github.com/go-chi/chi"
 )
@@ -22,7 +22,7 @@ func main() {
 
 	// === Handler ===
 	game := game.New(it, env, db, cache)
-	user := user.New(it, env, db, cache)
+	token := token.New(it, env, db, cache)
 	order := order.New(it, env, db, cache)
 
 	it.Route("/"+env.API.Version, func(server chi.Router) {
@@ -35,8 +35,10 @@ func main() {
 		})
 
 		// === User ===
-		server.Post("/token", user.POST)
-		server.Get("/auth", user.Auth)
+		server.Route("/tokens", func(server chi.Router) {
+			server.Post("/", token.POST)
+			server.Get("/{token}", token.Get)
+		})
 
 		// === Order ===
 		server.Route("/orders", func(server chi.Router) {
