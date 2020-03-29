@@ -9,8 +9,23 @@ import (
 
 func (it *Handler) GET(w http.ResponseWriter, r *http.Request) {
 
+	if err := it.authenticate(r); err != nil {
+
+		it.Send(w, response.JSON{
+			Code: http.StatusUnauthorized,
+
+			Error: model.Error{
+				Name:    "Unauthorized",
+				Message: err.Error(),
+			},
+		})
+
+		return
+	}
+
+	// Find by Name
 	name := it.URLParam(r, "name")
-	game, err := it.usecase.FindByName(name)
+	game, err := it.game.FindByName(name)
 	if err != nil {
 
 		it.Send(w, response.JSON{
@@ -35,7 +50,7 @@ func (it *Handler) GET(w http.ResponseWriter, r *http.Request) {
 
 func (it *Handler) GET_ALL(w http.ResponseWriter, r *http.Request) {
 
-	games, err := it.usecase.FindAll()
+	games, err := it.game.FindAll()
 	if err != nil {
 
 		it.Send(w, response.JSON{
