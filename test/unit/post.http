@@ -1,32 +1,74 @@
+@token = eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpYXQiOjE1ODU0ODI5NDIsImlzcyI6IjhkNzAwODUyLTliMGEtNDA5Zi1hZjFkLWE4NDFkNWNhN2Y0MCIsImp0aSI6IjAyMGQzZGZkLTVjZWUtNDdhOS04YzdmLTg3NTgwMTg1N2I4OCJ9.HhlrNr64vvmsXKLbeqVE05eT6AG4PmbGt-838OF4r58
+@username = kayac
+@password = Test123456.
+@organization = sunny
+@secret = my_secret_key
+@email = egg734631@gmail.com
+@game = catpunch
+@href = https://catpunch
+@category = slot
+@hostname = localhost
+@port = 8000
+@host = {{hostname}}:{{port}}
+
 ### Token
-POST http://localhost:8000/v1/tokens
+POST http://{{host}}/v1/tokens
 Content-Type: application/json
 Session: abcd1234
 
 {
-    "game": "catpunch",
-    "username": "kayac"
+    "game": {{game}},
+    "username": {{username}}
 }
 
+### Get Game Links
+GET http://{{host}}/v1/games
+
+
 ### Create Game
-POST http://localhost:8000/v1/games
+POST http://{{host}}/v1/games
 Content-Type: application/json
+Authorization: Bearer {{token}}
 
 {
-    "name": "catpunch",
-    "href": "https://catpunch",
-    "category": "slot"
+    "game": {{game}},
+    "href": {{href}},
+    "category": {{category}}
 }
 
 ### Find Game
-GET http://localhost:8000/v1/games/catpunch
+GET http://{{host}}/v1/games/{{game}}
+Authorization: Bearer {{token}}
 
 ### Update Game
-PUT http://localhost:8000/v1/games/catpunch
+PUT http://{{host}}/v1/games/{{game}}
+Content-Type: application/json
+Authorization: Bearer {{token}}
+
+{
+    "name": {{game}},
+    "href": {{href}},
+    "category": {{category}}
+}
+
+### Create Admin
+POST http://{{host}}/v1/admins
 Content-Type: application/json
 
 {
-    "name": "catpunch",
-    "href": "https://catpunch",
-    "category": "slot"
+    "secret": {{secret}},
+    "email": {{email}},
+    "username": {{username}},
+    "password": {{password}},
+    "organization": {{organization}}
+}
+
+### Create Admin Token
+POST http://{{host}}/v1/admins/tokens
+Content-Type: application/json
+
+{
+    "secret": {{secret}},
+    "email": {{email}},
+    "password": {{password}},
 }

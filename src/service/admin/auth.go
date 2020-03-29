@@ -1,28 +1,13 @@
-package game
+package admin
 
 import (
 	"api/model"
 	"api/model/response"
-
 	"encoding/json"
 	"net/http"
 )
 
-func (it *Handler) POST(w http.ResponseWriter, r *http.Request) {
-
-	if err := it.authenticate(r); err != nil {
-
-		it.Send(w, response.JSON{
-			Code: http.StatusUnauthorized,
-
-			Error: model.Error{
-				Name:    "Unauthorized",
-				Message: err.Error(),
-			},
-		})
-
-		return
-	}
+func (it *Handler) Auth(w http.ResponseWriter, r *http.Request) {
 
 	// == Parse Payload ==
 	req := map[string]string{}
@@ -40,16 +25,16 @@ func (it *Handler) POST(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// == Store Game ==
-	game, err := it.game.Store(req["name"], req["href"], req["category"])
+	// Authentication
+	token, err := it.usecase.CheckUser(req)
 	if err != nil {
 
 		it.Send(w, response.JSON{
-			Code: http.StatusInternalServerError,
+			Code: http.StatusUnauthorized,
 
 			Error: model.Error{
-				Name:    "Game Create Error",
-				Message: err.Error(),
+				Name:    "Unauthorized",
+				Message: model.ErrUnexpectPayload.Error(),
 			},
 		})
 
@@ -60,6 +45,6 @@ func (it *Handler) POST(w http.ResponseWriter, r *http.Request) {
 	it.Send(w, response.JSON{
 		Code: http.StatusCreated,
 
-		Data: game,
+		Data: token,
 	})
 }

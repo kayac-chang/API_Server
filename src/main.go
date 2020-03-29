@@ -5,6 +5,7 @@ import (
 	"api/framework/cache"
 	"api/framework/postgres"
 	"api/framework/server"
+	"api/service/admin"
 	"api/service/game"
 	"api/service/order"
 	"api/service/token"
@@ -22,6 +23,7 @@ func main() {
 
 	// === Handler ===
 	game := game.New(it, env, db, cache)
+	admin := admin.New(it, env, db, cache)
 	token := token.New(it, env, db, cache)
 	order := order.New(it, env, db, cache)
 
@@ -34,7 +36,16 @@ func main() {
 			server.Put("/{name}", game.PUT)
 		})
 
-		// === User ===
+		// === Admin ===
+		server.Route("/admins", func(server chi.Router) {
+			server.Post("/", admin.POST)
+
+			server.Route("/tokens", func(server chi.Router) {
+				server.Post("/", admin.Auth)
+			})
+		})
+
+		// === Token ===
 		server.Route("/tokens", func(server chi.Router) {
 			server.Post("/", token.POST)
 			server.Get("/{token}", token.Get)

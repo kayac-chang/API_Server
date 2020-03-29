@@ -1,6 +1,7 @@
 -- DROPS ALL
 DROP TABLE IF EXISTS games CASCADE;
 DROP TABLE IF EXISTS users CASCADE;
+DROP TABLE IF EXISTS admins CASCADE;
 DROP TABLE IF EXISTS orders CASCADE;
 DROP TABLE IF EXISTS sub_orders CASCADE;
 
@@ -28,6 +29,22 @@ CREATE TABLE IF NOT EXISTS users (
 
     -- properties
     username VARCHAR(256) NOT NULL UNIQUE,
+
+    -- times
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+-- Admins
+CREATE TABLE IF NOT EXISTS admins (
+    -- pk
+    admin_id CHAR(32) PRIMARY KEY,
+
+    -- properties
+    email VARCHAR(256) NOT NULL UNIQUE,
+    username VARCHAR(256),
+    password VARCHAR(256) NOT NULL,
+    organization VARCHAR(32) NOT NULL,
 
     -- times
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
@@ -96,6 +113,14 @@ CREATE TRIGGER set_timestamp
     FOR EACH ROW 
     EXECUTE PROCEDURE trigger_set_timestamp();
 
+-- Admins
+DROP TRIGGER IF EXISTS set_timestamp ON admins;
+
+CREATE TRIGGER set_timestamp 
+    BEFORE UPDATE ON admins 
+    FOR EACH ROW 
+    EXECUTE PROCEDURE trigger_set_timestamp();
+
 -- Orders
 DROP TRIGGER IF EXISTS set_timestamp ON orders;
 
@@ -114,5 +139,6 @@ CREATE TRIGGER set_timestamp
 
 SELECT * FROM games;
 SELECT * FROM users;
+SELECT * FROM admins;
 SELECT * FROM orders;
 SELECT * FROM sub_orders;
