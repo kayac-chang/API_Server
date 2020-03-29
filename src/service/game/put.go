@@ -9,6 +9,20 @@ import (
 
 func (it *Handler) PUT(w http.ResponseWriter, r *http.Request) {
 
+	if err := it.authenticate(r); err != nil {
+
+		it.Send(w, response.JSON{
+			Code: http.StatusUnauthorized,
+
+			Error: model.Error{
+				Name:    "Unauthorized",
+				Message: err.Error(),
+			},
+		})
+
+		return
+	}
+
 	// == Parse Payload ==
 	req := map[string]string{}
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
@@ -28,7 +42,7 @@ func (it *Handler) PUT(w http.ResponseWriter, r *http.Request) {
 	name := it.URLParam(r, "name")
 
 	// == Update Game ==
-	game, err := it.usecase.Update(name, req)
+	game, err := it.game.Update(name, req)
 	if err != nil {
 
 		it.Send(w, response.JSON{

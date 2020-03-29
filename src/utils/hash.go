@@ -5,7 +5,7 @@ import (
 	"fmt"
 
 	uuid "github.com/satori/go.uuid"
-	"golang.org/x/crypto/sha3"
+	"golang.org/x/crypto/bcrypt"
 )
 
 func UUID() string {
@@ -22,9 +22,24 @@ func MD5(text string) string {
 	return fmt.Sprintf("%x", hash)
 }
 
-func Hash(text string) string {
+func Hash(test string) string {
 
-	hash := sha3.Sum256([]byte(text))
+	hash, err := bcrypt.GenerateFromPassword([]byte(test), bcrypt.MinCost)
 
-	return fmt.Sprintf("%x", hash)
+	if err != nil {
+		panic(err)
+	}
+
+	return string(hash)
+}
+
+func CompareHash(hash string, compare string) error {
+
+	err := bcrypt.CompareHashAndPassword([]byte(hash), []byte(compare))
+
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
