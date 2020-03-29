@@ -1,5 +1,5 @@
 ### Token
-POST http://localhost:8000/v1/token
+POST http://localhost:8000/v1/tokens
 Content-Type: application/json
 Session: abcd1234
 
