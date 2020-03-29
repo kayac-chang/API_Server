@@ -7,7 +7,7 @@ MSG_TYPE=Order
 PROTO_FILE=model/pb/order.proto
 
 user_id=db780439d285e8aba7bf64daba277ec8
-game_id=b5ac49be5d3f76cb878671003dbb62ed
+game_id=4ca7d2b0a48965331c949d3dc79e4fcc
 bet=10
 
 req=$(

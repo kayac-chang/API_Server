@@ -2,7 +2,7 @@
 
 source $(dirname $0)/var.sh
 
-order_id=39fe7749-7df1-412e-a954-13867f20b436
+order_id=a4e951a8-872c-44c3-8cd9-0508e5ad24eb
 
 URL=$HOST/v1/orders/$order_id
 MSG_TYPE=Order

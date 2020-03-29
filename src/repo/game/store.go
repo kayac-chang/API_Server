@@ -35,15 +35,7 @@ func (it *Repo) Store(game *model.Game) error {
 	}
 
 	// === Save to Cache ===
-	defer it.storeCache(game)
+	// TODO
 
 	return tx.Commit()
-}
-
-func (it *Repo) storeCache(games ...*model.Game) {
-
-	for _, game := range games {
-
-		it.cache.SetDefault(game.ID, *game)
-	}
 }
