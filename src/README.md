@@ -9,7 +9,7 @@
 #### Request
 
 ```http
-GET http://{{host}}/v1/games HTTP/2.0
+GET http://{{host}}/v1/games HTTP/1.1
 ```
 
 #### Respoonse
@@ -41,7 +41,7 @@ A successful request returns the HTTP `200 OK` status code.
 #### Request
 
 ```http
-GET http://{{host}}/v1/games/{{game}} HTTP/2.0
+GET http://{{host}}/v1/games/{{game}} HTTP/1.1
 ```
 
 #### Respoonse
@@ -64,7 +64,7 @@ A successful request returns the HTTP `200 OK` status code.
 #### Request
 
 ```http
-POST http://{{host}}/v1/games
+POST http://{{host}}/v1/games HTTP/1.1
 Content-Type: application/json
 Authorization: Bearer {{token}}
 
@@ -95,7 +95,7 @@ A successful request returns the HTTP `201 Created` status code.
 #### Request
 
 ```http
-PUT http://{{host}}/v1/games/{{game}}
+PUT http://{{host}}/v1/games/{{game}} HTTP/1.1
 Content-Type: application/json
 Authorization: Bearer {{token}}
 
@@ -128,7 +128,7 @@ A successful request returns the HTTP `202 Accepted` status code.
 #### Request
 
 ```http
-POST http://{{host}}/v1/tokens
+POST http://{{host}}/v1/tokens HTTP/1.1
 Content-Type: application/json
 Session: {{session}}
 
@@ -194,7 +194,7 @@ A successful request returns the HTTP `201 Created` status code.
 #### Request
 
 ```http
-POST http://{{host}}/v1/admins
+POST http://{{host}}/v1/admins HTTP/1.1
 Content-Type: application/json
 
 {
@@ -251,7 +251,7 @@ A successful request returns the HTTP `201 Created` status code.
 #### Request
 
 ```http
-POST http://{{host}}/v1/admins/tokens
+POST http://{{host}}/v1/admins/tokens HTTP/1.1
 Content-Type: application/json
 
 {
@@ -289,14 +289,14 @@ A successful request returns the HTTP `201 Created` status code.
 
 Internal API for game service internal network, use `protobuf` for transform.
 
-## Token
+## User
 
 ### Authenticate Token
 
 #### Request
 
 ```http
-GET http://{{host}}/v1/tokens/{{token}}
+GET http://{{host}}/v1/users/{{token}} HTTP/1.1
 Content-Type: application/protobuf
 ```
 
@@ -317,7 +317,7 @@ A successful request returns the HTTP `200 OK` status code. Return `User`
 #### Request
 
 ```http
-POST http://{{host}}/v1/orders
+POST http://{{host}}/v1/orders HTTP/1.1
 content-type: application/protobuf
 authorization: Bearer {{token}}
 ```
@@ -338,7 +338,7 @@ Return `Order`
 #### Request
 
 ```http
-PUT http://{{host}}/v1/orders/{{order_id}}
+PUT http://{{host}}/v1/orders/{{order_id}} HTTP/1.1
 content-type: application/protobuf
 authorization: Bearer {{token}}
 ```

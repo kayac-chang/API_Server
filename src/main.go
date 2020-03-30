@@ -45,10 +45,14 @@ func main() {
 			})
 		})
 
+		// === User ===
+		server.Route("/users", func(server chi.Router) {
+			server.Get("/{token}", token.Get)
+		})
+
 		// === Token ===
 		server.Route("/tokens", func(server chi.Router) {
 			server.Post("/", token.POST)
-			server.Get("/{token}", token.Get)
 		})
 
 		// === Order ===
