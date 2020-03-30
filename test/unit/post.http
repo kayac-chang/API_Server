@@ -47,8 +47,8 @@ Authorization: Bearer {{authToken}}
 GET http://{{host}}/v1/games
 
 ### Create Game
-@gamename = "catpunch"
-@href = "https://catpunch"
+@gamename = "sushi"
+@href = "https://sushi"
 @category = "slot"
 POST http://{{host}}/v1/games
 Content-Type: application/json
@@ -61,8 +61,8 @@ Authorization: Bearer {{authToken}}
 }
 
 ### Update Game
-@gamename = "catpunch"
-@href = "https://catpunch"
+# @gamename = "catpunch"
+# @href = "https://catpunch"
 @category = "slot"
 PUT http://{{host}}/v1/games/{{gameurl}}
 Content-Type: application/json
