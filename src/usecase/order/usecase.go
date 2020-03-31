@@ -36,6 +36,10 @@ func New(env *env.Env, db *postgres.DB, c *cache.Cache) *Usecase {
 
 func (it *Usecase) Create(order *model.Order) error {
 
+	if _, err := it.game.FindByID(order.GameID); err != nil {
+		return err
+	}
+
 	order.ID = utils.UUID()
 	order.State = model.Pending
 	order.CreatedAt = sql.NullTime{time.Now(), true}
