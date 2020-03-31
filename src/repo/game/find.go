@@ -2,6 +2,8 @@ package game
 
 import (
 	"api/model"
+
+	errs "github.com/pkg/errors"
 )
 
 func (it *Repo) FindByID(id string) (*model.Game, error) {
@@ -13,7 +15,7 @@ func (it *Repo) FindByID(id string) (*model.Game, error) {
 
 	// Find in DB
 	if err := it.db.Get(&game, it.sql.findByID, id); err != nil {
-		return nil, err
+		return nil, errs.WithMessagef(err, id+" not existed")
 	}
 
 	// === Save to Cache ===
