@@ -2,7 +2,7 @@
 
 source $(dirname $0)/var.sh
 
-URL=$HOST/v1/tokens/$TOKEN
+URL=$HOST/v1/users/$TOKEN
 MSG_TYPE=User
 PROTO_FILE=model/pb/user.proto
 
