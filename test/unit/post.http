@@ -1,5 +1,5 @@
-@hostname = 34.94.53.107
-@port = 9000
+@hostname = 127.0.0.1
+@port = 8000
 @host = {{hostname}}:{{port}}
 
 ### Create Admin
@@ -75,9 +75,9 @@ Authorization: Bearer {{authToken}}
 }
 
 ### Token
-@session = abcd1234
+@session = dfd99af9-f92f-4161-8e62-9598fb38931b
 @game = "catpunch"
-@username = "kayac"
+@username = "mouse1"
 POST http://{{host}}/v1/tokens
 Content-Type: application/json
 Session: {{session}}
