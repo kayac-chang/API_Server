@@ -86,6 +86,8 @@ func (it *Usecase) sendToCheckPlayer(username string, session string) (uint64, e
 		"session":            session,
 	}
 
+	log.Printf("Agent: [ %s ] Post...\n header: %s", api, json.Jsonify(headers))
+
 	resp, err := utils.Post(url, req, headers)
 	if err != nil {
 		return 0, err
@@ -98,9 +100,7 @@ func (it *Usecase) sendToCheckPlayer(username string, session string) (uint64, e
 	if resp.StatusCode != 200 {
 		log.Printf("Agent: [ %s ] Failed...\n Error:\n %s", api, json.Jsonify(res))
 
-		err := res["error"].(map[string]interface{})
-
-		return 0, fmt.Errorf("%s", err["message"])
+		return 0, fmt.Errorf("%s", res["message"])
 	}
 
 	log.Printf("Agent: [ %s ] Success !!!\nResponse:\n %s", api, json.Jsonify(res))

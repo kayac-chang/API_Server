@@ -6,7 +6,7 @@ URL=$HOST/v1/orders
 MSG_TYPE=Order
 PROTO_FILE=model/pb/order.proto
 
-user_id=db780439d285e8aba7bf64daba277ec8
+user_id=43b8a2640bc945a0f6b311e3d626d942
 game_id=3e8e582e6f059a5a02c1fb4f05b1a11f
 bet=10
 
