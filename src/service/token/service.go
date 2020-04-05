@@ -2,26 +2,25 @@ package token
 
 import (
 	"api/env"
-	"api/framework/cache"
-	"api/framework/postgres"
 	"api/framework/server"
+
 	game "api/usecase/game"
-	user "api/usecase/user"
+	token "api/usecase/token"
 )
 
 type Handler struct {
 	*server.Server
-	env      *env.Env
-	userCase *user.Usecase
-	gameCase *game.Usecase
+	env   *env.Env
+	token *token.Usecase
+	game  *game.Usecase
 }
 
-func New(s *server.Server, e *env.Env, db *postgres.DB, c *cache.Cache) *Handler {
+func New(server *server.Server, env *env.Env, token *token.Usecase, game *game.Usecase) *Handler {
 
-	return &Handler{
-		s,
-		e,
-		user.New(e, db, c),
-		game.New(e, db, c),
-	}
+	return &Handler{server, env, token, game}
+}
+
+func (it *Handler) getHref(url string) string {
+
+	return it.env.Service.Domain + "/" + it.env.API.Version + url
 }

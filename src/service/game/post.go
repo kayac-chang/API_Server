@@ -15,7 +15,7 @@ func (it *Handler) POST(w http.ResponseWriter, r *http.Request) {
 		it.Send(w, response.JSON{
 			Code: http.StatusUnauthorized,
 
-			Error: model.Error{
+			Error: response.Error{
 				Name:    "Unauthorized",
 				Message: err.Error(),
 			},
@@ -31,7 +31,7 @@ func (it *Handler) POST(w http.ResponseWriter, r *http.Request) {
 		it.Send(w, response.JSON{
 			Code: http.StatusBadRequest,
 
-			Error: model.Error{
+			Error: response.Error{
 				Name:    "Unexpect Payload",
 				Message: model.ErrUnexpectPayload.Error(),
 			},
@@ -47,7 +47,7 @@ func (it *Handler) POST(w http.ResponseWriter, r *http.Request) {
 		it.Send(w, response.JSON{
 			Code: http.StatusInternalServerError,
 
-			Error: model.Error{
+			Error: response.Error{
 				Name:    "Game Create Error",
 				Message: err.Error(),
 			},

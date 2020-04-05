@@ -3,92 +3,106 @@ package token
 import (
 	"api/model"
 	"api/model/response"
+	"api/utils"
 
 	"encoding/json"
 	"net/http"
+
+	errs "github.com/pkg/errors"
 )
 
 func (it *Handler) POST(w http.ResponseWriter, r *http.Request) {
 
-	// == Check Session ID ==
-	session := r.Header.Get("session")
-	if session == "" {
+	checkHeader := func() error {
+		session := r.Header.Get("session")
+		contentType := r.Header.Get("Content-Type")
 
-		it.Send(w, response.JSON{
-			Code: http.StatusBadRequest,
+		return it.token.CheckHeader(session, contentType)
+	}
 
-			Error: model.Error{
-				Name:    "Missing Session ID",
-				Message: "Required header session id for authentication",
-			},
+	payload := func() (map[string]string, error) {
+
+		req := map[string]string{}
+
+		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+
+			return nil, &model.Error{
+				Code:    http.StatusInternalServerError,
+				Name:    "Parse JSON #2",
+				Message: errs.WithMessage(err, "Error occured when parsing payload").Error(),
+			}
+		}
+
+		// Check Payload
+		gamename := req["game"]
+		username := req["username"]
+
+		if err := it.token.CheckPayload(gamename, username); err != nil {
+			return nil, err
+		}
+
+		return req, nil
+	}
+
+	business := func(req map[string]string) ([]interface{}, error) {
+		// Registration
+		registration := utils.Promisefy(func() (interface{}, error) {
+
+			username := req["username"]
+			session := r.Header.Get("session")
+
+			return it.token.Regist(username, session)
 		})
 
-		return
-	}
+		// Get Game Link
+		getGameLink := utils.Promisefy(func() (interface{}, error) {
 
-	// == Parse Payload ==
-	req := map[string]string{}
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+			name := req["game"]
 
-		it.Send(w, response.JSON{
-			Code: http.StatusBadRequest,
-
-			Error: model.Error{
-				Name:    "Unexpect Payload",
-				Message: model.ErrUnexpectPayload.Error(),
-			},
+			return it.gameCase.FindByName(name)
 		})
 
-		return
+		return utils.WaitAll(registration, getGameLink)
 	}
 
-	// == Registration ==
-	username := req["username"]
-	token, err := it.userCase.Regist(username, session)
-	if err != nil {
+	genResponse := func(game *model.Game, token *model.Token) interface{} {
+		TAG := "/tokens"
 
-		it.Send(w, response.JSON{
-			Code: http.StatusUnauthorized,
+		href := it.getHref(TAG)
 
-			Error: model.Error{
-				Name:    "User Registration Failed",
-				Message: err.Error(),
+		return response.JSON{
+			Code: http.StatusCreated,
+
+			Data: map[string]interface{}{
+				"token": token,
+				"links": [...]response.Link{
+					{Relation: "access", Method: "GET", Href: game.Href},
+					{Relation: "reauthorize", Method: "POST", Href: href},
+				},
 			},
-		})
-
-		return
+		}
 	}
 
-	gamename := req["game"]
-	game, err := it.gameCase.FindByName(gamename)
-	if err != nil {
+	main := func() interface{} {
+		if err := checkHeader(); err != nil {
+			return err
+		}
 
-		it.Send(w, response.JSON{
-			Code: http.StatusNotFound,
+		req, err := payload()
+		if err != nil {
+			return err
+		}
 
-			Error: model.Error{
-				Name:    gamename + " Not Found",
-				Message: err.Error(),
-			},
-		})
+		results, err := business(req)
+		if err != nil {
+			return err
+		}
 
-		return
+		token := results[0].(*model.Token)
+		game := results[1].(*model.Game)
+
+		return genResponse(game, token)
 	}
 
-	href := it.env.Service.Domain + "/" + it.env.API.Version + "/token"
-
-	res := map[string]interface{}{
-		"token": token,
-		"links": [...]response.Link{
-			{Relation: "access", Method: "GET", Href: game.Href},
-			{Relation: "reauthorize", Method: "POST", Href: href},
-		},
-	}
-
-	// == Send Response ==
-	it.Send(w, response.JSON{
-		Code: http.StatusCreated,
-
-		Data: res,
-	})
+	it.Send(w, main())
 }

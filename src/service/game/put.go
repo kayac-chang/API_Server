@@ -14,7 +14,7 @@ func (it *Handler) PUT(w http.ResponseWriter, r *http.Request) {
 		it.Send(w, response.JSON{
 			Code: http.StatusUnauthorized,
 
-			Error: model.Error{
+			Error: response.Error{
 				Name:    "Unauthorized",
 				Message: err.Error(),
 			},
@@ -30,7 +30,7 @@ func (it *Handler) PUT(w http.ResponseWriter, r *http.Request) {
 		it.Send(w, response.JSON{
 			Code: http.StatusBadRequest,
 
-			Error: model.Error{
+			Error: response.Error{
 				Name:    "Unexpect Payload",
 				Message: model.ErrUnexpectPayload.Error(),
 			},
@@ -48,7 +48,7 @@ func (it *Handler) PUT(w http.ResponseWriter, r *http.Request) {
 		it.Send(w, response.JSON{
 			Code: http.StatusInternalServerError,
 
-			Error: model.Error{
+			Error: response.Error{
 				Name:    "Game Update Error",
 				Message: err.Error(),
 			},

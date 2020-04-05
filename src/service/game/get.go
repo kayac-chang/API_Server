@@ -1,7 +1,6 @@
 package game
 
 import (
-	"api/model"
 	"api/model/response"
 
 	"net/http"
@@ -14,7 +13,7 @@ func (it *Handler) GET(w http.ResponseWriter, r *http.Request) {
 		it.Send(w, response.JSON{
 			Code: http.StatusUnauthorized,
 
-			Error: model.Error{
+			Error: response.Error{
 				Name:    "Unauthorized",
 				Message: err.Error(),
 			},
@@ -31,7 +30,7 @@ func (it *Handler) GET(w http.ResponseWriter, r *http.Request) {
 		it.Send(w, response.JSON{
 			Code: http.StatusNotFound,
 
-			Error: model.Error{
+			Error: response.Error{
 				Name:    "Game not found",
 				Message: err.Error(),
 			},
@@ -56,7 +55,7 @@ func (it *Handler) GET_ALL(w http.ResponseWriter, r *http.Request) {
 		it.Send(w, response.JSON{
 			Code: http.StatusInternalServerError,
 
-			Error: model.Error{
+			Error: response.Error{
 				Name:    "Server Error",
 				Message: err.Error(),
 			},

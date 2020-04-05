@@ -16,7 +16,7 @@ func (it *Handler) Auth(w http.ResponseWriter, r *http.Request) {
 		it.Send(w, response.JSON{
 			Code: http.StatusBadRequest,
 
-			Error: model.Error{
+			Error: response.Error{
 				Name:    "Unexpect Payload",
 				Message: model.ErrUnexpectPayload.Error(),
 			},
@@ -32,7 +32,7 @@ func (it *Handler) Auth(w http.ResponseWriter, r *http.Request) {
 		it.Send(w, response.JSON{
 			Code: http.StatusUnauthorized,
 
-			Error: model.Error{
+			Error: response.Error{
 				Name:    "Unauthorized",
 				Message: model.ErrUnexpectPayload.Error(),
 			},

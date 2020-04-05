@@ -17,7 +17,7 @@ func (it *Handler) POST(w http.ResponseWriter, r *http.Request) {
 		it.Send(w, response.JSON{
 			Code: http.StatusBadRequest,
 
-			Error: model.Error{
+			Error: response.Error{
 				Name:    "Unexpect Payload",
 				Message: model.ErrUnexpectPayload.Error(),
 			},
@@ -32,7 +32,7 @@ func (it *Handler) POST(w http.ResponseWriter, r *http.Request) {
 		it.Send(w, response.JSON{
 			Code: http.StatusUnauthorized,
 
-			Error: model.Error{
+			Error: response.Error{
 				Name:    "Unexpect Secret Code",
 				Message: model.ErrUnauthorized.Error(),
 			},
@@ -48,7 +48,7 @@ func (it *Handler) POST(w http.ResponseWriter, r *http.Request) {
 		it.Send(w, response.JSON{
 			Code: http.StatusNotAcceptable,
 
-			Error: model.Error{
+			Error: response.Error{
 				Name:    "Create Admin Failed",
 				Message: err.Error(),
 			},

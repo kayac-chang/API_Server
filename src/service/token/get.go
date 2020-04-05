@@ -13,7 +13,7 @@ func (it *Handler) Get(w http.ResponseWriter, r *http.Request) {
 	token := it.URLParam(r, "token")
 
 	// Pass in Auth logic
-	user, err := it.userCase.Auth(token)
+	user, err := it.token.Auth(token)
 	if err != nil {
 		it.Send(w, response.ProtoBuf{
 			Code: http.StatusUnauthorized,
