@@ -13,6 +13,7 @@ type Order struct {
 
 	State State  `json:"state" db:"state"`
 	Bet   uint64 `json:"bet" db:"bet"`
+	Win   uint64 `json:"win" db:"win"`
 
 	CreatedAt   sql.NullTime `json:"created_at" db:"created_at"`
 	CompletedAt sql.NullTime `json:"completed_at" db:"completed_at,omitempty"`
