@@ -51,7 +51,7 @@ func (it *Usecase) Create(order *model.Order) error {
 	return it.order.Store("Cache", order)
 }
 
-func (it *Usecase) Checkout(orderID string) (*model.Order, error) {
+func (it *Usecase) Checkout(orderID string, win uint64) (*model.Order, error) {
 
 	order, err := it.order.FindByID(orderID)
 	if err != nil {
@@ -59,6 +59,7 @@ func (it *Usecase) Checkout(orderID string) (*model.Order, error) {
 	}
 
 	order.State = model.Completed
+	order.Win = win
 	order.CompletedAt = sql.NullTime{time.Now(), true}
 
 	// send end round
@@ -176,6 +177,7 @@ func (it *Usecase) sendEndRound(order *model.Order) error {
 		"account":      user.Username,
 		"gamename":     game.Name,
 		"roundid":      order.ID,
+		"amount":       order.Win,
 		"completed_at": order.CompletedAt.Time,
 	}
 
