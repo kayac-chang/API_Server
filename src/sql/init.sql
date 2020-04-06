@@ -59,6 +59,7 @@ CREATE TABLE IF NOT EXISTS orders (
     -- properties
     state CHAR(1) NOT NULL DEFAULT 'P',
     bet NUMERIC NOT NULL DEFAULT 0,
+    win NUMERIC NOT NULL DEFAULT 0,
     
     -- fk
     game_id CHAR(32) NOT NULL REFERENCES games,
