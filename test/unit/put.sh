@@ -2,7 +2,7 @@
 
 source $(dirname $0)/var.sh
 
-order_id=9ba3eaec-2fbb-4dd9-a27c-a83f9ccc3149
+order_id=0f504aa2-932d-4869-af9e-ae3dfa4c82ba
 
 URL=$HOST/v1/orders/$order_id
 MSG_TYPE=Order
@@ -11,6 +11,7 @@ PROTO_FILE=model/pb/order.proto
 req=$(
 cat << EOF
     state: Completed
+    win: 50
     completed_at: {
         seconds: 1584156999
         nanos: 386469000
