@@ -75,13 +75,14 @@ func (it *Handler) POST(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	href := it.env.Service.Domain + "/" + it.env.API.Version + "/token"
+	gameHref := game.Href + "?" + "access_token=" + token.AccessToken
+	selfHref := it.env.Service.Domain + "/" + it.env.API.Version + "/token"
 
 	res := map[string]interface{}{
 		"token": token,
 		"links": [...]response.Link{
-			{Relation: "access", Method: "GET", Href: game.Href},
-			{Relation: "reauthorize", Method: "POST", Href: href},
+			{Relation: "access", Method: "GET", Href: gameHref},
+			{Relation: "reauthorize", Method: "POST", Href: selfHref},
 		},
 	}
 
