@@ -1,5 +1,5 @@
-@hostname = 127.0.0.1
-@port = 8000
+@hostname = 35.184.168.53
+@port = 9000
 @host = {{hostname}}:{{port}}
 
 ### Create Admin
@@ -77,7 +77,8 @@ Authorization: Bearer {{authToken}}
 ### Token
 @session = dfd99af9-f92f-4161-8e62-9598fb38931b
 @game = "catpunch"
-@username = "mouse1"
+# @username = "mouse1"
+# @name gameToken
 POST http://{{host}}/v1/tokens
 Content-Type: application/json
 Session: {{session}}
@@ -85,4 +86,25 @@ Session: {{session}}
 {
     "game": {{game}},
     "username": {{username}}
+}
+
+### 
+@access_token = {{gameToken.response.body.$.data.token.access_token}}
+
+### Game Init
+# @name gameInit
+POST http://localhost:8000/game/init
+Authorization: Bearer {{access_token}}
+
+###
+@gametypeid = {{gameInit.response.body.$.data.player.gametypeid}}
+
+@betrate = {{gameInit.response.body.$.data.betrate.betratelinkindex[0]}}
+
+POST http://localhost:8000/game/result
+Authorization: Bearer {{access_token}}
+
+{
+    "gametypeid": "{{gametypeid}}",
+    "bet": {{betrate}}
 }
