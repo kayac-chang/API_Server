@@ -29,6 +29,7 @@ func (cfg PostgresConfig) ToURL() string {
 
 type Env struct {
 	Postgres PostgresConfig
+	Redis    Redis
 	Secret   []byte
 	Agent    Agent
 	Service  Service
@@ -57,6 +58,11 @@ type SSL struct {
 	Key  string
 }
 
+type Redis struct {
+	HOST string
+	PORT string
+}
+
 func New() *Env {
 
 	err := godotenv.Load()
@@ -73,6 +79,11 @@ func New() *Env {
 			"user":     getEnv("PG_USER"),
 			"password": getEnv("PG_PASSWORD"),
 			"dbname":   getEnv("PG_NAME"),
+		},
+
+		Redis: Redis{
+			HOST: getEnv("REDIS_HOST"),
+			PORT: getEnv("REDIS_PORT"),
 		},
 
 		Service: Service{

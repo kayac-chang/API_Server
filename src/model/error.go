@@ -3,8 +3,13 @@ package model
 import "errors"
 
 type Error struct {
-	Name    string `json:"name"`
-	Message string `json:"message"`
+	Code    int
+	Name    string
+	Message string
+}
+
+func (it *Error) Error() string {
+	return it.Message
 }
 
 var (

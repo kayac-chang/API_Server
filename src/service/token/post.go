@@ -3,93 +3,141 @@ package token
 import (
 	"api/model"
 	"api/model/response"
+	"api/utils"
 
 	"encoding/json"
 	"net/http"
+
+	errs "github.com/pkg/errors"
 )
 
 func (it *Handler) POST(w http.ResponseWriter, r *http.Request) {
 
-	// == Check Session ID ==
-	session := r.Header.Get("session")
-	if session == "" {
+	main := func() interface{} {
 
-		it.Send(w, response.JSON{
-			Code: http.StatusBadRequest,
+		if err := it.checkHeader(r); err != nil {
+			err := err.(*model.Error)
 
-			Error: model.Error{
-				Name:    "Missing Session ID",
-				Message: "Required header session id for authentication",
-			},
-		})
+			err.Name = "Check Request #1"
 
-		return
+			return err
+		}
+
+		req, err := it.parseJSON(r)
+		if err != nil {
+			err := err.(*model.Error)
+
+			err.Name = "Parse JSON #2"
+
+			return err
+		}
+
+		if err := it.checkPayload(req); err != nil {
+			err := err.(*model.Error)
+
+			err.Name = "Check Request Payload #3"
+
+			return err
+		}
+
+		req["session"] = r.Header.Get("session")
+		results, err := it.business(req)
+		if err != nil {
+			return err
+		}
+
+		token := results[0].(*model.Token)
+		game := results[1].(*model.Game)
+
+		return it.genResponse(game, token)
 	}
 
-	// == Parse Payload ==
+	it.Send(w, main())
+}
+
+func (it *Handler) checkHeader(r *http.Request) error {
+	session := r.Header.Get("session")
+	contentType := r.Header.Get("Content-Type")
+
+	return it.token.CheckHeader(session, contentType)
+}
+
+func (it *Handler) parseJSON(r *http.Request) (map[string]string, error) {
+
 	req := map[string]string{}
+
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 
-		it.Send(w, response.JSON{
-			Code: http.StatusBadRequest,
-
-			Error: model.Error{
-				Name:    "Unexpect Payload",
-				Message: model.ErrUnexpectPayload.Error(),
-			},
-		})
-
-		return
+		return nil, &model.Error{
+			Code:    http.StatusInternalServerError,
+			Message: errs.WithMessage(err, "Error occured when parsing payload").Error(),
+		}
 	}
 
-	// == Registration ==
-	username := req["username"]
-	token, err := it.userCase.Regist(username, session)
-	if err != nil {
+	return req, nil
+}
 
-		it.Send(w, response.JSON{
-			Code: http.StatusUnauthorized,
-
-			Error: model.Error{
-				Name:    "User Registration Failed",
-				Message: err.Error(),
-			},
-		})
-
-		return
-	}
+func (it *Handler) checkPayload(req map[string]string) error {
 
 	gamename := req["game"]
-	game, err := it.gameCase.FindByName(gamename)
-	if err != nil {
+	username := req["username"]
 
-		it.Send(w, response.JSON{
-			Code: http.StatusNotFound,
+	return it.token.CheckPayload(gamename, username)
+}
 
-			Error: model.Error{
-				Name:    gamename + " Not Found",
-				Message: err.Error(),
-			},
-		})
+func (it *Handler) business(req map[string]string) ([]interface{}, error) {
 
-		return
-	}
+	registration := utils.Promisefy(func() (interface{}, error) {
+
+		username := req["username"]
+		session := req["session"]
+
+		token, err := it.token.Regist(username, session)
+		if err != nil {
+			err := err.(*model.Error)
+
+			err.Name = "Registration #4"
+
+			return nil, err
+		}
+
+		return token, nil
+	})
+
+	getGameLink := utils.Promisefy(func() (interface{}, error) {
+
+		name := req["game"]
+
+		game, err := it.game.FindByName(name)
+		if err != nil {
+			err := err.(*model.Error)
+
+			err.Name = "Get Game Link #5"
+
+			return nil, err
+		}
+
+		return game, nil
+	})
+
+	return utils.WaitAll(registration, getGameLink)
+}
+
+func (it *Handler) genResponse(game *model.Game, token *model.Token) interface{} {
+
+	href := it.getHref("/tokens")
 
 	gameHref := game.Href + "?" + "access_token=" + token.AccessToken
-	selfHref := it.env.Service.Domain + "/" + it.env.API.Version + "/token"
 
-	res := map[string]interface{}{
-		"token": token,
-		"links": [...]response.Link{
-			{Relation: "access", Method: "GET", Href: gameHref},
-			{Relation: "reauthorize", Method: "POST", Href: selfHref},
-		},
-	}
-
-	// == Send Response ==
-	it.Send(w, response.JSON{
+	return response.JSON{
 		Code: http.StatusCreated,
 
-		Data: res,
-	})
+		Data: map[string]interface{}{
+			"token": token,
+			"links": [...]response.Link{
+				{Relation: "access", Method: "GET", Href: gameHref},
+				{Relation: "reauthorize", Method: "POST", Href: href},
+			},
+		},
+	}
 }

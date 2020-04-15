@@ -20,3 +20,8 @@ type ProtoBuf struct {
 	Code int
 	Data proto.Message
 }
+
+type Error struct {
+	Name    string `json:"name"`
+	Message string `json:"message"`
+}
