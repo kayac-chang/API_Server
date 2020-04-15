@@ -127,13 +127,15 @@ func (it *Handler) genResponse(game *model.Game, token *model.Token) interface{}
 
 	href := it.getHref("/tokens")
 
+	gameHref := game.Href + "?" + "access_token=" + token.AccessToken
+
 	return response.JSON{
 		Code: http.StatusCreated,
 
 		Data: map[string]interface{}{
 			"token": token,
 			"links": [...]response.Link{
-				{Relation: "access", Method: "GET", Href: game.Href},
+				{Relation: "access", Method: "GET", Href: gameHref},
 				{Relation: "reauthorize", Method: "POST", Href: href},
 			},
 		},
