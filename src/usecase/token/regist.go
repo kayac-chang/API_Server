@@ -10,26 +10,26 @@ import (
 
 func (it *Usecase) Regist(username string, session string) (*model.Token, error) {
 
-	// Check user with agent
-	balance, err := it.agent.CheckPlayer(username, session)
+	_, err := it.agent.CheckPlayer(username, session)
+
 	if err != nil {
+
 		msg := "Request username authorized failed"
 
 		return nil, &model.Error{
 			Code:    http.StatusUnauthorized,
-			Name:    "Unauthorized",
 			Message: errs.WithMessage(err, msg).Error(),
 		}
 	}
 
-	// Generate JWT token
 	token, err := it.sign()
+
 	if err != nil {
+
 		msg := "Error occured when generating JWT token"
 
 		return nil, &model.Error{
 			Code:    http.StatusInternalServerError,
-			Name:    "Generate Token Failed",
 			Message: errs.WithMessage(err, msg).Error(),
 		}
 	}

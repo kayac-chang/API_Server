@@ -10,9 +10,9 @@ func (it *Usecase) Auth(token string) (*model.User, error) {
 		Token: token,
 	}
 
-	if err := it.repo.FindBy("Token", &user); err != nil {
-		return nil, err
-	}
+	// if err := it.repo.FindBy("Token", &user); err != nil {
+	// 	return nil, err
+	// }
 
 	return &user, nil
 }

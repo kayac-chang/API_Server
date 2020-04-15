@@ -29,8 +29,8 @@ func New(env *env.Env, db *postgres.DB, c *cache.Cache) *Usecase {
 	return &Usecase{
 		env:   env,
 		order: orderrepo.New(db, c),
-		user:  userrepo.New(db, c),
-		game:  gamerepo.New(db, c),
+		// user:  userrepo.New(db, c),
+		game: gamerepo.New(db, c),
 	}
 }
 
@@ -99,9 +99,9 @@ func (it *Usecase) sendBet(order *model.Order) error {
 	user := model.User{
 		ID: order.UserID,
 	}
-	if err := it.user.FindBy("ID", &user); err != nil {
-		return err
-	}
+	// if err := it.user.FindBy("ID", &user); err != nil {
+	// 	return err
+	// }
 
 	game, err := it.game.FindByID(order.GameID)
 	if err != nil {
@@ -149,9 +149,9 @@ func (it *Usecase) sendBet(order *model.Order) error {
 
 	user.Balance = uint64(balance)
 
-	if err := it.user.Store("Cache", &user); err != nil {
-		return err
-	}
+	// if err := it.user.Store("Cache", &user); err != nil {
+	// 	return err
+	// }
 
 	return nil
 }
@@ -162,9 +162,9 @@ func (it *Usecase) sendEndRound(order *model.Order) error {
 	user := model.User{
 		ID: order.UserID,
 	}
-	if err := it.user.FindBy("ID", &user); err != nil {
-		return err
-	}
+	// if err := it.user.FindBy("ID", &user); err != nil {
+	// 	return err
+	// }
 
 	game, err := it.game.FindByID(order.GameID)
 	if err != nil {
@@ -212,9 +212,9 @@ func (it *Usecase) sendEndRound(order *model.Order) error {
 
 	user.Balance = uint64(balance)
 
-	if err := it.user.Store("Cache", &user); err != nil {
-		return err
-	}
+	// if err := it.user.Store("Cache", &user); err != nil {
+	// 	return err
+	// }
 
 	return nil
 }
