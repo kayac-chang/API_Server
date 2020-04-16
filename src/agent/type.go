@@ -15,15 +15,15 @@ type Agent struct {
 	Token  string
 }
 
-func New(env *env.Env) *Agent {
-	return &Agent{
+func New(env env.Env) Agent {
+	return Agent{
 		Domain: env.Agent.Domain,
 		API:    env.Agent.API,
 		Token:  env.Agent.Token,
 	}
 }
 
-func (it *Agent) CheckPlayer(username string, session string) (uint64, error) {
+func (it Agent) CheckPlayer(username string, session string) (uint64, error) {
 
 	api := "/player/check/" + username
 

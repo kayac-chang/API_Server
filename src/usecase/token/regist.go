@@ -4,14 +4,14 @@ import (
 	"api/framework/jwt"
 	"api/model"
 	"net/http"
+	"time"
 
 	errs "github.com/pkg/errors"
 )
 
 func (it *Usecase) Regist(username string, session string) (*model.Token, error) {
 
-	_, err := it.agent.CheckPlayer(username, session)
-
+	balance, err := it.agent.CheckPlayer(username, session)
 	if err != nil {
 
 		msg := "Request username authorized failed"
@@ -22,8 +22,7 @@ func (it *Usecase) Regist(username string, session string) (*model.Token, error)
 		}
 	}
 
-	token, err := it.sign()
-
+	token, err := jwt.Sign(it.env)
 	if err != nil {
 
 		msg := "Error occured when generating JWT token"
@@ -34,12 +33,41 @@ func (it *Usecase) Regist(username string, session string) (*model.Token, error)
 		}
 	}
 
-	// Store user in Redis with key users:token
+	// Create User
+	user := model.User{
+		Username: username,
+		Balance:  balance,
+		Data: model.Data{
+			CreatedAt: time.Now(),
+			UpdatedAt: time.Now(),
+		},
+	}
+
+	if err := it.user.Store(user); err != nil {
+
+		msg := "Error occured when storing user"
+
+		return nil, &model.Error{
+			Code:    http.StatusInternalServerError,
+			Message: errs.WithMessage(err, msg).Error(),
+		}
+	}
+
+	// Associate
+	associate := map[string]string{
+		"session": session,
+		"user":    username,
+	}
+
+	if err := it.token.Store(token.AccessToken, associate); err != nil {
+
+		msg := "Error occured when storing user"
+
+		return nil, &model.Error{
+			Code:    http.StatusInternalServerError,
+			Message: errs.WithMessage(err, msg).Error(),
+		}
+	}
 
 	return token, nil
-}
-
-func (it *Usecase) sign() (*model.Token, error) {
-
-	return jwt.Sign(it.env)
 }
