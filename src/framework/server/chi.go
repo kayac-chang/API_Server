@@ -13,10 +13,10 @@ import (
 
 type Server struct {
 	*chi.Mux
-	env *env.Env
+	env env.Env
 }
 
-func New(e *env.Env) *Server {
+func New(e env.Env) *Server {
 
 	server := chi.NewRouter()
 

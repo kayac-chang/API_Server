@@ -1,7 +1,6 @@
 package main
 
 import (
-	"api/agent"
 	"api/env"
 	"api/framework/cache"
 	"api/framework/postgres"
@@ -12,7 +11,6 @@ import (
 	"api/service/order"
 	"api/service/token"
 
-	userrepo "api/repo/user"
 	tokenusecase "api/usecase/token"
 
 	gameusecase "api/usecase/game"
@@ -26,16 +24,11 @@ func main() {
 	env := env.New()
 	cache := cache.Get()
 	db := postgres.New(env.Postgres.ToURL())
-
-	agent := agent.New(env)
-
-	// === Repo ===
 	redis := redis.New(env.Redis.HOST, env.Redis.PORT)
 
-	userRepo := userrepo.New(redis)
-
 	// === Usecase ===
-	tokenUsecase := tokenusecase.New(env, userRepo, agent)
+	tokenUsecase := tokenusecase.New(env, redis)
+
 	gameUsecase := gameusecase.New(env, db, cache)
 
 	// === Handler ===

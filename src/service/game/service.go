@@ -11,17 +11,17 @@ import (
 
 type Handler struct {
 	*server.Server
-	env   *env.Env
+	env   env.Env
 	game  *game.Usecase
 	admin *admin.Usecase
 }
 
-func New(s *server.Server, e *env.Env, db *postgres.DB, c *cache.Cache) *Handler {
+func New(s *server.Server, env env.Env, db *postgres.DB, c *cache.Cache) *Handler {
 
 	return &Handler{
 		s,
-		e,
-		game.New(e, db, c),
-		admin.New(e, db, c),
+		env,
+		game.New(env, db, c),
+		admin.New(env, db, c),
 	}
 }

@@ -8,11 +8,11 @@ import (
 )
 
 type Usecase struct {
-	env  *env.Env
+	env  env.Env
 	repo *repo.Repo
 }
 
-func New(env *env.Env, db *postgres.DB, c *cache.Cache) *Usecase {
+func New(env env.Env, db *postgres.DB, c *cache.Cache) *Usecase {
 
 	return &Usecase{
 		env:  env,

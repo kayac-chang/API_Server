@@ -3,17 +3,24 @@ package token
 import (
 	"api/agent"
 	"api/env"
+	"api/framework/redis"
 
-	repo "api/repo/user"
+	"api/repo/token"
+	"api/repo/user"
 )
 
 type Usecase struct {
-	env   *env.Env
-	repo  *repo.Repo
-	agent *agent.Agent
+	env   env.Env
+	user  user.Repo
+	token token.Repo
+	agent agent.Agent
 }
 
-func New(env *env.Env, repo *repo.Repo, agent *agent.Agent) *Usecase {
+func New(env env.Env, db redis.Redis) Usecase {
 
-	return &Usecase{env, repo, agent}
+	user := user.New(db)
+	token := token.New(db)
+	agent := agent.New(env)
+
+	return Usecase{env, user, token, agent}
 }

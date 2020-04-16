@@ -18,13 +18,13 @@ import (
 )
 
 type Usecase struct {
-	env   *env.Env
+	env   env.Env
 	order *orderrepo.Repo
 	user  *userrepo.Repo
 	game  *gamerepo.Repo
 }
 
-func New(env *env.Env, db *postgres.DB, c *cache.Cache) *Usecase {
+func New(env env.Env, db *postgres.DB, c *cache.Cache) *Usecase {
 
 	return &Usecase{
 		env:   env,
@@ -96,9 +96,9 @@ func (it *Usecase) Store(order *model.Order) error {
 func (it *Usecase) sendBet(order *model.Order) error {
 	api := "/transaction/game/bet"
 
-	user := model.User{
-		ID: order.UserID,
-	}
+	// user := model.User{
+	// 	ID: order.UserID,
+	// }
 	// if err := it.user.FindBy("ID", &user); err != nil {
 	// 	return err
 	// }
@@ -111,7 +111,7 @@ func (it *Usecase) sendBet(order *model.Order) error {
 	url := it.env.Agent.Domain + it.env.Agent.API + api
 
 	req := map[string]interface{}{
-		"account":    user.Username,
+		// "account":    user.Username,
 		"created_at": order.CreatedAt.Time,
 		"gamename":   game.Name,
 		"roundid":    order.ID,
@@ -121,7 +121,7 @@ func (it *Usecase) sendBet(order *model.Order) error {
 	headers := map[string]string{
 		"Content-Type":       "application/json",
 		"organization-token": it.env.Agent.Token,
-		"session":            user.Session,
+		// "session":            user.Session,
 	}
 
 	resp, err := utils.Post(url, req, headers)
@@ -144,10 +144,10 @@ func (it *Usecase) sendBet(order *model.Order) error {
 
 	log.Printf("Agent: [ %s ] Success !!!\nResponse:\n %s", api, json.Jsonify(res))
 
-	data := res["data"].(map[string]interface{})
-	balance := data["balance"].(float64)
+	// data := res["data"].(map[string]interface{})
+	// balance := data["balance"].(float64)
 
-	user.Balance = uint64(balance)
+	// user.Balance = uint64(balance)
 
 	// if err := it.user.Store("Cache", &user); err != nil {
 	// 	return err
@@ -159,9 +159,9 @@ func (it *Usecase) sendBet(order *model.Order) error {
 func (it *Usecase) sendEndRound(order *model.Order) error {
 	api := "/transaction/game/endround"
 
-	user := model.User{
-		ID: order.UserID,
-	}
+	// user := model.User{
+	// 	ID: order.UserID,
+	// }
 	// if err := it.user.FindBy("ID", &user); err != nil {
 	// 	return err
 	// }
@@ -174,7 +174,7 @@ func (it *Usecase) sendEndRound(order *model.Order) error {
 	url := it.env.Agent.Domain + it.env.Agent.API + api
 
 	req := map[string]interface{}{
-		"account":      user.Username,
+		// "account":      user.Username,
 		"gamename":     game.Name,
 		"roundid":      order.ID,
 		"amount":       order.Win,
@@ -184,7 +184,7 @@ func (it *Usecase) sendEndRound(order *model.Order) error {
 	headers := map[string]string{
 		"Content-Type":       "application/json",
 		"organization-token": it.env.Agent.Token,
-		"session":            user.Session,
+		// "session":            user.Session,
 	}
 
 	resp, err := utils.Post(url, req, headers)
@@ -207,10 +207,10 @@ func (it *Usecase) sendEndRound(order *model.Order) error {
 
 	log.Printf("Agent: [ %s ] Success !!!\nResponse:\n %s", api, json.Jsonify(res))
 
-	data := res["data"].(map[string]interface{})
-	balance := data["balance"].(float64)
+	// data := res["data"].(map[string]interface{})
+	// balance := data["balance"].(float64)
 
-	user.Balance = uint64(balance)
+	// user.Balance = uint64(balance)
 
 	// if err := it.user.Store("Cache", &user); err != nil {
 	// 	return err
