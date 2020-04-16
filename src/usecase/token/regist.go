@@ -42,7 +42,6 @@ func (it *Usecase) Regist(username string, session string) (*model.Token, error)
 			UpdatedAt: time.Now(),
 		},
 	}
-
 	if err := it.user.Store(user); err != nil {
 
 		msg := "Error occured when storing user"
@@ -58,10 +57,9 @@ func (it *Usecase) Regist(username string, session string) (*model.Token, error)
 		"session": session,
 		"user":    username,
 	}
-
 	if err := it.token.Store(token.AccessToken, associate); err != nil {
 
-		msg := "Error occured when storing user"
+		msg := "Error occured when storing token associate data"
 
 		return nil, &model.Error{
 			Code:    http.StatusInternalServerError,
