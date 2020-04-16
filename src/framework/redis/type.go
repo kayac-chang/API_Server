@@ -19,7 +19,7 @@ type Action interface {
 // New return Redis client
 func New(host string, port string) Redis {
 
-	pool, err := radix.NewPool("tcp", "127.0.0.1:6379", 10)
+	pool, err := radix.NewPool("tcp", host+":"+port, 10)
 	if err != nil {
 		log.Fatal("Init: Failed when connect to Redis...")
 	}
@@ -28,13 +28,12 @@ func New(host string, port string) Redis {
 }
 
 // Set return an action for set command
-func (it Redis) Set(key string, val interface{}) Action {
+func (it Redis) Set(key string, val interface{}) error {
 
 	switch val := val.(type) {
 
 	case string:
-		return radix.Cmd(nil, "SET", key, val)
-
+		return it.pool.Do(radix.Cmd(nil, "SET", key, val))
 	}
 
 	panic("Exception on Redis.Set: Not support val type")

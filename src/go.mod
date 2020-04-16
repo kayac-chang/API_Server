@@ -22,7 +22,7 @@ require (
 	github.com/kabukky/httpscerts v0.0.0-20150320125433-617593d7dcb3 // indirect
 	github.com/labstack/echo v3.3.10+incompatible // indirect
 	github.com/labstack/echo/v4 v4.1.14 // indirect
-	github.com/mediocregopher/radix/v3 v3.4.2 // indirect
+	github.com/mediocregopher/radix/v3 v3.4.2
 	github.com/onsi/ginkgo v1.12.0 // indirect
 	github.com/onsi/gomega v1.9.0 // indirect
 	github.com/patrickmn/go-cache v2.1.0+incompatible
