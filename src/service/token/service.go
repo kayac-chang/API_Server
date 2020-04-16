@@ -10,12 +10,12 @@ import (
 
 type Handler struct {
 	*server.Server
-	env   *env.Env
-	token *token.Usecase
+	env   env.Env
+	token token.Usecase
 	game  *game.Usecase
 }
 
-func New(server *server.Server, env *env.Env, token *token.Usecase, game *game.Usecase) *Handler {
+func New(server *server.Server, env env.Env, token token.Usecase, game *game.Usecase) *Handler {
 
 	return &Handler{server, env, token, game}
 }

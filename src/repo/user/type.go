@@ -4,11 +4,13 @@ import (
 	"api/framework/redis"
 )
 
+const prefix = "users:"
+
 type Repo struct {
-	*redis.Redis
+	db redis.Redis
 }
 
-func New(redis *redis.Redis) *Repo {
+func New(db redis.Redis) Repo {
 
-	return &Repo{redis}
+	return Repo{db}
 }

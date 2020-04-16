@@ -35,7 +35,6 @@ func (it *Handler) Get(w http.ResponseWriter, r *http.Request) {
 		Code: http.StatusOK,
 
 		Data: &pb.User{
-			UserId:   user.ID,
 			Username: user.Username,
 			Balance:  user.Balance,
 		},

@@ -10,7 +10,7 @@ import (
 	"github.com/dgrijalva/jwt-go"
 )
 
-func Sign(env *env.Env) (*model.Token, error) {
+func Sign(env env.Env) (*model.Token, error) {
 
 	createdTime := time.Now()
 

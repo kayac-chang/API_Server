@@ -2,36 +2,39 @@ package redis
 
 import (
 	"log"
-	"time"
 
-	"github.com/gomodule/redigo/redis"
+	"github.com/mediocregopher/radix/v3"
 )
 
+// Redis radix client wrapper
 type Redis struct {
-	*redis.Pool
+	pool *radix.Pool
 }
 
-func New(host string, port string) *Redis {
+// Action radix wrapper
+type Action interface {
+	radix.Action
+}
 
-	pool := &redis.Pool{
+// New return Redis client
+func New(host string, port string) Redis {
 
-		MaxIdle: 3,
-
-		IdleTimeout: 240 * time.Second,
-
-		Dial: func() (redis.Conn, error) {
-
-			addr := host + ":" + port
-
-			conn, err := redis.Dial("tcp", addr)
-
-			if err != nil {
-				log.Fatal(err)
-			}
-
-			return conn, err
-		},
+	pool, err := radix.NewPool("tcp", host+":"+port, 10)
+	if err != nil {
+		log.Fatal("Init: Failed when connect to Redis...")
 	}
 
-	return &Redis{pool}
+	return Redis{pool}
+}
+
+// Set return an action for set command
+func (it Redis) Set(key string, val interface{}) error {
+
+	switch val := val.(type) {
+
+	case string:
+		return it.pool.Do(radix.Cmd(nil, "SET", key, val))
+	}
+
+	panic("Exception on Redis.Set: Not support val type")
 }

@@ -63,7 +63,7 @@ type Redis struct {
 	PORT string
 }
 
-func New() *Env {
+func New() Env {
 
 	err := godotenv.Load()
 
@@ -71,7 +71,7 @@ func New() *Env {
 		log.Panicf("No [ .env ] file found...\n")
 	}
 
-	env := &Env{
+	env := Env{
 
 		Postgres: map[string]string{
 			"host":     getEnv("PG_HOST"),
