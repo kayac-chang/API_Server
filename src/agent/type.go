@@ -23,7 +23,7 @@ func New(env env.Env) Agent {
 	}
 }
 
-func (it Agent) CheckPlayer(username string, session string) (uint64, error) {
+func (it Agent) CheckPlayer(username string, session string) (float64, error) {
 
 	api := "/player/check/" + username
 
@@ -57,5 +57,5 @@ func (it Agent) CheckPlayer(username string, session string) (uint64, error) {
 	data := res["data"].(map[string]interface{})
 	amount := data["balance"].(float64)
 
-	return uint64(amount), nil
+	return amount, nil
 }

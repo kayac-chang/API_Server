@@ -16,7 +16,7 @@ type Server struct {
 	env env.Env
 }
 
-func New(e env.Env) *Server {
+func New(e env.Env) Server {
 
 	server := chi.NewRouter()
 
@@ -35,10 +35,10 @@ func New(e env.Env) *Server {
 	server.Use(middleware.Logger)
 	server.Use(middleware.Recoverer)
 
-	return &Server{server, e}
+	return Server{server, e}
 }
 
-func (it *Server) Listen(port string) {
+func (it Server) Listen(port string) {
 
 	log.Fatal(
 		http.ListenAndServe(port, it),

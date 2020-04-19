@@ -5,12 +5,12 @@ import (
 )
 
 type Game struct {
-	ID string `json:"game_id,omitempty" db:"game_id"`
+	ID string `json:"game_id"`
 
-	Name     string `json:"name" db:"name"`
-	Href     string `json:"href" db:"href"`
-	Category string `json:"category" db:"category"`
+	Name     string `json:"name"`
+	Href     string `json:"href"`
+	Category string `json:"category"`
 
-	CreatedAt time.Time `json:"-" db:"created_at"`
-	UpdatedAt time.Time `json:"-" db:"updated_at"`
+	CreatedAt time.Time `json:"created_at"`
+	UpdatedAt time.Time `json:"updated_at"`
 }

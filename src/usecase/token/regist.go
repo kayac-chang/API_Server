@@ -9,28 +9,36 @@ import (
 	errs "github.com/pkg/errors"
 )
 
-func (it *Usecase) Regist(username string, session string) (*model.Token, error) {
+// Regist regist token business flow
+func (it Usecase) Regist(username string, session string) (*model.Token, error) {
 
-	balance, err := it.agent.CheckPlayer(username, session)
-	if err != nil {
+	_balance, _err := it.agent.CheckPlayer(username, session)
+	if _err != nil {
 
 		msg := "Request username authorized failed"
 
-		return nil, &model.Error{
+		err := &model.Error{
 			Code:    http.StatusUnauthorized,
-			Message: errs.WithMessage(err, msg).Error(),
+			Message: errs.WithMessage(_err, msg).Error(),
 		}
+
+		return nil, err
 	}
 
-	token, err := jwt.Sign(it.env)
-	if err != nil {
+	// TODO: maybe fix to uint64 is a bad idea
+	balance := uint64(_balance)
+
+	token, _err := jwt.Sign(it.env)
+	if _err != nil {
 
 		msg := "Error occured when generating JWT token"
 
-		return nil, &model.Error{
+		err := &model.Error{
 			Code:    http.StatusInternalServerError,
-			Message: errs.WithMessage(err, msg).Error(),
+			Message: errs.WithMessage(_err, msg).Error(),
 		}
+
+		return nil, err
 	}
 
 	// Create User
@@ -42,14 +50,16 @@ func (it *Usecase) Regist(username string, session string) (*model.Token, error)
 			UpdatedAt: time.Now(),
 		},
 	}
-	if err := it.user.Store(user); err != nil {
+	if _err := it.user.Store(user); _err != nil {
 
 		msg := "Error occured when storing user"
 
-		return nil, &model.Error{
+		err := &model.Error{
 			Code:    http.StatusInternalServerError,
-			Message: errs.WithMessage(err, msg).Error(),
+			Message: errs.WithMessage(_err, msg).Error(),
 		}
+
+		return nil, err
 	}
 
 	// Associate
@@ -57,15 +67,17 @@ func (it *Usecase) Regist(username string, session string) (*model.Token, error)
 		"session": session,
 		"user":    username,
 	}
-	if err := it.token.Store(token.AccessToken, associate); err != nil {
+	if _err := it.token.Store(token.AccessToken, associate); _err != nil {
 
 		msg := "Error occured when storing token associate data"
 
-		return nil, &model.Error{
+		err := &model.Error{
 			Code:    http.StatusInternalServerError,
-			Message: errs.WithMessage(err, msg).Error(),
+			Message: errs.WithMessage(_err, msg).Error(),
 		}
+
+		return nil, err
 	}
 
-	return token, nil
+	return &token, nil
 }
