@@ -11,6 +11,7 @@ import (
 	errs "github.com/pkg/errors"
 )
 
+// POST POST /tokens
 func (it *Handler) POST(w http.ResponseWriter, r *http.Request) {
 
 	main := func() interface{} {
@@ -41,15 +42,12 @@ func (it *Handler) POST(w http.ResponseWriter, r *http.Request) {
 		}
 
 		req["session"] = r.Header.Get("session")
-		results, err := it.business(req)
+		token, game, err := it.business(req)
 		if err != nil {
 			return err
 		}
 
-		token := results[0].(*model.Token)
-		game := results[1].(*model.Game)
-
-		return it.genResponse(game, token)
+		return it.genResponse(token, game)
 	}
 
 	it.Send(w, main())
@@ -85,7 +83,7 @@ func (it *Handler) checkPayload(req map[string]string) error {
 	return it.token.CheckPayload(gamename, username)
 }
 
-func (it *Handler) business(req map[string]string) ([]interface{}, error) {
+func (it *Handler) business(req map[string]string) (*model.Token, *model.Game, error) {
 
 	registration := utils.Promisefy(func() (interface{}, error) {
 
@@ -120,10 +118,18 @@ func (it *Handler) business(req map[string]string) ([]interface{}, error) {
 		return game, nil
 	})
 
-	return utils.WaitAll(registration, getGameLink)
+	res, err := utils.WaitAll(registration, getGameLink)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	token := res[0].(*model.Token)
+	game := res[1].(*model.Game)
+
+	return token, game, nil
 }
 
-func (it *Handler) genResponse(game *model.Game, token *model.Token) interface{} {
+func (it *Handler) genResponse(token *model.Token, game *model.Game) interface{} {
 
 	href := it.getHref("/tokens")
 

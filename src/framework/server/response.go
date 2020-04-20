@@ -23,7 +23,7 @@ func (it *Server) Send(w http.ResponseWriter, val interface{}) {
 	case string:
 		w.Write([]byte(val))
 
-	case model.Error:
+	case *model.Error:
 		sendJSON(w, response.JSON{
 			Code: val.Code,
 

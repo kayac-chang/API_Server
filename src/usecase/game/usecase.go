@@ -2,20 +2,18 @@ package game
 
 import (
 	"api/env"
-	"api/framework/cache"
-	"api/framework/postgres"
-	repo "api/repo/game"
+	"api/framework/redis"
+	"api/repo/game"
 )
 
 type Usecase struct {
 	env  env.Env
-	repo *repo.Repo
+	repo game.Repo
 }
 
-func New(env env.Env, db *postgres.DB, c *cache.Cache) *Usecase {
+func New(env env.Env, db redis.Redis) Usecase {
 
-	return &Usecase{
-		env:  env,
-		repo: repo.New(db, c),
-	}
+	repo := game.New(db)
+
+	return Usecase{env, repo}
 }

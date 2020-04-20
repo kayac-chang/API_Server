@@ -10,7 +10,7 @@ import (
 	"github.com/dgrijalva/jwt-go"
 )
 
-func Sign(env env.Env) (*model.Token, error) {
+func Sign(env env.Env) (res model.Token, err error) {
 
 	createdTime := time.Now()
 
@@ -22,15 +22,15 @@ func Sign(env env.Env) (*model.Token, error) {
 
 	tokenString, err := token.SignedString(env.Secret)
 	if err != nil {
-		return nil, err
+		return
 	}
 
-	res := model.Token{
+	res = model.Token{
 		AccessToken: tokenString,
 		Type:        "Bearer",
 		ServiceID:   env.Service.ID,
 		CreatedAt:   createdTime,
 	}
 
-	return &res, nil
+	return
 }

@@ -1,18 +1,26 @@
 package game
 
-import "api/model"
+import (
+	"api/model"
+	"net/http"
 
-func (it *Usecase) FindByName(name string) (*model.Game, error) {
+	errs "github.com/pkg/errors"
+)
 
-	return it.repo.FindByName(name)
-}
+func (it Usecase) FindByName(name string) (*model.Game, error) {
 
-func (it *Usecase) FindByID(id string) (*model.Game, error) {
+	game, _err := it.repo.Find(name)
 
-	return it.repo.FindByID(id)
-}
+	if _err != nil {
+		msg := "Request game not found"
 
-func (it *Usecase) FindAll() ([]*model.Game, error) {
+		err := &model.Error{
+			Code:    http.StatusNotFound,
+			Message: errs.WithMessage(_err, msg).Error(),
+		}
 
-	return it.repo.FindAll()
+		return nil, err
+	}
+
+	return game, nil
 }

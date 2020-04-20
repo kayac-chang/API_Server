@@ -5,7 +5,7 @@ import (
 	"net/http"
 )
 
-func (it *Usecase) CheckHeader(session, contentType string) error {
+func (it Usecase) CheckHeader(session, contentType string) error {
 
 	if err := checkSession(session); err != nil {
 		return err
@@ -46,7 +46,7 @@ func checkContentType(contentType string) *model.Error {
 	return nil
 }
 
-func (it *Usecase) CheckPayload(game, username string) error {
+func (it Usecase) CheckPayload(game, username string) error {
 
 	if game == "" || username == "" {
 

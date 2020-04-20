@@ -27,7 +27,7 @@ func WaitCtx(ctx context.Context, task Promise) (interface{}, error) {
 
 func WaitAll(tasks ...Promise) ([]interface{}, error) {
 
-	return WaitAllCtx(context.Background())
+	return WaitAllCtx(context.Background(), tasks...)
 }
 
 func WaitAllCtx(ctx context.Context, tasks ...Promise) ([]interface{}, error) {

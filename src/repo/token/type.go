@@ -2,7 +2,6 @@ package token
 
 import (
 	"api/framework/redis"
-	"encoding/json"
 )
 
 const prefix = "tokens:"
@@ -21,12 +20,7 @@ func New(db redis.Redis) Repo {
 // Store store associate table with key by token
 func (it Repo) Store(token string, associate map[string]string) error {
 
-	json, err := json.Marshal(associate)
-	if err != nil {
-		return err
-	}
-
 	key := prefix + token
 
-	return it.db.Set(key, json)
+	return it.db.Set(key, associate)
 }
