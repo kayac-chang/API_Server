@@ -74,9 +74,9 @@ func Post(url string, body interface{}, headers map[string]string) (*http.Respon
 	return client.Do(req)
 }
 
-func ParseJSON(body io.ReadCloser) (map[string]string, error) {
+func ParseJSON(body io.ReadCloser) (map[string]interface{}, error) {
 
-	req := map[string]string{}
+	req := map[string]interface{}{}
 
 	if err := json.NewDecoder(body).Decode(&req); err != nil {
 

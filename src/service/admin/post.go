@@ -8,13 +8,14 @@ import (
 	"net/http"
 )
 
+// POST create admin account
 func (it Handler) POST(w http.ResponseWriter, r *http.Request) {
 
 	main := func() interface{} {
 
 		// == Check Content-Type #1 ==
 		contentType := r.Header.Get("Content-Type")
-		if err := utils.CheckContentType(contentType); err != nil {
+		if err := utils.CheckContentType(contentType, "application/json"); err != nil {
 
 			err.Name = "Check Request #1"
 
@@ -41,7 +42,11 @@ func (it Handler) POST(w http.ResponseWriter, r *http.Request) {
 		}
 
 		// == Create Admin Account #4 ==
-		admin, err := it.usecase.Store(req["email"], req["username"], req["password"])
+		email := req["email"].(string)
+		username := req["username"].(string)
+		password := req["password"].(string)
+
+		admin, err := it.usecase.Store(email, username, password)
 		if err != nil {
 			err := err.(*model.Error)
 
@@ -61,19 +66,11 @@ func (it Handler) POST(w http.ResponseWriter, r *http.Request) {
 	it.Send(w, main())
 }
 
-func (it Handler) checkPayload(req map[string]string) error {
+func (it Handler) checkPayload(req map[string]interface{}) error {
 
-	keys := []string{"secret", "email", "username", "password"}
-
-	for _, key := range keys {
-
-		if val, exist := req[key]; !exist || val == "" {
-
-			return &model.Error{
-				Code:    http.StatusBadRequest,
-				Message: "Request payload must contain " + key,
-			}
-		}
+	err := utils.CheckPayload(req, "secret", "email", "username", "password")
+	if err != nil {
+		return err
 	}
 
 	if req["secret"] != string(it.env.Secret) {
@@ -84,11 +81,13 @@ func (it Handler) checkPayload(req map[string]string) error {
 		}
 	}
 
-	if err := utils.CheckMail(req["email"]); err != nil {
+	email := req["email"].(string)
+	if err := utils.CheckMail(email); err != nil {
 		return err
 	}
 
-	if err := utils.CheckPassword(req["password"]); err != nil {
+	password := req["password"].(string)
+	if err := utils.CheckPassword(password); err != nil {
 		return err
 	}
 
