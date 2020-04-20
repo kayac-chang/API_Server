@@ -2,19 +2,17 @@ package admin
 
 import (
 	"api/env"
-	"api/framework/cache"
-	"api/framework/postgres"
 	"api/framework/server"
 	admin "api/usecase/admin"
 )
 
 type Handler struct {
-	*server.Server
+	server.Server
 	env     env.Env
 	usecase *admin.Usecase
 }
 
-func New(server *server.Server, env env.Env, db *postgres.DB, c *cache.Cache) *Handler {
+func New(server server.Server, env env.Env) *Handler {
 
 	return &Handler{
 		server,

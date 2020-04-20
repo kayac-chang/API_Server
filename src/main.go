@@ -4,8 +4,10 @@ import (
 	"api/env"
 	"api/framework/redis"
 	"api/framework/server"
+	"api/service/admin"
 	"api/service/token"
 
+	adminusecase "api/usecase/admin"
 	gameusecase "api/usecase/game"
 	tokenusecase "api/usecase/token"
 
@@ -22,6 +24,7 @@ func main() {
 	// === Usecase ===
 	tokenUsecase := tokenusecase.New(env, redis)
 	gameUsecase := gameusecase.New(env, redis)
+	adminUsecase := adminusecase.New(env, redis)
 
 	// === Handler ===
 	token := token.New(it, env, tokenUsecase, gameUsecase)
@@ -36,13 +39,13 @@ func main() {
 		// })
 
 		// === Admin ===
-		// router.Route("/admins", func(router chi.Router) {
-		// 	router.Post("/", admin.POST)
+		router.Route("/admins", func(router chi.Router) {
+			router.Post("/", admin.POST)
 
-		// 	router.Route("/tokens", func(router chi.Router) {
-		// 		router.Post("/", admin.Auth)
-		// 	})
-		// })
+			// router.Route("/tokens", func(router chi.Router) {
+			// 	router.Post("/", admin.Auth)
+			// })
+		})
 
 		// === User ===
 		// router.Route("/users", func(router chi.Router) {

@@ -3,64 +3,94 @@ package admin
 import (
 	"api/model"
 	"api/model/response"
+	"api/utils"
 
-	"encoding/json"
 	"net/http"
 )
 
-func (it *Handler) POST(w http.ResponseWriter, r *http.Request) {
+func (it Handler) POST(w http.ResponseWriter, r *http.Request) {
 
-	// == Parse Payload ==
-	req := map[string]string{}
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+	main := func() interface{} {
 
-		it.Send(w, response.JSON{
-			Code: http.StatusBadRequest,
+		// == Check Content-Type #1 ==
+		contentType := r.Header.Get("Content-Type")
+		if err := utils.CheckContentType(contentType); err != nil {
 
-			Error: response.Error{
-				Name:    "Unexpect Payload",
-				Message: model.ErrUnexpectPayload.Error(),
-			},
-		})
+			err.Name = "Check Request #1"
 
-		return
+			return err
+		}
+
+		// == Parse JSON #2 ==
+		req, err := utils.ParseJSON(r.Body)
+		if err != nil {
+			err := err.(*model.Error)
+
+			err.Name = "Parse JSON #2"
+
+			return err
+		}
+
+		// == Check Request Payload #3 ==
+		if err := it.checkPayload(req); err != nil {
+			err := err.(*model.Error)
+
+			err.Name = "Check Request Payload #3"
+
+			return err
+		}
+
+		// == Create Admin Account #4 ==
+		admin, err := it.usecase.Store(req["email"], req["username"], req["password"])
+		if err != nil {
+			err := err.(*model.Error)
+
+			err.Name = "Create Admin Account #4"
+
+			return err
+		}
+
+		// == Send Response ==
+		return response.JSON{
+			Code: http.StatusCreated,
+
+			Data: admin,
+		}
 	}
 
-	// Check secret code
+	it.Send(w, main())
+}
+
+func (it Handler) checkPayload(req map[string]string) error {
+
+	keys := []string{"secret", "email", "username", "password"}
+
+	for _, key := range keys {
+
+		if val, exist := req[key]; !exist || val == "" {
+
+			return &model.Error{
+				Code:    http.StatusBadRequest,
+				Message: "Request payload must contain " + key,
+			}
+		}
+	}
+
 	if req["secret"] != string(it.env.Secret) {
 
-		it.Send(w, response.JSON{
-			Code: http.StatusUnauthorized,
-
-			Error: response.Error{
-				Name:    "Unexpect Secret Code",
-				Message: model.ErrUnauthorized.Error(),
-			},
-		})
-
-		return
+		return &model.Error{
+			Code:    http.StatusBadRequest,
+			Message: "Secret Code is wrong",
+		}
 	}
 
-	// == Store ==
-	admin, err := it.usecase.Store(req)
-	if err != nil {
-
-		it.Send(w, response.JSON{
-			Code: http.StatusNotAcceptable,
-
-			Error: response.Error{
-				Name:    "Create Admin Failed",
-				Message: err.Error(),
-			},
-		})
-
-		return
+	if err := utils.CheckMail(req["email"]); err != nil {
+		return err
 	}
 
-	// == Send Response ==
-	it.Send(w, response.JSON{
-		Code: http.StatusCreated,
+	if err := utils.CheckPassword(req["password"]); err != nil {
+		return err
+	}
 
-		Data: admin,
-	})
+	return nil
 }
