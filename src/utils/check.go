@@ -37,9 +37,7 @@ func CheckSession(session string) *model.Error {
 	return nil
 }
 
-func CheckContentType(contentType string) *model.Error {
-
-	compare := "application/json"
+func CheckContentType(contentType string, compare string) *model.Error {
 
 	if contentType != compare {
 
@@ -52,13 +50,16 @@ func CheckContentType(contentType string) *model.Error {
 	return nil
 }
 
-func CheckPayload(game, username string) error {
+func CheckPayload(json map[string]interface{}, keys ...string) error {
 
-	if game == "" || username == "" {
+	for _, key := range keys {
 
-		return &model.Error{
-			Code:    http.StatusBadRequest,
-			Message: "Request payload must contain <game> and <username>",
+		if _, exist := json[key]; !exist {
+
+			return &model.Error{
+				Code:    http.StatusBadRequest,
+				Message: "Request payload must contain " + key,
+			}
 		}
 	}
 

@@ -61,16 +61,16 @@ func (it *Handler) checkHeader(r *http.Request) error {
 	}
 
 	contentType := r.Header.Get("Content-Type")
-	if err := utils.CheckContentType(contentType); err != nil {
+	if err := utils.CheckContentType(contentType, "application/json"); err != nil {
 		return err
 	}
 
 	return nil
 }
 
-func (it *Handler) parseJSON(r *http.Request) (map[string]string, error) {
+func (it *Handler) parseJSON(r *http.Request) (map[string]interface{}, error) {
 
-	req := map[string]string{}
+	req := map[string]interface{}{}
 
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 
@@ -83,20 +83,18 @@ func (it *Handler) parseJSON(r *http.Request) (map[string]string, error) {
 	return req, nil
 }
 
-func (it *Handler) checkPayload(req map[string]string) error {
+func (it *Handler) checkPayload(req map[string]interface{}) error {
 
-	gamename := req["game"]
-	username := req["username"]
-
-	return utils.CheckPayload(gamename, username)
+	return utils.CheckPayload(req, "game", "username")
 }
 
-func (it *Handler) business(req map[string]string) (*model.Token, *model.Game, error) {
+func (it *Handler) business(req map[string]interface{}) (*model.Token, *model.Game, error) {
+
+	username := req["username"].(string)
+	session := req["session"].(string)
+	name := req["game"].(string)
 
 	registration := utils.Promisefy(func() (interface{}, error) {
-
-		username := req["username"]
-		session := req["session"]
 
 		token, err := it.token.Regist(username, session)
 		if err != nil {
@@ -111,8 +109,6 @@ func (it *Handler) business(req map[string]string) (*model.Token, *model.Game, e
 	})
 
 	getGameLink := utils.Promisefy(func() (interface{}, error) {
-
-		name := req["game"]
 
 		game, err := it.game.FindByName(name)
 		if err != nil {
