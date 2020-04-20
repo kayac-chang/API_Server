@@ -54,10 +54,18 @@ func (it *Handler) POST(w http.ResponseWriter, r *http.Request) {
 }
 
 func (it *Handler) checkHeader(r *http.Request) error {
-	session := r.Header.Get("session")
-	contentType := r.Header.Get("Content-Type")
 
-	return it.token.CheckHeader(session, contentType)
+	session := r.Header.Get("session")
+	if err := utils.CheckSession(session); err != nil {
+		return err
+	}
+
+	contentType := r.Header.Get("Content-Type")
+	if err := utils.CheckContentType(contentType); err != nil {
+		return err
+	}
+
+	return nil
 }
 
 func (it *Handler) parseJSON(r *http.Request) (map[string]string, error) {
@@ -80,7 +88,7 @@ func (it *Handler) checkPayload(req map[string]string) error {
 	gamename := req["game"]
 	username := req["username"]
 
-	return it.token.CheckPayload(gamename, username)
+	return utils.CheckPayload(gamename, username)
 }
 
 func (it *Handler) business(req map[string]string) (*model.Token, *model.Game, error) {
