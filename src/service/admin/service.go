@@ -2,21 +2,22 @@ package admin
 
 import (
 	"api/env"
+	"api/framework/redis"
 	"api/framework/server"
-	admin "api/usecase/admin"
+	"api/usecase/admin"
 )
 
 type Handler struct {
 	server.Server
 	env     env.Env
-	usecase *admin.Usecase
+	usecase admin.Usecase
 }
 
-func New(server server.Server, env env.Env) *Handler {
+func New(server server.Server, env env.Env, db redis.Redis) *Handler {
 
 	return &Handler{
 		server,
 		env,
-		admin.New(env, db, c),
+		admin.New(env, db),
 	}
 }
