@@ -1,45 +1,39 @@
 package admin
 
-import (
-	"api/framework/jwt"
-	"api/model"
-	"api/utils"
-)
+// func (it *Usecase) CheckUser(req map[string]string) (*model.Token, error) {
 
-func (it *Usecase) CheckUser(req map[string]string) (*model.Token, error) {
+// 	email := req["email"]
+// 	password := req["password"]
 
-	email := req["email"]
-	password := req["password"]
+// 	admin, err := it.repo.FindByID(newID(email))
+// 	if err != nil {
+// 		return nil, err
+// 	}
 
-	admin, err := it.repo.FindByID(newID(email))
-	if err != nil {
-		return nil, err
-	}
+// 	if err := utils.CompareHash(admin.Password, password); err != nil {
+// 		return nil, err
+// 	}
 
-	if err := utils.CompareHash(admin.Password, password); err != nil {
-		return nil, err
-	}
+// 	token, err := jwt.Sign(it.env)
+// 	if err != nil {
+// 		return nil, err
+// 	}
 
-	token, err := jwt.Sign(it.env)
-	if err != nil {
-		return nil, err
-	}
+// 	// Store in Cache
+// 	admin.Token = token.AccessToken
+// 	it.repo.Store("Cache", admin)
 
-	// Store in Cache
-	admin.Token = token.AccessToken
-	it.repo.Store("Cache", admin)
+// 	return token, nil
+// }
 
-	return token, nil
-}
+// func (it *Usecase) CheckToken(token string) (*model.Admin, error) {
 
-func (it *Usecase) CheckToken(token string) (*model.Admin, error) {
+// 	admin, err := it.repo.FindByToken(token)
 
-	admin, err := it.repo.FindByToken(token)
+// 	if err != nil {
 
-	if err != nil {
+// 		return nil, err
+// 	}
 
-		return nil, err
-	}
-
-	return admin, nil
-}
+// 	return admin, nil
+// }

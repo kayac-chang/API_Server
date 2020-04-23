@@ -1,6 +1,8 @@
 package redis
 
 import (
+	"api/env"
+	"api/model"
 	"encoding/json"
 	"log"
 
@@ -19,9 +21,11 @@ type Action interface {
 }
 
 // New return Redis client
-func New(host string, port string) Redis {
+func New(env env.Env) Redis {
 
-	pool, err := radix.NewPool("tcp", host+":"+port, 10)
+	url := env.Redis.HOST + ":" + env.Redis.PORT
+
+	pool, err := radix.NewPool("tcp", url, 10)
 	if err != nil {
 		log.Fatal("Init: Failed when connect to Redis...")
 	}
@@ -56,4 +60,32 @@ func (it Redis) Get(key string, val interface{}) error {
 	}
 
 	return json.Unmarshal([]byte(res), val)
+}
+
+func (it Redis) Read(cmd string, args ...string) (string, error) {
+
+	var res string
+
+	mn := radix.MaybeNil{Rcv: &res}
+
+	err := it.pool.Do(radix.Cmd(&mn, cmd, args...))
+
+	if err != nil {
+
+		return "", err
+	}
+
+	if mn.Nil {
+
+		return "", model.ErrNotFound
+	}
+
+	return res, nil
+}
+
+type Handler func(radix.Conn) error
+
+func (it Redis) Write(key string, fn Handler) error {
+
+	return it.pool.Do(radix.WithConn(key, fn))
 }

@@ -41,16 +41,35 @@ func (it Handler) POST(w http.ResponseWriter, r *http.Request) {
 			return err
 		}
 
-		// == Create Admin Account #4 ==
 		email := req["email"].(string)
 		username := req["username"].(string)
 		password := req["password"].(string)
 
+		// == Check Admin Email Already Exist #4 ==
+		found, err := it.usecase.Find(email)
+		if found != nil {
+
+			return &model.Error{
+				Name:    "Check Admin Email #4",
+				Code:    http.StatusConflict,
+				Message: "Email has been used",
+			}
+		}
+		if err != model.ErrNotFound {
+
+			return &model.Error{
+				Name:    "Check Admin Email #4",
+				Code:    http.StatusInternalServerError,
+				Message: err.Error(),
+			}
+		}
+
+		// == Create Admin Account #5 ==
 		admin, err := it.usecase.Store(email, username, password)
 		if err != nil {
 			err := err.(*model.Error)
 
-			err.Name = "Create Admin Account #4"
+			err.Name = "Create Admin Account #5"
 
 			return err
 		}
@@ -59,7 +78,13 @@ func (it Handler) POST(w http.ResponseWriter, r *http.Request) {
 		return response.JSON{
 			Code: http.StatusCreated,
 
-			Data: admin,
+			Data: map[string]string{
+				"admin_id":   admin.ID,
+				"email":      admin.Email,
+				"username":   admin.Username,
+				"created_at": admin.CreatedAt.String(),
+				"updated_at": admin.UpdatedAt.String(),
+			},
 		}
 	}
 

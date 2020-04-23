@@ -5,12 +5,12 @@ import (
 )
 
 type Admin struct {
-	ID string `json:"admin_id"`
+	ID string `json:"admin_id" db:"admin_id"`
 
-	Email    string `json:"email"`
-	Username string `json:"username"`
-	Password string `json:"password"`
+	Email    string `json:"email" db:"email"`
+	Username string `json:"username" db:"username"`
+	Password string `json:"password" db:"password"`
 
-	CreatedAt time.Time `json:"created_at"`
-	UpdatedAt time.Time `json:"updated_at"`
+	CreatedAt time.Time `json:"created_at" db:"created_at"`
+	UpdatedAt time.Time `json:"updated_at" db:"updated_at"`
 }

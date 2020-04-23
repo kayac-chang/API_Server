@@ -68,12 +68,12 @@ Request
     E --> End[Response]
 ```
 
-#### Check Request #1
+#### Check Content-Type #1
 
 #### Parse JSON #2
 
-#### Check request body must match #3
+#### Check Request Payload #3
 
-#### Registration #4
+#### Check Admin Email Already Exist #4
 
-#### Get Game Link #5
+#### Create Admin Account #5

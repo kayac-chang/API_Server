@@ -5,7 +5,6 @@
 ### Create Admin
 @username = "kayac"
 @password = "Test123456."
-@organization = "sunny"
 @secret = "my_secret_key"
 @email = "egg734631@gmail.com"
 
@@ -16,14 +15,13 @@ Content-Type: application/json
     "secret": {{secret}},
     "email": {{email}},
     "username": {{username}},
-    "password": {{password}},
-    "organization": {{organization}}
+    "password": {{password}}
 }
 
 ### Create Admin Token
 @password = "Test123456."
 @secret = "my_secret_key"
-@email = "egg734631@gmail.com"
+# @email = "egg734631@gmail.com"
 # @name adminToken
 POST http://{{host}}/v1/admins/tokens
 Content-Type: application/json

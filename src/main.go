@@ -2,11 +2,13 @@ package main
 
 import (
 	"api/env"
+	"api/framework/postgres"
 	"api/framework/redis"
 	"api/framework/server"
 	"api/service/admin"
 	"api/service/token"
 
+	adminusecase "api/usecase/admin"
 	gameusecase "api/usecase/game"
 	tokenusecase "api/usecase/token"
 
@@ -17,16 +19,18 @@ func main() {
 
 	// === Framework ===
 	env := env.New()
-	redis := redis.New(env.Redis.HOST, env.Redis.PORT)
+	db := postgres.New(env)
+	redis := redis.New(env)
 	it := server.New(env)
 
 	// === Usecase ===
 	tokenUsecase := tokenusecase.New(env, redis)
 	gameUsecase := gameusecase.New(env, redis)
+	adminUsecase := adminusecase.New(env, redis, db)
 
 	// === Handler ===
 	token := token.New(it, env, tokenUsecase, gameUsecase)
-	admin := admin.New(it, env, redis)
+	admin := admin.New(it, env, adminUsecase)
 
 	it.Route("/"+env.API.Version, func(router chi.Router) {
 		// === Game ===

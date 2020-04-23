@@ -18,6 +18,7 @@ func (it Usecase) Store(email, username, password string) (*model.Admin, error) 
 	}
 
 	if err := it.repo.Store(&admin); err != nil {
+
 		return nil, err
 	}
 
