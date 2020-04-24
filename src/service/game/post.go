@@ -51,17 +51,34 @@ func (it *Handler) POST(w http.ResponseWriter, r *http.Request) {
 			return err
 		}
 
+		// == Create Game Exist #5 ==
 		name := req["name"].(string)
+		if _, err := it.usecase.FindByName(name); err == nil {
+
+			return &model.Error{
+				Code:    http.StatusConflict,
+				Name:    "Create Game Exist #5",
+				Message: "Request game already existed",
+			}
+		}
+		if err != model.ErrNotFound {
+
+			return &model.Error{
+				Code:    http.StatusInternalServerError,
+				Name:    "Create Game Exist #5",
+				Message: err.Error(),
+			}
+		}
+
+		// == Create Game #6 ==
 		href := req["href"].(string)
 		category := req["category"].(string)
-
-		// == Create Game #5 ==
 		game, err := it.usecase.Store(name, href, category)
 		if err != nil {
 
 			return &model.Error{
 				Code:    http.StatusInternalServerError,
-				Name:    "Create Game #5",
+				Name:    "Create Game #6",
 				Message: err.Error(),
 			}
 		}

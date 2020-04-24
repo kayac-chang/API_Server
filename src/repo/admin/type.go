@@ -34,13 +34,13 @@ func (it Repo) Store(admin *model.Admin) error {
 	return it.redis.Write(table, func(conn radix.Conn) error {
 
 		err := conn.Do(
-			radix.Cmd(nil, "HSETNX", table, admin.ID, string(data)),
+			radix.Cmd(nil, "HSET", table, admin.ID, string(data)),
 		)
 		if err != nil {
 			return err
 		}
 
-		insert := "insert:" + table
+		insert := "pending:" + table
 		err = conn.Do(radix.Cmd(nil, "LPUSH", insert, string(data)))
 		if err != nil {
 			return err

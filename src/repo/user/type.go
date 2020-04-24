@@ -39,9 +39,9 @@ func (it Repo) Store(user *model.User) error {
 			return err
 		}
 
-		insert := "insert:" + table
+		pending := "pending:" + table
 		err = conn.Do(
-			radix.Cmd(nil, "LPUSH", insert, string(data)),
+			radix.Cmd(nil, "LPUSH", pending, string(data)),
 		)
 		if err != nil {
 			return err

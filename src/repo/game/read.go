@@ -3,6 +3,8 @@ package game
 import (
 	"api/model"
 	"fmt"
+
+	"github.com/jackc/pgx"
 )
 
 // FindByID find game by id in db
@@ -18,6 +20,11 @@ func (it Repo) FindByID(id string) (*model.Game, error) {
 	}
 
 	if err := it.db.Get(&game, sql, id); err != nil {
+
+		if err == pgx.ErrNoRows {
+
+			return nil, model.ErrNotFound
+		}
 
 		return nil, err
 	}
@@ -38,6 +45,11 @@ func (it Repo) FindByName(name string) (*model.Game, error) {
 	}
 
 	if err := it.db.Get(&game, sql, name); err != nil {
+
+		if err == pgx.ErrNoRows {
+
+			return nil, model.ErrNotFound
+		}
 
 		return nil, err
 	}

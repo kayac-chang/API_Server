@@ -17,31 +17,9 @@ func (it Repo) Store(game *model.Game) error {
 
 	return it.redis.Write(table, func(conn radix.Conn) error {
 
-		insert := "insert:" + table
+		pending := "pending:" + table
 		err = conn.Do(
-			radix.Cmd(nil, "LPUSH", insert, string(data)),
-		)
-		if err != nil {
-			return err
-		}
-
-		return nil
-	})
-}
-
-// Update update game in db
-func (it Repo) Update(game *model.Game) error {
-
-	data, err := json.Marshal(game)
-	if err != nil {
-		return err
-	}
-
-	return it.redis.Write(table, func(conn radix.Conn) error {
-
-		update := "update:" + table
-		err = conn.Do(
-			radix.Cmd(nil, "LPUSH", update, string(data)),
+			radix.Cmd(nil, "LPUSH", pending, string(data)),
 		)
 		if err != nil {
 			return err
