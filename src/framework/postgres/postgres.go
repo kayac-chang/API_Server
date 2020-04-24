@@ -1,6 +1,8 @@
 package postgres
 
 import (
+	"api/env"
+
 	"github.com/jackc/pgerrcode"
 	"github.com/jackc/pgx"
 	_ "github.com/jackc/pgx/v4/stdlib"
@@ -11,14 +13,14 @@ type DB struct {
 	*sqlx.DB
 }
 
-func New(url string) *DB {
+func New(env env.Env) DB {
 
-	db := sqlx.MustOpen("pgx", url)
+	db := sqlx.MustOpen("pgx", env.Postgres.ToURL())
 
-	return &DB{db}
+	return DB{db}
 }
 
-func (it *DB) IsConstraintErr(err error) bool {
+func (it DB) IsConstraintErr(err error) bool {
 
 	pgerr, ok := err.(pgx.PgError)
 	if !ok {

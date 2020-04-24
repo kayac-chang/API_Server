@@ -22,9 +22,9 @@ func MD5(text string) string {
 	return fmt.Sprintf("%x", hash)
 }
 
-func Hash(test string) string {
+func Hash(text string) string {
 
-	hash, err := bcrypt.GenerateFromPassword([]byte(test), bcrypt.MinCost)
+	hash, err := bcrypt.GenerateFromPassword([]byte(text), bcrypt.MinCost)
 
 	if err != nil {
 		panic(err)

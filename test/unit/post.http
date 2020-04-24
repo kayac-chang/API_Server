@@ -3,11 +3,10 @@
 @host = {{hostname}}:{{port}}
 
 ### Create Admin
-@username = "kayac"
-@password = "Test123456."
-@organization = "sunny"
-@secret = "my_secret_key"
-@email = "egg734631@gmail.com"
+# @username = "kayac"
+# @password = "Test123456."
+# @secret = "my_secret_key"
+# @email = "egg734631@gmail.com"
 
 POST http://{{host}}/v1/admins
 Content-Type: application/json
@@ -16,8 +15,7 @@ Content-Type: application/json
     "secret": {{secret}},
     "email": {{email}},
     "username": {{username}},
-    "password": {{password}},
-    "organization": {{organization}}
+    "password": {{password}}
 }
 
 ### Create Admin Token

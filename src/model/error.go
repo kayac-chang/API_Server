@@ -13,6 +13,7 @@ func (it *Error) Error() string {
 }
 
 var (
+	ErrNotFound        = errors.New("Resource Not Found")
 	ErrUserNotFound    = errors.New("User Not Found")
 	ErrGameNotFound    = errors.New("Game Not Found")
 	ErrOrderNotFound   = errors.New("Order Not Found")
