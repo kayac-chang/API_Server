@@ -51,6 +51,31 @@ func (it Usecase) Store(name, href, category string) (*model.Game, error) {
 	return &game, nil
 }
 
+// Update update game in to repo
+func (it Usecase) Update(game *model.Game) (*model.Game, error) {
+
+	game.UpdatedAt = time.Now()
+
+	if err := it.game.Update(game); err != nil {
+
+		return nil, err
+	}
+
+	return game, nil
+}
+
+// FindByID find game in repo
+func (it Usecase) FindByID(id string) (*model.Game, error) {
+
+	return it.game.FindByID(id)
+}
+
+// FindAll find all games in repo
+func (it Usecase) FindAll() ([]model.Game, error) {
+
+	return it.game.FindAll()
+}
+
 // Auth check the admin token
 func (it Usecase) Auth(token string) error {
 

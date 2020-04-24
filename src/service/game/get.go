@@ -1,89 +1,93 @@
 package game
 
-// func (it *Handler) GET(w http.ResponseWriter, r *http.Request) {
+import (
+	"api/model"
+	"api/model/response"
+	"net/http"
+)
 
-// 	if err := it.authenticate(r); err != nil {
+// GET ...
+func (it Handler) GET(w http.ResponseWriter, r *http.Request) {
 
-// 		it.Send(w, response.JSON{
-// 			Code: http.StatusUnauthorized,
+	main := func() interface{} {
 
-// 			Error: response.Error{
-// 				Name:    "Unauthorized",
-// 				Message: err.Error(),
-// 			},
-// 		})
+		// == Check Authorization #1 ==
+		token := r.Header.Get("Authorization")
+		if err := it.usecase.Auth(token); err != nil {
 
-// 		return
-// 	}
+			return &model.Error{
+				Code:    http.StatusUnauthorized,
+				Name:    "Check Authorization #1",
+				Message: err.Error(),
+			}
+		}
 
-// 	// Find by Name
-// 	name := it.URLParam(r, "name")
-// 	game, err := it.game.FindByName(name)
-// 	if err != nil {
+		// == Find Game #2 ==
+		id := it.URLParam(r, "id")
+		game, err := it.usecase.FindByID(id)
+		if err != nil {
 
-// 		it.Send(w, response.JSON{
-// 			Code: http.StatusNotFound,
+			return &model.Error{
+				Code:    http.StatusNotFound,
+				Name:    "Find Game #2",
+				Message: err.Error(),
+			}
+		}
 
-// 			Error: response.Error{
-// 				Name:    "Game not found",
-// 				Message: err.Error(),
-// 			},
-// 		})
+		return response.JSON{
+			Code: http.StatusOK,
 
-// 		return
-// 	}
+			Data: game,
+		}
+	}
 
-// 	// == Send Response ==
-// 	it.Send(w, response.JSON{
-// 		Code: http.StatusOK,
+	it.Send(w, main())
+}
 
-// 		Data: game,
-// 	})
-// }
+// GETALL ...
+func (it Handler) GETALL(w http.ResponseWriter, r *http.Request) {
 
-// func (it *Handler) GET_ALL(w http.ResponseWriter, r *http.Request) {
+	main := func() interface{} {
 
-// 	games, err := it.game.FindAll()
-// 	if err != nil {
+		// == Find Games #1 ==
+		games, err := it.usecase.FindAll()
+		if err != nil {
 
-// 		it.Send(w, response.JSON{
-// 			Code: http.StatusInternalServerError,
+			return &model.Error{
+				Code:    http.StatusInternalServerError,
+				Name:    "Find Games #1",
+				Message: err.Error(),
+			}
+		}
 
-// 			Error: response.Error{
-// 				Name:    "Server Error",
-// 				Message: err.Error(),
-// 			},
-// 		})
+		// == Send Response ==
+		links := []response.Link{}
+		for _, game := range games {
 
-// 		return
-// 	}
+			links = append(links, response.Link{
+				Relation: game.Name,
+				Method:   "GET",
+				Href:     game.Href,
+			})
+		}
 
-// 	// == Send Response ==
-// 	links := []response.Link{}
-// 	for _, game := range games {
+		href := it.env.Service.Domain + "/" + it.env.API.Version + "/games"
+		links = append(links, response.Link{
+			Relation: "self",
+			Method:   "GET",
+			Href:     href,
+		})
 
-// 		links = append(links, response.Link{
-// 			Relation: game.Name,
-// 			Method:   "GET",
-// 			Href:     game.Href,
-// 		})
-// 	}
+		res := map[string]interface{}{
+			"links": links,
+		}
 
-// 	href := it.env.Service.Domain + "/" + it.env.API.Version + "/games"
-// 	links = append(links, response.Link{
-// 		Relation: "self",
-// 		Method:   "GET",
-// 		Href:     href,
-// 	})
+		return response.JSON{
+			Code: http.StatusOK,
 
-// 	res := map[string]interface{}{
-// 		"links": links,
-// 	}
+			Data: res,
+		}
+	}
 
-// 	// == Send Response ==
-// 	it.Send(w, response.JSON{
-// 		Code: http.StatusOK,
-
-// 		Data: res,
-// 	})
-// }
+	it.Send(w, main())
+}

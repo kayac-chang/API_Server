@@ -36,7 +36,7 @@ Content-Type: application/json
 @authToken = {{adminToken.response.body.$.data.access_token}}
 
 ### Find Game
-@gameurl = catpunch
+@gameurl = d52d3013075fe1078c47236cdc338422
 
 GET http://{{host}}/v1/games/{{gameurl}}
 Authorization: Bearer {{authToken}}
@@ -45,8 +45,8 @@ Authorization: Bearer {{authToken}}
 GET http://{{host}}/v1/games
 
 ### Create Game
-@gamename = "catpunch"
-@href = "https://catpunch-dev.sunnyland.fun"
+@gamename = "cyberpunk"
+@href = "https://cyberpunk-dev.sunnyland.fun"
 @category = "slot"
 POST http://{{host}}/v1/games
 Content-Type: application/json
@@ -59,8 +59,7 @@ Authorization: Bearer {{authToken}}
 }
 
 ### Update Game
-# @gamename = "catpunch"
-# @href = "https://catpunch"
+@href = "https://cyberpunk-dev.sunnyland.fun"
 @category = "slot"
 PUT http://{{host}}/v1/games/{{gameurl}}
 Content-Type: application/json

@@ -37,10 +37,10 @@ func main() {
 	it.Route("/"+env.API.Version, func(router chi.Router) {
 		// === Game ===
 		router.Route("/games", func(router chi.Router) {
-			// router.Get("/", game.GET_ALL)
-			// router.Get("/{name}", game.GET)
+			router.Get("/", game.GETALL)
+			router.Get("/{id}", game.GET)
 			router.Post("/", game.POST)
-			// router.Put("/{name}", game.PUT)
+			router.Put("/{id}", game.PUT)
 		})
 
 		// === Admin ===

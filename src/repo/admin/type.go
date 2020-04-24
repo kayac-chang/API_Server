@@ -40,8 +40,8 @@ func (it Repo) Store(admin *model.Admin) error {
 			return err
 		}
 
-		pending := "pending:" + table
-		err = conn.Do(radix.Cmd(nil, "LPUSH", pending, string(data)))
+		insert := "insert:" + table
+		err = conn.Do(radix.Cmd(nil, "LPUSH", insert, string(data)))
 		if err != nil {
 			return err
 		}

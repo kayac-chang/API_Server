@@ -1,59 +1,87 @@
 package game
 
-// func (it *Handler) PUT(w http.ResponseWriter, r *http.Request) {
+import (
+	"api/model"
+	"api/model/response"
+	"api/utils"
+	"net/http"
+)
 
-// 	if err := it.authenticate(r); err != nil {
+// PUT ...
+func (it Handler) PUT(w http.ResponseWriter, r *http.Request) {
 
-// 		it.Send(w, response.JSON{
-// 			Code: http.StatusUnauthorized,
+	main := func() interface{} {
 
-// 			Error: response.Error{
-// 				Name:    "Unauthorized",
-// 				Message: err.Error(),
-// 			},
-// 		})
+		// == Check Authorization #1 ==
+		token := r.Header.Get("Authorization")
+		if err := it.usecase.Auth(token); err != nil {
 
-// 		return
-// 	}
+			return &model.Error{
+				Code:    http.StatusUnauthorized,
+				Name:    "Check Authorization #1",
+				Message: err.Error(),
+			}
+		}
 
-// 	// == Parse Payload ==
-// 	req := map[string]string{}
-// 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		// == Check Content-Type #2 ==
+		contentType := r.Header.Get("Content-Type")
+		if err := utils.CheckContentType(contentType, "application/json"); err != nil {
 
-// 		it.Send(w, response.JSON{
-// 			Code: http.StatusBadRequest,
+			err.Name = "Check Content-Type #2"
 
-// 			Error: response.Error{
-// 				Name:    "Unexpect Payload",
-// 				Message: model.ErrUnexpectPayload.Error(),
-// 			},
-// 		})
+			return err
+		}
 
-// 		return
-// 	}
+		// == Parse JSON #3 ==
+		req, err := utils.ParseJSON(r.Body)
+		if err != nil {
+			err := err.(*model.Error)
 
-// 	name := it.URLParam(r, "name")
+			err.Name = "Parse JSON #3"
 
-// 	// == Update Game ==
-// 	game, err := it.game.Update(name, req)
-// 	if err != nil {
+			return err
+		}
 
-// 		it.Send(w, response.JSON{
-// 			Code: http.StatusInternalServerError,
+		// == Check Request Payload #4 ==
+		if err := it.checkPayload(req); err != nil {
+			err := err.(*model.Error)
 
-// 			Error: response.Error{
-// 				Name:    "Game Update Error",
-// 				Message: err.Error(),
-// 			},
-// 		})
+			err.Name = "Check Request Payload #4"
 
-// 		return
-// 	}
+			return err
+		}
 
-// 	// == Send Response ==
-// 	it.Send(w, response.JSON{
-// 		Code: http.StatusAccepted,
+		// == Check Game ID Existed #5 ==
+		gameID := it.URLParam(r, "id")
+		game, err := it.usecase.FindByID(gameID)
+		if err != nil {
+			err := err.(*model.Error)
 
-// 		Data: game,
-// 	})
-// }
+			err.Name = "Check Game ID Existed #5"
+
+			return err
+		}
+
+		// == Update Game By ID #6 ==
+		game.Name = req["name"].(string)
+		game.Href = req["href"].(string)
+		game.Category = req["category"].(string)
+
+		if game, err = it.usecase.Update(game); err != nil {
+
+			return &model.Error{
+				Code:    http.StatusInternalServerError,
+				Name:    "Update Game By ID #6",
+				Message: err.Error(),
+			}
+		}
+
+		return response.JSON{
+			Code: http.StatusAccepted,
+
+			Data: game,
+		}
+	}
+
+	it.Send(w, main())
+}
