@@ -4,20 +4,18 @@ import (
 	"api/env"
 	"api/framework/server"
 
-	game "api/usecase/game"
 	token "api/usecase/token"
 )
 
 type Handler struct {
 	server.Server
-	env   env.Env
-	token token.Usecase
-	game  game.Usecase
+	env     env.Env
+	usecase token.Usecase
 }
 
-func New(server server.Server, env env.Env, token token.Usecase, game game.Usecase) Handler {
+func New(server server.Server, env env.Env, usecase token.Usecase) Handler {
 
-	return Handler{server, env, token, game}
+	return Handler{server, env, usecase}
 }
 
 func (it Handler) getHref(url string) string {

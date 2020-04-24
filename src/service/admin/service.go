@@ -14,9 +14,9 @@ type Handler struct {
 }
 
 // New admin service
-func New(server server.Server, env env.Env, usecase admin.Usecase) *Handler {
+func New(server server.Server, env env.Env, usecase admin.Usecase) Handler {
 
-	return &Handler{
+	return Handler{
 		server,
 		env,
 		usecase,

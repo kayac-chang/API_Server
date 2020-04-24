@@ -33,7 +33,9 @@ func (it Repo) Store(admin *model.Admin) error {
 
 	return it.redis.Write(table, func(conn radix.Conn) error {
 
-		err := conn.Do(radix.Cmd(nil, "HSET", table, admin.ID, string(data)))
+		err := conn.Do(
+			radix.Cmd(nil, "HSETNX", table, admin.ID, string(data)),
+		)
 		if err != nil {
 			return err
 		}
@@ -48,6 +50,7 @@ func (it Repo) Store(admin *model.Admin) error {
 	})
 }
 
+// FindByID find admin by specify id
 func (it Repo) FindByID(id string) (*model.Admin, error) {
 
 	var err error

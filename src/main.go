@@ -9,7 +9,6 @@ import (
 	"api/service/token"
 
 	adminusecase "api/usecase/admin"
-	gameusecase "api/usecase/game"
 	tokenusecase "api/usecase/token"
 
 	"github.com/go-chi/chi"
@@ -25,11 +24,11 @@ func main() {
 
 	// === Usecase ===
 	tokenUsecase := tokenusecase.New(env, redis)
-	gameUsecase := gameusecase.New(env, redis)
+	// gameUsecase := gameusecase.New(env, redis)
 	adminUsecase := adminusecase.New(env, redis, db)
 
 	// === Handler ===
-	token := token.New(it, env, tokenUsecase, gameUsecase)
+	token := token.New(it, env, tokenUsecase)
 	admin := admin.New(it, env, adminUsecase)
 
 	it.Route("/"+env.API.Version, func(router chi.Router) {
@@ -45,9 +44,9 @@ func main() {
 		router.Route("/admins", func(router chi.Router) {
 			router.Post("/", admin.POST)
 
-			// router.Route("/tokens", func(router chi.Router) {
-			// 	router.Post("/", admin.Auth)
-			// })
+			router.Route("/tokens", func(router chi.Router) {
+				router.Post("/", admin.Auth)
+			})
 		})
 
 		// === User ===

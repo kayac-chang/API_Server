@@ -96,7 +96,7 @@ func (it *Handler) business(req map[string]interface{}) (*model.Token, *model.Ga
 
 	registration := utils.Promisefy(func() (interface{}, error) {
 
-		token, err := it.token.Regist(username, session)
+		token, err := it.usecase.Regist(username, session)
 		if err != nil {
 			err := err.(*model.Error)
 
@@ -110,7 +110,7 @@ func (it *Handler) business(req map[string]interface{}) (*model.Token, *model.Ga
 
 	getGameLink := utils.Promisefy(func() (interface{}, error) {
 
-		game, err := it.game.FindByName(name)
+		game, err := it.usecase.FindGameByName(name)
 		if err != nil {
 			err := err.(*model.Error)
 

@@ -2,9 +2,11 @@ package token
 
 import (
 	"api/framework/redis"
+
+	"github.com/mediocregopher/radix/v3"
 )
 
-const prefix = "tokens:"
+const table = "tokens"
 
 // Repo type for persistence layer logic
 type Repo struct {
@@ -17,10 +19,11 @@ func New(db redis.Redis) Repo {
 	return Repo{db}
 }
 
-// Store store associate table with key by token
-func (it Repo) Store(token string, associate map[string]string) error {
+// Store associate token and primary key from another table
+func (it Repo) Store(token, pk string) error {
 
-	key := prefix + token
+	return it.db.Write(table, func(conn radix.Conn) error {
 
-	return it.db.Set(key, associate)
+		return conn.Do(radix.Cmd(nil, "HSETNX", table, token, pk))
+	})
 }

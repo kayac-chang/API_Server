@@ -1,42 +1,35 @@
 package token
 
-import (
-	"api/model/pb"
-	"api/model/response"
+// func (it *Handler) Get(w http.ResponseWriter, r *http.Request) {
 
-	"net/http"
-)
+// 	// Get Authorization in http header
+// 	token := it.URLParam(r, "token")
 
-func (it *Handler) Get(w http.ResponseWriter, r *http.Request) {
+// 	// Pass in Auth logic
+// 	user, err := it.token.Auth(token)
+// 	if err != nil {
+// 		it.Send(w, response.ProtoBuf{
+// 			Code: http.StatusUnauthorized,
 
-	// Get Authorization in http header
-	token := it.URLParam(r, "token")
+// 			Data: &pb.Error{
+// 				Code:    http.StatusUnauthorized,
+// 				Name:    "Given token not found in service",
+// 				Message: err.Error(),
+// 			},
+// 		})
 
-	// Pass in Auth logic
-	user, err := it.token.Auth(token)
-	if err != nil {
-		it.Send(w, response.ProtoBuf{
-			Code: http.StatusUnauthorized,
+// 		return
 
-			Data: &pb.Error{
-				Code:    http.StatusUnauthorized,
-				Name:    "Given token not found in service",
-				Message: err.Error(),
-			},
-		})
+// 	}
 
-		return
+// 	// == Send Response ==
+// 	it.Send(w, response.ProtoBuf{
 
-	}
+// 		Code: http.StatusOK,
 
-	// == Send Response ==
-	it.Send(w, response.ProtoBuf{
-
-		Code: http.StatusOK,
-
-		Data: &pb.User{
-			Username: user.Username,
-			Balance:  user.Balance,
-		},
-	})
-}
+// 		Data: &pb.User{
+// 			Username: user.Username,
+// 			Balance:  user.Balance,
+// 		},
+// 	})
+// }
