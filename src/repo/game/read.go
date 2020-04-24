@@ -30,7 +30,7 @@ func (it Repo) FindByName(name string) (*model.Game, error) {
 
 	game := model.Game{}
 
-	sql := fmt.Sprintf("SELECT * FROM %s WHERE name=$1", name)
+	sql := fmt.Sprintf("SELECT * FROM %s WHERE name=$1", table)
 
 	if err := it.db.Ping(); err != nil {
 
