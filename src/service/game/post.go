@@ -80,6 +80,7 @@ func (it Handler) checkPayload(req map[string]interface{}) error {
 
 	err := utils.CheckPayload(req, "name", "href", "category")
 	if err != nil {
+
 		return err
 	}
 

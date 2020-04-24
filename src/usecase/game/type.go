@@ -8,7 +8,6 @@ import (
 	"api/repo/game"
 	"api/repo/token"
 	"api/utils"
-	"fmt"
 	"strings"
 	"time"
 )
@@ -41,6 +40,7 @@ func (it Usecase) Store(name, href, category string) (*model.Game, error) {
 		Category: category,
 
 		CreatedAt: time.Now(),
+		UpdatedAt: time.Now(),
 	}
 
 	if err := it.game.Store(&game); err != nil {
@@ -55,8 +55,6 @@ func (it Usecase) Store(name, href, category string) (*model.Game, error) {
 func (it Usecase) Auth(token string) error {
 
 	token = strings.TrimPrefix(token, "Bearer ")
-
-	fmt.Println(token)
 
 	_, err := it.token.Find(token)
 

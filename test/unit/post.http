@@ -45,8 +45,8 @@ Authorization: Bearer {{authToken}}
 GET http://{{host}}/v1/games
 
 ### Create Game
-@gamename = "cyberpunk"
-@href = "https://cyberpunk-dev.sunnyland.fun"
+@gamename = "catpunch"
+@href = "https://catpunch-dev.sunnyland.fun"
 @category = "slot"
 POST http://{{host}}/v1/games
 Content-Type: application/json
