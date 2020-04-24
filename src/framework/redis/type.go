@@ -89,8 +89,3 @@ func (it Redis) Write(key string, fn Handler) error {
 
 	return it.pool.Do(radix.WithConn(key, fn))
 }
-
-// func (it Redis) HSETNX() error {
-
-// 	it.pool.Do(radix.Cmd(nil, "HSETNX", key, string(json)))
-// }

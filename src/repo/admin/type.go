@@ -23,7 +23,7 @@ func New(redis redis.Redis, db postgres.DB) Repo {
 	return Repo{redis, db}
 }
 
-// Store store associate table with key by admin
+// Store store admin in redis
 func (it Repo) Store(admin *model.Admin) error {
 
 	data, err := json.Marshal(admin)

@@ -45,8 +45,8 @@ Authorization: Bearer {{authToken}}
 GET http://{{host}}/v1/games
 
 ### Create Game
-@gamename = "catpunch"
-@href = "https://catpunch"
+@gamename = "cyberpunk"
+@href = "https://cyberpunk-dev.sunnyland.fun"
 @category = "slot"
 POST http://{{host}}/v1/games
 Content-Type: application/json
@@ -73,9 +73,9 @@ Authorization: Bearer {{authToken}}
 }
 
 ### Token
-@session = dfd99af9-f92f-4161-8e62-9598fb38931b
-@game = "cyberpunk"
-@username = "mouse1"
+# @session = dfd99af9-f92f-4161-8e62-9598fb38931b
+# @game = "cyberpunk"
+# @username = "mouse1"
 # @name gameToken
 POST http://{{host}}/v1/tokens
 Content-Type: application/json
