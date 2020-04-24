@@ -56,7 +56,7 @@ func (it Usecase) Update(game *model.Game) (*model.Game, error) {
 
 	game.UpdatedAt = time.Now()
 
-	if err := it.game.Update(game); err != nil {
+	if err := it.game.Store(game); err != nil {
 
 		return nil, err
 	}
@@ -64,10 +64,16 @@ func (it Usecase) Update(game *model.Game) (*model.Game, error) {
 	return game, nil
 }
 
-// FindByID find game in repo
+// FindByID find game by id in repo
 func (it Usecase) FindByID(id string) (*model.Game, error) {
 
 	return it.game.FindByID(id)
+}
+
+// FindByName find game by name in repo
+func (it Usecase) FindByName(name string) (*model.Game, error) {
+
+	return it.game.FindByName(name)
 }
 
 // FindAll find all games in repo

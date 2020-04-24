@@ -162,7 +162,7 @@ A successful request returns the HTTP `201 Created` status code.
       {
         "rel": "access",
         "method": "GET",
-        "href": "https://<game_domain>"
+        "href": "https://<game_domain>?access_token=<token>"
       },
       {
         "rel": "reauthorize",
@@ -373,11 +373,13 @@ message Order {
     State state = 2;
 
     uint64 bet = 3;
-    string game_id = 4;
-    string user_id = 5;
-    google.protobuf.Timestamp created_at = 6;
-    google.protobuf.Timestamp updated_at = 7;
-    google.protobuf.Timestamp completed_at = 8;
+    uint64 win = 4;
+
+    string game_id = 5;
+    string user_id = 6;
+    google.protobuf.Timestamp created_at = 7;
+    google.protobuf.Timestamp updated_at = 8;
+    google.protobuf.Timestamp completed_at = 9;
 }
 ```
 
@@ -386,6 +388,7 @@ message Order {
 | orderId      | string    | false    | The order's identifier         |
 | state        | State     | false    | Current order state            |
 | bet          | uint64    | false    | The bet of this order          |
+| win          | uint64    | false    | The win of this order          |
 | game_id      | string    | false    | The game's identifier          |
 | user_id      | string    | false    | The user's identifier          |
 | created_at   | Timestamp | true     | Time when this order created   |

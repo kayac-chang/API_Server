@@ -10,10 +10,12 @@ import (
 
 const table = "users"
 
+// Repo ...
 type Repo struct {
 	db redis.Redis
 }
 
+// New ...
 func New(db redis.Redis) Repo {
 
 	return Repo{db}
@@ -31,10 +33,9 @@ func (it Repo) Store(user *model.User) error {
 	return it.db.Write(table, func(conn radix.Conn) error {
 
 		err := conn.Do(
-			radix.Cmd(nil, "HSETNX", table, user.ID, string(data)),
+			radix.Cmd(nil, "HSET", table, user.ID, string(data)),
 		)
 		if err != nil {
-
 			return err
 		}
 
@@ -43,7 +44,6 @@ func (it Repo) Store(user *model.User) error {
 			radix.Cmd(nil, "LPUSH", pending, string(data)),
 		)
 		if err != nil {
-
 			return err
 		}
 

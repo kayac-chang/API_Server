@@ -41,19 +41,6 @@ func CheckMail(email string) error {
 	return nil
 }
 
-func CheckSession(session string) *model.Error {
-
-	if session == "" {
-		return &model.Error{
-
-			Code:    http.StatusBadRequest,
-			Message: "Request header must contain session",
-		}
-	}
-
-	return nil
-}
-
 func CheckContentType(contentType string, compare string) *model.Error {
 
 	if contentType != compare {
