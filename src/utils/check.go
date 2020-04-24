@@ -4,10 +4,27 @@ import (
 	"api/model"
 	"fmt"
 	"net/http"
+	"net/url"
 	"strings"
 
 	"github.com/badoux/checkmail"
 )
+
+// IsValidURL tests a string to determine if it is a well-structured url or not.
+func IsValidURL(subject string) bool {
+
+	_, err := url.ParseRequestURI(subject)
+	if err != nil {
+		return false
+	}
+
+	u, err := url.Parse(subject)
+	if err != nil || u.Scheme == "" || u.Host == "" {
+		return false
+	}
+
+	return true
+}
 
 func CheckMail(email string) error {
 

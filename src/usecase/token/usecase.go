@@ -3,6 +3,7 @@ package token
 import (
 	"api/agent"
 	"api/env"
+	"api/framework/postgres"
 	"api/framework/redis"
 	"api/model"
 
@@ -11,6 +12,7 @@ import (
 	"api/repo/user"
 )
 
+// Usecase ...
 type Usecase struct {
 	env   env.Env
 	user  user.Repo
@@ -19,17 +21,19 @@ type Usecase struct {
 	agent agent.Agent
 }
 
-func New(env env.Env, redis redis.Redis) Usecase {
+// New ...
+func New(env env.Env, redis redis.Redis, db postgres.DB) Usecase {
 
 	user := user.New(redis)
 	token := token.New(redis)
-	game := game.New(redis)
+	game := game.New(redis, db)
 	agent := agent.New(env)
 
 	return Usecase{env, user, token, game, agent}
 }
 
+// FindGameByName ...
 func (it Usecase) FindGameByName(name string) (*model.Game, error) {
 
-	return it.game.Find(name)
+	return it.game.FindByName(name)
 }

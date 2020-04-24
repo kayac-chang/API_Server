@@ -1,31 +1,20 @@
 package game
 
 import (
+	"api/framework/postgres"
 	"api/framework/redis"
-	"api/model"
 )
 
-const prefix = "games:"
+const table = "games"
 
 // Repo Game Repo
 type Repo struct {
-	db redis.Redis
+	redis redis.Redis
+	db    postgres.DB
 }
 
 // New return Game Repo
-func New(db redis.Redis) Repo {
+func New(redis redis.Redis, db postgres.DB) Repo {
 
-	return Repo{db}
-}
-
-// Find game by name
-func (it Repo) Find(name string) (*model.Game, error) {
-
-	game := model.Game{}
-
-	if err := it.db.Get(prefix+name, &game); err != nil {
-		return nil, err
-	}
-
-	return &game, nil
+	return Repo{redis, db}
 }

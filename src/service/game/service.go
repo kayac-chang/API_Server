@@ -2,26 +2,19 @@ package game
 
 import (
 	"api/env"
-	"api/framework/cache"
-	"api/framework/postgres"
 	"api/framework/server"
-	admin "api/usecase/admin"
 	game "api/usecase/game"
 )
 
+// Handler game service instance
 type Handler struct {
-	*server.Server
-	env   env.Env
-	game  *game.Usecase
-	admin *admin.Usecase
+	server.Server
+	env     env.Env
+	usecase game.Usecase
 }
 
-func New(s *server.Server, env env.Env, db *postgres.DB, c *cache.Cache) *Handler {
+// New create game service instance
+func New(s server.Server, env env.Env, usecase game.Usecase) Handler {
 
-	return &Handler{
-		s,
-		env,
-		game.New(env, db, c),
-		admin.New(env, db, c),
-	}
+	return Handler{s, env, usecase}
 }
