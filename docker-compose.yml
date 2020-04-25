@@ -1,20 +1,6 @@
 version: "3"
 
 services:
-  postgres:
-    build:
-      context: "."
-      dockerfile: "./dockerfiles/db/Dockerfile"
-    ports:
-      - "${PG_PORT}"
-    volumes:
-      - ./.db:/var/lib/postgresql/data
-    environment:
-      - POSTGRES_USER=${PG_USER}
-      - POSTGRES_PASSWORD=${PG_PASSWORD}
-      - POSTGRES_DB=${PG_NAME}
-      - POSTGRES_HOST=${PG_HOST}
-
   service:
     build:
       context: "."
@@ -24,10 +10,3 @@ services:
     depends_on:
       - postgres
     command: ./wait-for postgres:${PG_PORT} -- ./run
-
-  fake_agent:
-    build:
-      context: "."
-      dockerfile: "./dockerfiles/fake_server/Dockerfile"
-    ports:
-      - "${AGENT_PORT}"
