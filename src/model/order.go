@@ -2,7 +2,9 @@ package model
 
 import (
 	"api/model/pb"
-	"database/sql"
+	"time"
+
+	"github.com/golang/protobuf/ptypes"
 )
 
 type Order struct {
@@ -15,9 +17,42 @@ type Order struct {
 	Bet   uint64 `json:"bet" db:"bet"`
 	Win   uint64 `json:"win" db:"win"`
 
-	CreatedAt   sql.NullTime `json:"created_at" db:"created_at"`
-	CompletedAt sql.NullTime `json:"completed_at" db:"completed_at,omitempty"`
-	UpdatedAt   sql.NullTime `json:"updated_at" db:"updated_at"`
+	CreatedAt   time.Time `json:"created_at" db:"created_at"`
+	CompletedAt time.Time `json:"completed_at" db:"completed_at,omitempty"`
+	UpdatedAt   time.Time `json:"updated_at" db:"updated_at"`
+}
+
+// ToProto ...
+func (it Order) ToProto() (*pb.Order, error) {
+
+	createAt, err := ptypes.TimestampProto(it.CreatedAt)
+	if err != nil {
+		return nil, err
+	}
+
+	completedAt, err := ptypes.TimestampProto(it.CompletedAt)
+	if err != nil {
+		return nil, err
+	}
+
+	updatedAt, err := ptypes.TimestampProto(it.UpdatedAt)
+	if err != nil {
+		return nil, err
+	}
+
+	pb := pb.Order{
+		OrderId:     it.ID,
+		GameId:      it.GameID,
+		UserId:      it.UserID,
+		State:       it.State.PbState(),
+		Bet:         it.Bet,
+		Win:         it.Win,
+		CreatedAt:   createAt,
+		CompletedAt: completedAt,
+		UpdatedAt:   updatedAt,
+	}
+
+	return &pb, nil
 }
 
 type SubOrder struct {
@@ -28,8 +63,8 @@ type SubOrder struct {
 	State State  `json:"state" db:"state"`
 	Bet   uint64 `json:"bet" db:"bet"`
 
-	CreatedAt sql.NullTime `json:"created_at" db:"created_at"`
-	UpdatedAt sql.NullTime `json:"updated_at" db:"updated_at"`
+	CreatedAt time.Time `json:"created_at" db:"created_at"`
+	UpdatedAt time.Time `json:"updated_at" db:"updated_at"`
 }
 
 type State string
