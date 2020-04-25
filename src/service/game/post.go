@@ -53,7 +53,8 @@ func (it *Handler) POST(w http.ResponseWriter, r *http.Request) {
 
 		// == Create Game Exist #5 ==
 		name := req["name"].(string)
-		if _, err := it.usecase.FindByName(name); err == nil {
+		_, err = it.usecase.FindByName(name)
+		if err == nil {
 
 			return &model.Error{
 				Code:    http.StatusConflict,

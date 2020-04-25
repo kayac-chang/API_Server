@@ -2,29 +2,41 @@ package game
 
 import (
 	"api/model"
-	"encoding/json"
-
-	"github.com/mediocregopher/radix/v3"
+	"fmt"
 )
 
 // Store store game in db
 func (it Repo) Store(game *model.Game) error {
 
-	data, err := json.Marshal(game)
-	if err != nil {
-		return err
-	}
+	query := fmt.Sprintf(`
+		INSERT INTO %s 
+			(game_id, name, href, category, created_at, updated_at) 
+		VALUES 
+			(:game_id, :name, :href, :category, :created_at, :updated_at)
+	`, table)
 
-	return it.redis.Write(table, func(conn radix.Conn) error {
+	_, err := it.db.NamedExec(query, game)
 
-		pending := "pending:" + table
-		err = conn.Do(
-			radix.Cmd(nil, "LPUSH", pending, string(data)),
-		)
-		if err != nil {
-			return err
-		}
+	return err
+}
 
-		return nil
-	})
+// Update update game in db
+func (it Repo) Update(game *model.Game) error {
+
+	query := fmt.Sprintf(`
+		UPDATE %s 
+		SET	
+			game_id = :game_id, 
+			name = :name, 
+			href = :href, 
+			category = :category, 
+			created_at = :created_at, 
+			updated_at = :updated_at 
+		WHERE 
+			game_id = :game_id
+	`, table)
+
+	_, err := it.db.NamedExec(query, game)
+
+	return err
 }

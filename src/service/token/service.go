@@ -7,12 +7,14 @@ import (
 	token "api/usecase/token"
 )
 
+// Handler ...
 type Handler struct {
 	server.Server
 	env     env.Env
 	usecase token.Usecase
 }
 
+// New ...
 func New(server server.Server, env env.Env, usecase token.Usecase) Handler {
 
 	return Handler{server, env, usecase}

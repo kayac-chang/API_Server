@@ -53,9 +53,9 @@ func main() {
 		})
 
 		// === User ===
-		// router.Route("/users", func(router chi.Router) {
-		// 	router.Get("/{token}", token.Get)
-		// })
+		router.Route("/users", func(router chi.Router) {
+			router.Get("/{token}", token.GET)
+		})
 
 		// === Token ===
 		router.Route("/tokens", func(router chi.Router) {
