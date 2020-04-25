@@ -7,10 +7,12 @@ import (
 	"api/framework/server"
 	"api/service/admin"
 	"api/service/game"
+	"api/service/order"
 	"api/service/token"
 
 	adminusecase "api/usecase/admin"
 	gameusecase "api/usecase/game"
+	orderusecase "api/usecase/order"
 	tokenusecase "api/usecase/token"
 
 	"github.com/go-chi/chi"
@@ -28,11 +30,13 @@ func main() {
 	tokenUsecase := tokenusecase.New(env, redis, db)
 	gameUsecase := gameusecase.New(env, redis, db)
 	adminUsecase := adminusecase.New(env, redis, db)
+	orderUsecase := orderusecase.New(env, redis, db)
 
 	// === Handler ===
 	token := token.New(it, env, tokenUsecase)
 	admin := admin.New(it, env, adminUsecase)
 	game := game.New(it, env, gameUsecase)
+	order := order.New(it, env, orderUsecase)
 
 	it.Route("/"+env.API.Version, func(router chi.Router) {
 		// === Game ===
@@ -63,10 +67,10 @@ func main() {
 		})
 
 		// === Order ===
-		// router.Route("/orders", func(router chi.Router) {
-		// 	router.Post("/", order.POST)
-		// 	router.Put("/{order_id}", order.PUT)
-		// })
+		router.Route("/orders", func(router chi.Router) {
+			router.Post("/", order.POST)
+			router.Put("/{id}", order.PUT)
+		})
 	})
 
 	it.Listen(env.Service.Port)

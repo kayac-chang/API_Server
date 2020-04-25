@@ -87,17 +87,21 @@ func (it Repo) FindByID(id string) (*model.User, error) {
 		return it.db.Get(&user, sql, id)
 	}
 
-	if err := findInRedis(); err == nil {
+	if err = findInRedis(); err == nil {
+
 		return &user, nil
 	}
 	if err != model.ErrNotFound {
+
 		return nil, err
 	}
 
 	if err = findInDB(); err == nil {
+
 		return &user, nil
 	}
 	if err != sql.ErrNoRows {
+
 		return nil, err
 	}
 

@@ -14,12 +14,13 @@ func (it Handler) POST(w http.ResponseWriter, r *http.Request) {
 	main := func() interface{} {
 
 		// == Check Content-Type #1 ==
-		contentType := r.Header.Get("Content-Type")
-		if err := utils.CheckContentType(contentType, "application/json"); err != nil {
+		if r.Header.Get("Content-Type") != "application/json" {
 
-			err.Name = "Check Content-Type #1"
-
-			return err
+			return &model.Error{
+				Code:    http.StatusBadRequest,
+				Name:    "Check Content-Type #1",
+				Message: "Content-Type must be application/json",
+			}
 		}
 
 		// == Check Session #2 ==

@@ -1,220 +1,159 @@
 package order
 
 import (
+	"api/agent"
 	"api/env"
-	"api/framework/cache"
 	"api/framework/postgres"
+	"api/framework/redis"
 	"api/model"
-	gamerepo "api/repo/game"
-	orderrepo "api/repo/order"
-	userrepo "api/repo/user"
 	"api/utils"
-	"api/utils/json"
-
-	"database/sql"
-	"fmt"
-	"log"
+	"strings"
 	"time"
+
+	"api/repo/game"
+	"api/repo/order"
+	"api/repo/token"
+	"api/repo/user"
 )
 
+// Usecase ...
 type Usecase struct {
 	env   env.Env
-	order *orderrepo.Repo
-	user  *userrepo.Repo
-	game  *gamerepo.Repo
+	order order.Repo
+	game  game.Repo
+	user  user.Repo
+	token token.Repo
+	agent agent.Agent
 }
 
-func New(env env.Env, db *postgres.DB, c *cache.Cache) *Usecase {
+// New ...
+func New(env env.Env, redis redis.Redis, db postgres.DB) Usecase {
 
-	return &Usecase{
+	return Usecase{
 		env:   env,
-		order: orderrepo.New(db, c),
-		// user:  userrepo.New(db, c),
-		game: gamerepo.New(db, c),
+		order: order.New(redis, db),
+		game:  game.New(redis, db),
+		user:  user.New(redis, db),
+		token: token.New(redis),
+		agent: agent.New(env),
 	}
 }
 
-func (it *Usecase) Create(order *model.Order) error {
+// Auth ...
+func (it Usecase) Auth(token string) error {
 
-	if _, err := it.game.FindByID(order.GameID); err != nil {
-		return err
-	}
+	token = strings.TrimPrefix(token, "Bearer ")
 
-	order.ID = utils.UUID()
-	order.State = model.Pending
-	order.CreatedAt = sql.NullTime{time.Now(), true}
+	_, err := it.token.Find(token)
 
-	if err := it.sendBet(order); err != nil {
-		return err
-	}
-
-	return it.order.Store("Cache", order)
+	return err
 }
 
-func (it *Usecase) Checkout(orderID string, win uint64) (*model.Order, error) {
+// FindUserByID ...
+func (it Usecase) FindUserByID(id string) (*model.User, error) {
 
-	order, err := it.order.FindByID(orderID)
+	user, err := it.user.FindByID(id)
 	if err != nil {
 		return nil, err
 	}
 
-	order.State = model.Completed
-	order.Win = win
-	order.CompletedAt = sql.NullTime{time.Now(), true}
+	return user, nil
+}
 
-	// send end round
-	if err := it.sendEndRound(order); err != nil {
+// FindGameByID ...
+func (it Usecase) FindGameByID(id string) (*model.Game, error) {
 
-		order.State = model.Issue
-
-		it.order.Store("Cache", order)
-
+	game, err := it.game.FindByID(id)
+	if err != nil {
 		return nil, err
 	}
 
-	if err := it.Store(order); err != nil {
+	return game, nil
+}
 
+// FindOrderByID ...
+func (it Usecase) FindOrderByID(id string) (*model.Order, error) {
+
+	order, err := it.order.FindByID(id)
+	if err != nil {
 		return nil, err
 	}
 
 	return order, nil
 }
 
-func (it *Usecase) Store(order *model.Order) error {
+// SendBet ...
+func (it Usecase) SendBet(user *model.User, game *model.Game, order *model.Order) error {
 
-	if err := it.order.Store("DB", order); err != nil {
+	bet := agent.Bet{
+		Roundid:   utils.UUID(),
+		Username:  user.Username,
+		Gamename:  game.Name,
+		Amount:    order.Bet,
+		Session:   user.Session,
+		CreatedAt: time.Now(),
+	}
+
+	balance, err := it.agent.SendBet(bet)
+	if err != nil {
 		return err
 	}
 
-	it.order.RemoveCache(order)
+	// == Update Balance ==
+	user.Balance = balance
+	defer it.UpdateUser(user)
+
+	// == Store Order ==
+	order.ID = bet.Roundid
+	order.State = model.Pending
+	order.CreatedAt = bet.CreatedAt
+	defer it.StoreOrder(order)
 
 	return nil
 }
 
-// === Private ===
+// Checkout ...
+func (it Usecase) Checkout(user *model.User, game *model.Game, order *model.Order) error {
 
-func (it *Usecase) sendBet(order *model.Order) error {
-	api := "/transaction/game/bet"
+	bet := agent.Bet{
+		Roundid:   order.ID,
+		Username:  user.Username,
+		Gamename:  game.Name,
+		Amount:    order.Win,
+		Session:   user.Session,
+		CreatedAt: time.Now(),
+	}
 
-	// user := model.User{
-	// 	ID: order.UserID,
-	// }
-	// if err := it.user.FindBy("ID", &user); err != nil {
-	// 	return err
-	// }
-
-	game, err := it.game.FindByID(order.GameID)
+	balance, err := it.agent.SendEndRound(bet)
 	if err != nil {
+		order.State = model.Issue
+
 		return err
 	}
 
-	url := it.env.Agent.Domain + it.env.Agent.API + api
+	// == Update ==
+	order.State = model.Completed
+	order.CompletedAt = time.Now()
+	defer it.StoreOrder(order)
 
-	req := map[string]interface{}{
-		// "account":    user.Username,
-		"created_at": order.CreatedAt.Time,
-		"gamename":   game.Name,
-		"roundid":    order.ID,
-		"amount":     order.Bet,
-	}
-
-	headers := map[string]string{
-		"Content-Type":       "application/json",
-		"organization-token": it.env.Agent.Token,
-		// "session":            user.Session,
-	}
-
-	resp, err := utils.Post(url, req, headers)
-	if err != nil {
-		return err
-	}
-
-	defer resp.Body.Close()
-
-	res := map[string]interface{}{}
-	json.Parse(resp.Body, &res)
-
-	if resp.StatusCode != 200 {
-		log.Printf("Agent: [ %s ] Failed...\n Error:\n %s", api, json.Jsonify(res))
-
-		err := res["error"].(map[string]interface{})
-
-		return fmt.Errorf("%s", err["message"])
-	}
-
-	log.Printf("Agent: [ %s ] Success !!!\nResponse:\n %s", api, json.Jsonify(res))
-
-	// data := res["data"].(map[string]interface{})
-	// balance := data["balance"].(float64)
-
-	// user.Balance = uint64(balance)
-
-	// if err := it.user.Store("Cache", &user); err != nil {
-	// 	return err
-	// }
+	user.Balance = balance
+	defer it.UpdateUser(user)
 
 	return nil
 }
 
-func (it *Usecase) sendEndRound(order *model.Order) error {
-	api := "/transaction/game/endround"
+// StoreOrder ...
+func (it Usecase) StoreOrder(order *model.Order) error {
 
-	// user := model.User{
-	// 	ID: order.UserID,
-	// }
-	// if err := it.user.FindBy("ID", &user); err != nil {
-	// 	return err
-	// }
+	order.UpdatedAt = time.Now()
 
-	game, err := it.game.FindByID(order.GameID)
-	if err != nil {
-		return err
-	}
+	return it.order.Store(order)
+}
 
-	url := it.env.Agent.Domain + it.env.Agent.API + api
+// UpdateUser ...
+func (it Usecase) UpdateUser(user *model.User) error {
 
-	req := map[string]interface{}{
-		// "account":      user.Username,
-		"gamename":     game.Name,
-		"roundid":      order.ID,
-		"amount":       order.Win,
-		"completed_at": order.CompletedAt.Time,
-	}
+	user.UpdatedAt = time.Now()
 
-	headers := map[string]string{
-		"Content-Type":       "application/json",
-		"organization-token": it.env.Agent.Token,
-		// "session":            user.Session,
-	}
-
-	resp, err := utils.Post(url, req, headers)
-	if err != nil {
-		return err
-	}
-
-	defer resp.Body.Close()
-
-	res := map[string]interface{}{}
-	json.Parse(resp.Body, &res)
-
-	if resp.StatusCode != 200 {
-		log.Printf("Agent: [ %s ] Failed...\n Error:\n %s", api, json.Jsonify(res))
-
-		err := res["error"].(map[string]interface{})
-
-		return fmt.Errorf("%s", err["message"])
-	}
-
-	log.Printf("Agent: [ %s ] Success !!!\nResponse:\n %s", api, json.Jsonify(res))
-
-	// data := res["data"].(map[string]interface{})
-	// balance := data["balance"].(float64)
-
-	// user.Balance = uint64(balance)
-
-	// if err := it.user.Store("Cache", &user); err != nil {
-	// 	return err
-	// }
-
-	return nil
+	return it.user.Store(user)
 }
