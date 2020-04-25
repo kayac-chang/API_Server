@@ -69,7 +69,7 @@ func main() {
 		// === Order ===
 		router.Route("/orders", func(router chi.Router) {
 			router.Post("/", order.POST)
-			// router.Put("/{order_id}", order.PUT)
+			router.Put("/{id}", order.PUT)
 		})
 	})
 

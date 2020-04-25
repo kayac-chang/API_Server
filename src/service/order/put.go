@@ -1,95 +1,186 @@
 package order
 
-// func (it *Handler) PUT(w http.ResponseWriter, r *http.Request) {
+import (
+	"api/model"
+	"api/model/pb"
+	"api/model/response"
+	"api/utils"
+	"net/http"
+)
 
-// 	order, err := it.usecase.Parse(r.Body)
-// 	if err != nil {
+// PUT ...
+func (it *Handler) PUT(w http.ResponseWriter, r *http.Request) {
 
-// 		it.Send(w, response.ProtoBuf{
-// 			Code: http.StatusBadRequest,
+	main := func() interface{} {
 
-// 			Data: &pb.Error{
-// 				Code:    http.StatusBadRequest,
-// 				Name:    "Unexpect Payload",
-// 				Message: err.Error(),
-// 			},
-// 		})
+		// == Check Authorization #1 ==
+		token := r.Header.Get("Authorization")
+		if err := it.usecase.Auth(token); err != nil {
 
-// 		return
-// 	}
+			return &model.Error{
+				Code:    http.StatusUnauthorized,
+				Name:    "Check Authorization #1",
+				Message: err.Error(),
+			}
+		}
 
-// 	order.ID = it.URLParam(r, "order_id")
+		// == Check Content-Type #2 ==
+		if r.Header.Get("Content-Type") != "application/protobuf" {
 
-// 	switch order.State {
+			return response.ProtoBuf{
+				Code: http.StatusBadRequest,
 
-// 	case model.Completed:
-// 		order, err = it.usecase.Checkout(order.ID, order.Win)
+				Data: &pb.Error{
+					Code:    http.StatusBadRequest,
+					Name:    "Check Content-Type #2",
+					Message: "Content-Type must be application/protobuf",
+				},
+			}
+		}
 
-// 	case model.Rejected:
-// 		// TODO
+		// == Check Order Exist #3 ==
+		orderID := it.URLParam(r, "id")
+		order, err := it.usecase.FindOrderByID(orderID)
+		if err != nil {
+			code := http.StatusNotFound
+			if err != model.ErrNotFound {
+				code = http.StatusInternalServerError
+			}
 
-// 	default:
-// 		// TODO
-// 	}
+			return response.ProtoBuf{
+				Code: code,
 
-// 	if err != nil {
-// 		it.Send(w, response.ProtoBuf{
-// 			Code: http.StatusNotAcceptable,
+				Data: &pb.Error{
+					Code:    uint32(code),
+					Name:    "Check Order Exist #3",
+					Message: err.Error(),
+				},
+			}
+		}
 
-// 			Data: &pb.Error{
-// 				Code:    http.StatusNotAcceptable,
-// 				Name:    "Error",
-// 				Message: err.Error(),
-// 			},
-// 		})
+		// == Check Exist #4 ==
+		task1 := utils.Promisefy(func() (interface{}, error) {
+			return it.usecase.FindGameByID(order.GameID)
+		})
+		task2 := utils.Promisefy(func() (interface{}, error) {
+			return it.usecase.FindUserByID(order.UserID)
+		})
+		res, err := utils.WaitAll(task1, task2)
+		if err != nil {
 
-// 		return
-// 	}
+			code := http.StatusNotFound
+			if err != model.ErrNotFound {
+				code = http.StatusInternalServerError
+			}
 
-// 	// === Send ProtoBuf ===
-// 	completed, err := ptypes.TimestampProto(order.CompletedAt.Time)
-// 	if err != nil {
+			return response.ProtoBuf{
+				Code: code,
 
-// 		it.Send(w, response.ProtoBuf{
-// 			Code: http.StatusInternalServerError,
+				Data: &pb.Error{
+					Code:    uint32(code),
+					Name:    "Check Exist #4",
+					Message: err.Error(),
+				},
+			}
+		}
 
-// 			Data: &pb.Error{
-// 				Code:    http.StatusInternalServerError,
-// 				Name:    "Server Error",
-// 				Message: err.Error(),
-// 			},
-// 		})
+		game := res[0].(*model.Game)
+		user := res[1].(*model.User)
 
-// 		return
-// 	}
+		// == Parse ProtoBuf #5 ==
+		req, err := it.Parse(r.Body)
+		if err != nil {
 
-// 	created, err := ptypes.TimestampProto(order.CreatedAt.Time)
-// 	if err != nil {
+			return response.ProtoBuf{
+				Code: http.StatusBadRequest,
 
-// 		it.Send(w, response.ProtoBuf{
-// 			Code: http.StatusInternalServerError,
+				Data: &pb.Error{
+					Code:    http.StatusBadRequest,
+					Name:    "Parse ProtoBuf #5",
+					Message: err.Error(),
+				},
+			}
+		}
 
-// 			Data: &pb.Error{
-// 				Code:    http.StatusInternalServerError,
-// 				Name:    "Server Error",
-// 				Message: err.Error(),
-// 			},
-// 		})
+		// == Update Order ==
+		order.State = req.State
 
-// 		return
-// 	}
+		switch order.State {
 
-// 	it.Send(w, response.ProtoBuf{
-// 		Code: http.StatusCreated,
+		case model.Completed:
 
-// 		Data: &pb.Order{
-// 			OrderId:     order.ID,
-// 			GameId:      order.GameID,
-// 			UserId:      order.UserID,
-// 			State:       order.State.PbState(),
-// 			Bet:         order.Bet,
-// 			CreatedAt:   created,
-// 			CompletedAt: completed,
-// 		},
-// 	})
-// }
+			// == Checkout Order #7 ==
+			order.Win = req.Win
+			if err := it.usecase.Checkout(user, game, order); err != nil {
+
+				return response.ProtoBuf{
+					Code: http.StatusInternalServerError,
+
+					Data: &pb.Error{
+						Code:    http.StatusInternalServerError,
+						Name:    "Checkout Order #7",
+						Message: err.Error(),
+					},
+				}
+			}
+
+		case model.Rejected:
+
+			return response.ProtoBuf{
+				Code: http.StatusBadRequest,
+
+				Data: &pb.Error{
+					Code:    http.StatusBadRequest,
+					Name:    "Rejected #7",
+					Message: "Not Implement",
+				},
+			}
+
+		case model.Issue:
+
+			return response.ProtoBuf{
+				Code: http.StatusBadRequest,
+
+				Data: &pb.Error{
+					Code:    http.StatusBadRequest,
+					Name:    "Issue #7",
+					Message: "Not Implement",
+				},
+			}
+
+		default:
+			return response.ProtoBuf{
+				Code: http.StatusInternalServerError,
+
+				Data: &pb.Error{
+					Code:    http.StatusInternalServerError,
+					Name:    "Update Order #7",
+					Message: "Not Support Order State",
+				},
+			}
+		}
+
+		// == Create Protobuf #6 ==
+		data, err := order.ToProto()
+		if err != nil {
+
+			return response.ProtoBuf{
+				Code: http.StatusInternalServerError,
+
+				Data: &pb.Error{
+					Code:    http.StatusInternalServerError,
+					Name:    "Create Protobuf #6",
+					Message: err.Error(),
+				},
+			}
+		}
+
+		return response.ProtoBuf{
+			Code: http.StatusCreated,
+
+			Data: data,
+		}
+	}
+
+	it.Send(w, main())
+}

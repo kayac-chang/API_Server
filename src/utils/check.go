@@ -41,19 +41,6 @@ func CheckMail(email string) error {
 	return nil
 }
 
-func CheckContentType(contentType string, compare string) *model.Error {
-
-	if contentType != compare {
-
-		return &model.Error{
-			Code:    http.StatusBadRequest,
-			Message: "Content-Type must be " + compare,
-		}
-	}
-
-	return nil
-}
-
 func CheckPayload(json map[string]interface{}, keys ...string) error {
 
 	for _, key := range keys {

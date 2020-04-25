@@ -7,15 +7,16 @@ import (
 	"github.com/golang/protobuf/ptypes"
 )
 
+// Order ...
 type Order struct {
 	ID string `json:"order_id" db:"order_id"`
 
 	GameID string `json:"game_id" db:"game_id"`
 	UserID string `json:"user_id" db:"user_id"`
 
-	State State  `json:"state" db:"state"`
-	Bet   uint64 `json:"bet" db:"bet"`
-	Win   uint64 `json:"win" db:"win"`
+	State State   `json:"state" db:"state"`
+	Bet   float64 `json:"bet" db:"bet"`
+	Win   float64 `json:"win" db:"win"`
 
 	CreatedAt   time.Time `json:"created_at" db:"created_at"`
 	CompletedAt time.Time `json:"completed_at" db:"completed_at,omitempty"`
@@ -45,8 +46,8 @@ func (it Order) ToProto() (*pb.Order, error) {
 		GameId:      it.GameID,
 		UserId:      it.UserID,
 		State:       it.State.PbState(),
-		Bet:         it.Bet,
-		Win:         it.Win,
+		Bet:         uint64(it.Bet),
+		Win:         uint64(it.Win),
 		CreatedAt:   createAt,
 		CompletedAt: completedAt,
 		UpdatedAt:   updatedAt,
@@ -55,6 +56,7 @@ func (it Order) ToProto() (*pb.Order, error) {
 	return &pb, nil
 }
 
+// SubOrder ...
 type SubOrder struct {
 	ID string `json:"sub_order_id" db:"sub_order_id"`
 
@@ -67,6 +69,7 @@ type SubOrder struct {
 	UpdatedAt time.Time `json:"updated_at" db:"updated_at"`
 }
 
+// State ...
 type State string
 
 const (

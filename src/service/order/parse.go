@@ -24,13 +24,13 @@ func (it Handler) Parse(reqBody io.Reader) (*model.Order, error) {
 	}
 
 	order := model.Order{
-		ID: req.GetOrderId(),
+		ID: req.OrderId,
 
-		GameID: req.GetGameId(),
-		UserID: req.GetUserId(),
+		GameID: req.GameId,
+		UserID: req.UserId,
 
-		State: model.ToState(req.GetState()),
-		Bet:   req.GetBet(),
+		State: model.ToState(req.State),
+		Bet:   float64(req.Bet),
 	}
 
 	if req.CreatedAt != nil {

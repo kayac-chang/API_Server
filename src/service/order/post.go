@@ -25,8 +25,7 @@ func (it Handler) POST(w http.ResponseWriter, r *http.Request) {
 		}
 
 		// == Check Content-Type #2 ==
-		contentType := r.Header.Get("Content-Type")
-		if err := utils.CheckContentType(contentType, "application/protobuf"); err != nil {
+		if r.Header.Get("Content-Type") != "application/protobuf" {
 
 			return response.ProtoBuf{
 				Code: http.StatusBadRequest,
@@ -34,7 +33,7 @@ func (it Handler) POST(w http.ResponseWriter, r *http.Request) {
 				Data: &pb.Error{
 					Code:    http.StatusBadRequest,
 					Name:    "Check Content-Type #2",
-					Message: err.Error(),
+					Message: "Content-Type must be application/protobuf",
 				},
 			}
 		}
@@ -54,8 +53,14 @@ func (it Handler) POST(w http.ResponseWriter, r *http.Request) {
 			}
 		}
 
-		// == Check Game Exist #4 ==
-		game, err := it.usecase.FindGameByID(order.GameID)
+		// == Check Exist #4 ==
+		task1 := utils.Promisefy(func() (interface{}, error) {
+			return it.usecase.FindGameByID(order.GameID)
+		})
+		task2 := utils.Promisefy(func() (interface{}, error) {
+			return it.usecase.FindUserByID(order.UserID)
+		})
+		res, err := utils.WaitAll(task1, task2)
 		if err != nil {
 
 			code := http.StatusNotFound
@@ -68,37 +73,17 @@ func (it Handler) POST(w http.ResponseWriter, r *http.Request) {
 
 				Data: &pb.Error{
 					Code:    uint32(code),
-					Name:    "Check Game Exist #4",
+					Name:    "Check Exist #4",
 					Message: err.Error(),
 				},
 			}
 		}
 
-		// == Check User Exist #5 ==
-		user, err := it.usecase.FindUserByID(order.UserID)
-		if err != nil {
-
-			code := http.StatusNotFound
-			msg := "User does not existed"
-
-			if err != model.ErrNotFound {
-				code = http.StatusInternalServerError
-				msg = err.Error()
-			}
-
-			return response.ProtoBuf{
-				Code: code,
-
-				Data: &pb.Error{
-					Code:    uint32(code),
-					Name:    "Check User Exist #5",
-					Message: msg,
-				},
-			}
-		}
+		game := res[0].(*model.Game)
+		user := res[1].(*model.User)
 
 		// == Send Bet #6 ==
-		balance, err := it.usecase.SendBet(user, game, order)
+		err = it.usecase.SendBet(user, game, order)
 		if err != nil {
 			_err := err.(*model.Error)
 
@@ -109,35 +94,6 @@ func (it Handler) POST(w http.ResponseWriter, r *http.Request) {
 					Code:    uint32(_err.Code),
 					Name:    "Send Bet #6",
 					Message: _err.Error(),
-				},
-			}
-		}
-
-		// == Update Balance #7 ==
-		user.Balance = balance
-		if err := it.usecase.UpdateUser(user); err != nil {
-
-			return response.ProtoBuf{
-				Code: http.StatusInternalServerError,
-
-				Data: &pb.Error{
-					Code:    uint32(http.StatusInternalServerError),
-					Name:    "Update Balance #7",
-					Message: err.Error(),
-				},
-			}
-		}
-
-		// == Store Order #8 ==
-		if err := it.usecase.StoreOrder(order); err != nil {
-
-			return response.ProtoBuf{
-				Code: http.StatusInternalServerError,
-
-				Data: &pb.Error{
-					Code:    http.StatusInternalServerError,
-					Name:    "Store Order #8",
-					Message: err.Error(),
 				},
 			}
 		}

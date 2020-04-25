@@ -19,6 +19,19 @@ type Agent struct {
 	Token  string
 }
 
+// Bet ...
+type Bet struct {
+	Roundid string
+
+	Username string
+	Gamename string
+
+	Amount  float64
+	Session string
+
+	CreatedAt time.Time
+}
+
 // New ...
 func New(env env.Env) Agent {
 
@@ -29,6 +42,7 @@ func New(env env.Env) Agent {
 	}
 }
 
+// CheckPlayer ...
 func (it Agent) CheckPlayer(username string, session string) (float64, error) {
 
 	api := "/player/check/" + username
@@ -66,18 +80,6 @@ func (it Agent) CheckPlayer(username string, session string) (float64, error) {
 	return amount, nil
 }
 
-type Bet struct {
-	Roundid string
-
-	Username string
-	Gamename string
-
-	Amount  float64
-	Session string
-
-	CreatedAt time.Time
-}
-
 // SendBet ...
 func (it Agent) SendBet(bet Bet) (float64, error) {
 
@@ -91,6 +93,61 @@ func (it Agent) SendBet(bet Bet) (float64, error) {
 		"gamename":   bet.Gamename,
 		"roundid":    bet.Roundid,
 		"amount":     bet.Amount,
+	}
+
+	headers := map[string]string{
+		"Content-Type":       "application/json",
+		"organization-token": it.Token,
+		"session":            bet.Session,
+	}
+
+	resp, err := utils.Post(url, req, headers)
+	if err != nil {
+
+		return 0, &model.Error{
+			Code:    http.StatusInternalServerError,
+			Message: err.Error(),
+		}
+	}
+
+	defer resp.Body.Close()
+
+	res := map[string]interface{}{}
+	json.Parse(resp.Body, &res)
+
+	if resp.StatusCode != 200 {
+		log.Printf("Agent: [ %s ] Failed...\n Error:\n %s", api, json.Jsonify(res))
+
+		data := res["error"].(map[string]interface{})
+		msg := data["message"].(string)
+
+		return 0, &model.Error{
+			Code:    resp.StatusCode,
+			Message: msg,
+		}
+	}
+
+	log.Printf("Agent: [ %s ] Success !!!\nResponse:\n %s", api, json.Jsonify(res))
+
+	data := res["data"].(map[string]interface{})
+	balance := data["balance"].(float64)
+
+	return balance, nil
+}
+
+// SendEndRound ...
+func (it Agent) SendEndRound(bet Bet) (float64, error) {
+
+	api := "/transaction/game/endround"
+
+	url := it.Domain + it.API + api
+
+	req := map[string]interface{}{
+		"account":      bet.Username,
+		"gamename":     bet.Gamename,
+		"roundid":      bet.Roundid,
+		"amount":       bet.Amount,
+		"completed_at": bet.CreatedAt.String(),
 	}
 
 	headers := map[string]string{

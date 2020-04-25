@@ -24,12 +24,13 @@ func (it *Handler) POST(w http.ResponseWriter, r *http.Request) {
 		}
 
 		// == Check Content-Type #2 ==
-		contentType := r.Header.Get("Content-Type")
-		if err := utils.CheckContentType(contentType, "application/json"); err != nil {
+		if r.Header.Get("Content-Type") != "application/json" {
 
-			err.Name = "Check Content-Type #2"
-
-			return err
+			return &model.Error{
+				Code:    http.StatusBadRequest,
+				Name:    "Check Content-Type #2",
+				Message: "Content-Type must be application/json",
+			}
 		}
 
 		// == Parse JSON #3 ==

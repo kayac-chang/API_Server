@@ -31,7 +31,7 @@ func New(env env.Env, redis redis.Redis, db postgres.DB) Usecase {
 
 	return Usecase{
 		env:   env,
-		order: order.New(redis),
+		order: order.New(redis, db),
 		game:  game.New(redis, db),
 		user:  user.New(redis, db),
 		token: token.New(redis),
@@ -71,28 +71,75 @@ func (it Usecase) FindGameByID(id string) (*model.Game, error) {
 	return game, nil
 }
 
+// FindOrderByID ...
+func (it Usecase) FindOrderByID(id string) (*model.Order, error) {
+
+	order, err := it.order.FindByID(id)
+	if err != nil {
+		return nil, err
+	}
+
+	return order, nil
+}
+
 // SendBet ...
-func (it Usecase) SendBet(user *model.User, game *model.Game, order *model.Order) (float64, error) {
+func (it Usecase) SendBet(user *model.User, game *model.Game, order *model.Order) error {
 
 	bet := agent.Bet{
 		Roundid:   utils.UUID(),
 		Username:  user.Username,
 		Gamename:  game.Name,
-		Amount:    float64(order.Bet),
+		Amount:    order.Bet,
 		Session:   user.Session,
 		CreatedAt: time.Now(),
 	}
 
 	balance, err := it.agent.SendBet(bet)
 	if err != nil {
-		return 0, err
+		return err
 	}
 
+	// == Update Balance ==
+	user.Balance = balance
+	defer it.UpdateUser(user)
+
+	// == Store Order ==
 	order.ID = bet.Roundid
 	order.State = model.Pending
 	order.CreatedAt = bet.CreatedAt
+	defer it.StoreOrder(order)
 
-	return balance, nil
+	return nil
+}
+
+// Checkout ...
+func (it Usecase) Checkout(user *model.User, game *model.Game, order *model.Order) error {
+
+	bet := agent.Bet{
+		Roundid:   order.ID,
+		Username:  user.Username,
+		Gamename:  game.Name,
+		Amount:    order.Win,
+		Session:   user.Session,
+		CreatedAt: time.Now(),
+	}
+
+	balance, err := it.agent.SendEndRound(bet)
+	if err != nil {
+		order.State = model.Issue
+
+		return err
+	}
+
+	// == Update ==
+	order.State = model.Completed
+	order.CompletedAt = time.Now()
+	defer it.StoreOrder(order)
+
+	user.Balance = balance
+	defer it.UpdateUser(user)
+
+	return nil
 }
 
 // StoreOrder ...
@@ -110,97 +157,3 @@ func (it Usecase) UpdateUser(user *model.User) error {
 
 	return it.user.Store(user)
 }
-
-// func (it Usecase) Checkout(orderID string, win uint64) (*model.Order, error) {
-
-// 	order, err := it.order.FindByID(orderID)
-// 	if err != nil {
-// 		return nil, err
-// 	}
-
-// 	order.State = model.Completed
-// 	order.Win = win
-// 	order.CompletedAt = sql.NullTime{time.Now(), true}
-
-// 	// send end round
-// 	if err := it.sendEndRound(order); err != nil {
-
-// 		order.State = model.Issue
-
-// 		it.order.Store("Cache", order)
-
-// 		return nil, err
-// 	}
-
-// 	if err := it.Store(order); err != nil {
-
-// 		return nil, err
-// 	}
-
-// 	return order, nil
-// }
-
-// === Private ===
-
-// func (it *Usecase) sendEndRound(order *model.Order) error {
-// 	api := "/transaction/game/endround"
-
-// 	// user := model.User{
-// 	// 	ID: order.UserID,
-// 	// }
-// 	// if err := it.user.FindBy("ID", &user); err != nil {
-// 	// 	return err
-// 	// }
-
-// 	game, err := it.game.FindByID(order.GameID)
-// 	if err != nil {
-// 		return err
-// 	}
-
-// 	url := it.env.Agent.Domain + it.env.Agent.API + api
-
-// 	req := map[string]interface{}{
-// 		// "account":      user.Username,
-// 		"gamename":     game.Name,
-// 		"roundid":      order.ID,
-// 		"amount":       order.Win,
-// 		"completed_at": order.CompletedAt.Time,
-// 	}
-
-// 	headers := map[string]string{
-// 		"Content-Type":       "application/json",
-// 		"organization-token": it.env.Agent.Token,
-// 		// "session":            user.Session,
-// 	}
-
-// 	resp, err := utils.Post(url, req, headers)
-// 	if err != nil {
-// 		return err
-// 	}
-
-// 	defer resp.Body.Close()
-
-// 	res := map[string]interface{}{}
-// 	json.Parse(resp.Body, &res)
-
-// 	if resp.StatusCode != 200 {
-// 		log.Printf("Agent: [ %s ] Failed...\n Error:\n %s", api, json.Jsonify(res))
-
-// 		err := res["error"].(map[string]interface{})
-
-// 		return fmt.Errorf("%s", err["message"])
-// 	}
-
-// 	log.Printf("Agent: [ %s ] Success !!!\nResponse:\n %s", api, json.Jsonify(res))
-
-// 	// data := res["data"].(map[string]interface{})
-// 	// balance := data["balance"].(float64)
-
-// 	// user.Balance = uint64(balance)
-
-// 	// if err := it.user.Store("Cache", &user); err != nil {
-// 	// 	return err
-// 	// }
-
-// 	return nil
-// }
