@@ -6,7 +6,7 @@ import (
 	"github.com/go-chi/chi"
 )
 
-func (it *Server) URLParam(r *http.Request, key string) string {
+func (it Server) URLParam(r *http.Request, key string) string {
 
 	return chi.URLParam(r, key)
 }

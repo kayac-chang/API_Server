@@ -9,11 +9,8 @@ type Admin struct {
 
 	Email    string `json:"email" db:"email"`
 	Username string `json:"username" db:"username"`
-	Password string `json:"-" db:"password"`
-	Org      string `json:"organization" db:"organization"`
+	Password string `json:"password" db:"password"`
 
-	Token string `json:"-" db:"-"`
-
-	CreatedAt time.Time `json:"-" db:"created_at"`
-	UpdatedAt time.Time `json:"-" db:"updated_at"`
+	CreatedAt time.Time `json:"created_at" db:"created_at"`
+	UpdatedAt time.Time `json:"updated_at" db:"updated_at"`
 }

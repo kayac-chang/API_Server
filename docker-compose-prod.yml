@@ -1,18 +1,6 @@
 version: "3"
 
 services:
-  postgres:
-    image: kayacchang/api_pg
-    ports:
-      - "${PG_PORT}"
-    volumes:
-      - ./.db:/var/lib/postgresql/data
-    environment:
-      - POSTGRES_USER=${PG_USER}
-      - POSTGRES_PASSWORD=${PG_PASSWORD}
-      - POSTGRES_DB=${PG_NAME}
-      - POSTGRES_HOST=${PG_HOST}
-
   service:
     image: kayacchang/api_service
     ports:

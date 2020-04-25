@@ -2,23 +2,19 @@ package order
 
 import (
 	"api/env"
-	"api/framework/cache"
-	"api/framework/postgres"
 	"api/framework/server"
 	order "api/usecase/order"
 )
 
+// Handler ...
 type Handler struct {
-	*server.Server
-	env     *env.Env
-	usecase *order.Usecase
+	server.Server
+	env     env.Env
+	usecase order.Usecase
 }
 
-func New(s *server.Server, e *env.Env, db *postgres.DB, c *cache.Cache) *Handler {
+// New ...
+func New(server server.Server, env env.Env, order order.Usecase) Handler {
 
-	return &Handler{
-		s,
-		e,
-		order.New(e, db, c),
-	}
+	return Handler{server, env, order}
 }

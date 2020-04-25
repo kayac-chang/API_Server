@@ -1,18 +1,13 @@
 package model
 
-import (
-	"time"
-)
+import "time"
 
 type User struct {
-	ID string `json:"user_id" db:"user_id"`
+	ID       string  `json:"user_id"`
+	Username string  `json:"username"`
+	Balance  float64 `json:"balance"`
+	Session  string  `json:"session"`
 
-	Username string `json:"username" db:"username"`
-
-	Balance uint64 `json:"balance,omitempty" db:"-"`
-	Token   string `json:"access_token,omitempty" db:"-"`
-	Session string `json:"session,omitempty" db:"-"`
-
-	CreatedAt time.Time `json:"-" db:"created_at"`
-	UpdatedAt time.Time `json:"-" db:"updated_at"`
+	CreatedAt time.Time `json:"created_at"`
+	UpdatedAt time.Time `json:"updated_at"`
 }

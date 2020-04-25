@@ -1,50 +1,99 @@
 package admin
 
 import (
+	"api/framework/jwt"
 	"api/model"
 	"api/model/response"
-	"encoding/json"
+	"api/utils"
 	"net/http"
 )
 
-func (it *Handler) Auth(w http.ResponseWriter, r *http.Request) {
+// Auth POST /admins/tokens
+func (it Handler) Auth(w http.ResponseWriter, r *http.Request) {
 
-	// == Parse Payload ==
-	req := map[string]string{}
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+	main := func() interface{} {
 
-		it.Send(w, response.JSON{
-			Code: http.StatusBadRequest,
+		// == Check Content-Type #1 ==
+		if r.Header.Get("Content-Type") != "application/json" {
 
-			Error: model.Error{
-				Name:    "Unexpect Payload",
-				Message: model.ErrUnexpectPayload.Error(),
-			},
-		})
+			return &model.Error{
+				Code:    http.StatusBadRequest,
+				Name:    "Check Content-Type #1",
+				Message: "Content-Type must be application/json",
+			}
+		}
 
-		return
+		// == Parse JSON #2 ==
+		req, err := utils.ParseJSON(r.Body)
+		if err != nil {
+			err := err.(*model.Error)
+
+			err.Name = "Parse JSON #2"
+
+			return err
+		}
+
+		email := req["email"].(string)
+		password := req["password"].(string)
+
+		// == Check Admin Exist #3 ==
+		admin, err := it.usecase.Find(email)
+		if err != nil {
+
+			if err != model.ErrNotFound {
+
+				return &model.Error{
+					Code:    http.StatusInternalServerError,
+					Name:    "Check Admin Exist #3",
+					Message: err.Error(),
+				}
+			}
+
+			return &model.Error{
+				Code:    http.StatusUnauthorized,
+				Name:    "Check Admin Exist #3",
+				Message: "Incorrect email address and / or password",
+			}
+		}
+
+		// == Check Password #4 ==
+		if err := utils.CompareHash(admin.Password, password); err != nil {
+
+			return &model.Error{
+				Code:    http.StatusUnauthorized,
+				Name:    "Check Password #4",
+				Message: "Incorrect email address and / or password",
+			}
+		}
+
+		// == Generate JWT Token #5 ==
+		token, err := jwt.Sign(it.env)
+		if err != nil {
+
+			return &model.Error{
+				Code:    http.StatusInternalServerError,
+				Name:    "Generate JWT Token #5",
+				Message: err.Error(),
+			}
+		}
+
+		// == Associate Token With Admin #6 ==
+		if err := it.usecase.Associate(token, admin); err != nil {
+
+			return &model.Error{
+				Code:    http.StatusInternalServerError,
+				Name:    "Associate Token With Admin #6",
+				Message: err.Error(),
+			}
+		}
+
+		// == Send Response ==
+		return response.JSON{
+			Code: http.StatusCreated,
+
+			Data: token,
+		}
 	}
 
-	// Authentication
-	token, err := it.usecase.CheckUser(req)
-	if err != nil {
-
-		it.Send(w, response.JSON{
-			Code: http.StatusUnauthorized,
-
-			Error: model.Error{
-				Name:    "Unauthorized",
-				Message: model.ErrUnexpectPayload.Error(),
-			},
-		})
-
-		return
-	}
-
-	// == Send Response ==
-	it.Send(w, response.JSON{
-		Code: http.StatusCreated,
-
-		Data: token,
-	})
+	it.Send(w, main())
 }

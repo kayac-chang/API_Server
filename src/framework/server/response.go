@@ -1,6 +1,7 @@
 package server
 
 import (
+	"api/model"
 	"api/model/response"
 	"encoding/json"
 	"log"
@@ -21,6 +22,16 @@ func (it *Server) Send(w http.ResponseWriter, val interface{}) {
 
 	case string:
 		w.Write([]byte(val))
+
+	case *model.Error:
+		sendJSON(w, response.JSON{
+			Code: val.Code,
+
+			Error: response.Error{
+				Name:    val.Name,
+				Message: val.Message,
+			},
+		})
 
 	default:
 		log.Fatalf("Unsupport Type: %t\n", val)

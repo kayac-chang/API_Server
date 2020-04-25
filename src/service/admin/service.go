@@ -2,23 +2,23 @@ package admin
 
 import (
 	"api/env"
-	"api/framework/cache"
-	"api/framework/postgres"
 	"api/framework/server"
-	admin "api/usecase/admin"
+	"api/usecase/admin"
 )
 
+// Handler service instance
 type Handler struct {
-	*server.Server
-	env     *env.Env
-	usecase *admin.Usecase
+	server.Server
+	env     env.Env
+	usecase admin.Usecase
 }
 
-func New(s *server.Server, e *env.Env, db *postgres.DB, c *cache.Cache) *Handler {
+// New admin service
+func New(server server.Server, env env.Env, usecase admin.Usecase) Handler {
 
-	return &Handler{
-		s,
-		e,
-		admin.New(e, db, c),
+	return Handler{
+		server,
+		env,
+		usecase,
 	}
 }

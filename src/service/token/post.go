@@ -3,93 +3,117 @@ package token
 import (
 	"api/model"
 	"api/model/response"
+	"api/utils"
 
-	"encoding/json"
 	"net/http"
 )
 
-func (it *Handler) POST(w http.ResponseWriter, r *http.Request) {
+// POST POST /tokens
+func (it Handler) POST(w http.ResponseWriter, r *http.Request) {
 
-	// == Check Session ID ==
-	session := r.Header.Get("session")
-	if session == "" {
+	main := func() interface{} {
 
-		it.Send(w, response.JSON{
-			Code: http.StatusBadRequest,
+		// == Check Content-Type #1 ==
+		if r.Header.Get("Content-Type") != "application/json" {
 
-			Error: model.Error{
-				Name:    "Missing Session ID",
-				Message: "Required header session id for authentication",
-			},
-		})
+			return &model.Error{
+				Code:    http.StatusBadRequest,
+				Name:    "Check Content-Type #1",
+				Message: "Content-Type must be application/json",
+			}
+		}
 
-		return
-	}
+		// == Check Session #2 ==
+		session := r.Header.Get("session")
+		if session == "" {
 
-	// == Parse Payload ==
-	req := map[string]string{}
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+			return &model.Error{
+				Code:    http.StatusBadRequest,
+				Name:    "Check Session #2",
+				Message: "Request header must contain session",
+			}
+		}
 
-		it.Send(w, response.JSON{
-			Code: http.StatusBadRequest,
+		// == Parse JSON #3 ==
+		req, err := utils.ParseJSON(r.Body)
+		if err != nil {
 
-			Error: model.Error{
-				Name:    "Unexpect Payload",
-				Message: model.ErrUnexpectPayload.Error(),
-			},
-		})
-
-		return
-	}
-
-	// == Registration ==
-	username := req["username"]
-	token, err := it.userCase.Regist(username, session)
-	if err != nil {
-
-		it.Send(w, response.JSON{
-			Code: http.StatusUnauthorized,
-
-			Error: model.Error{
-				Name:    "User Registration Failed",
+			return &model.Error{
+				Code:    http.StatusInternalServerError,
+				Name:    "Parse JSON #3",
 				Message: err.Error(),
-			},
+			}
+		}
+
+		// == Check Request Payload #4 ==
+		if err := utils.CheckPayload(req, "game", "username"); err != nil {
+			err := err.(*model.Error)
+
+			err.Name = "Check Request Payload #4"
+
+			return err
+		}
+
+		username := req["username"].(string)
+		name := req["game"].(string)
+
+		// == Registration #5 ==
+		registration := utils.Promisefy(func() (interface{}, error) {
+
+			token, err := it.usecase.Regist(username, session)
+			if err != nil {
+				err := err.(*model.Error)
+
+				err.Name = "Registration #5"
+
+				return nil, err
+			}
+
+			return token, nil
 		})
 
-		return
-	}
+		// == Get Game Link #6 ==
+		getGameLink := utils.Promisefy(func() (interface{}, error) {
 
-	gamename := req["game"]
-	game, err := it.gameCase.FindByName(gamename)
-	if err != nil {
+			game, err := it.usecase.FindGameByName(name)
+			if err != nil {
 
-		it.Send(w, response.JSON{
-			Code: http.StatusNotFound,
+				_err := &model.Error{
+					Code:    http.StatusInternalServerError,
+					Name:    "Get Game Link #6",
+					Message: err.Error(),
+				}
 
-			Error: model.Error{
-				Name:    gamename + " Not Found",
-				Message: err.Error(),
-			},
+				return nil, _err
+			}
+
+			return game, nil
 		})
 
-		return
+		res, err := utils.WaitAll(registration, getGameLink)
+		if err != nil {
+			return err
+		}
+
+		token := res[0].(*model.Token)
+		game := res[1].(*model.Game)
+
+		href := it.getHref("/tokens")
+
+		gameHref := game.Href + "?" + "token=" + token.AccessToken
+
+		return response.JSON{
+			Code: http.StatusCreated,
+
+			Data: map[string]interface{}{
+				"token": token,
+				"links": [...]response.Link{
+					{Relation: "access", Method: "GET", Href: gameHref},
+					{Relation: "reauthorize", Method: "POST", Href: href},
+				},
+			},
+		}
 	}
 
-	gameHref := game.Href + "?" + "access_token=" + token.AccessToken
-	selfHref := it.env.Service.Domain + "/" + it.env.API.Version + "/token"
-
-	res := map[string]interface{}{
-		"token": token,
-		"links": [...]response.Link{
-			{Relation: "access", Method: "GET", Href: gameHref},
-			{Relation: "reauthorize", Method: "POST", Href: selfHref},
-		},
-	}
-
-	// == Send Response ==
-	it.Send(w, response.JSON{
-		Code: http.StatusCreated,
-
-		Data: res,
-	})
+	it.Send(w, main())
 }

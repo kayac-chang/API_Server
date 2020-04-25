@@ -29,6 +29,7 @@ func (cfg PostgresConfig) ToURL() string {
 
 type Env struct {
 	Postgres PostgresConfig
+	Redis    Redis
 	Secret   []byte
 	Agent    Agent
 	Service  Service
@@ -57,7 +58,12 @@ type SSL struct {
 	Key  string
 }
 
-func New() *Env {
+type Redis struct {
+	HOST string
+	PORT string
+}
+
+func New() Env {
 
 	err := godotenv.Load()
 
@@ -65,7 +71,7 @@ func New() *Env {
 		log.Panicf("No [ .env ] file found...\n")
 	}
 
-	env := &Env{
+	env := Env{
 
 		Postgres: map[string]string{
 			"host":     getEnv("PG_HOST"),
@@ -73,6 +79,11 @@ func New() *Env {
 			"user":     getEnv("PG_USER"),
 			"password": getEnv("PG_PASSWORD"),
 			"dbname":   getEnv("PG_NAME"),
+		},
+
+		Redis: Redis{
+			HOST: getEnv("REDIS_HOST"),
+			PORT: getEnv("REDIS_PORT"),
 		},
 
 		Service: Service{
@@ -93,7 +104,7 @@ func New() *Env {
 		Secret: []byte(getEnv("SECRET")),
 
 		Agent: Agent{
-			Domain: "http://" + getEnv("AGENT_DOMAIN") + ":" + getEnv("AGENT_PORT"),
+			Domain: getEnv("AGENT_DOMAIN"),
 			API:    getEnv("AGENT_API"),
 			Token:  getEnv("AGENT_TOKEN"),
 		},

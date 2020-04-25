@@ -1,13 +1,12 @@
-@hostname = 35.184.168.53
-@port = 9000
+@hostname = localhost
+@port = 8000
 @host = {{hostname}}:{{port}}
 
 ### Create Admin
-@username = "kayac"
-@password = "Test123456."
-@organization = "sunny"
-@secret = "my_secret_key"
-@email = "egg734631@gmail.com"
+# @username = "kayac"
+# @password = "Test123456."
+# @secret = "my_secret_key"
+# @email = "egg734631@gmail.com"
 
 POST http://{{host}}/v1/admins
 Content-Type: application/json
@@ -16,8 +15,7 @@ Content-Type: application/json
     "secret": {{secret}},
     "email": {{email}},
     "username": {{username}},
-    "password": {{password}},
-    "organization": {{organization}}
+    "password": {{password}}
 }
 
 ### Create Admin Token
@@ -38,7 +36,7 @@ Content-Type: application/json
 @authToken = {{adminToken.response.body.$.data.access_token}}
 
 ### Find Game
-@gameurl = catpunch
+@gameurl = d52d3013075fe1078c47236cdc338422
 
 GET http://{{host}}/v1/games/{{gameurl}}
 Authorization: Bearer {{authToken}}
@@ -47,8 +45,8 @@ Authorization: Bearer {{authToken}}
 GET http://{{host}}/v1/games
 
 ### Create Game
-@gamename = "catpunch"
-@href = "https://catpunch"
+@gamename = "cyberpunk"
+@href = "https://cyberpunk-dev.sunnyland.fun"
 @category = "slot"
 POST http://{{host}}/v1/games
 Content-Type: application/json
@@ -61,8 +59,7 @@ Authorization: Bearer {{authToken}}
 }
 
 ### Update Game
-# @gamename = "catpunch"
-# @href = "https://catpunch"
+@href = "https://cyberpunk-dev.sunnyland.fun"
 @category = "slot"
 PUT http://{{host}}/v1/games/{{gameurl}}
 Content-Type: application/json
@@ -76,8 +73,8 @@ Authorization: Bearer {{authToken}}
 
 ### Token
 @session = dfd99af9-f92f-4161-8e62-9598fb38931b
-@game = "catpunch"
-# @username = "mouse1"
+@game = "cyberpunk"
+@username = "mouse1"
 # @name gameToken
 POST http://{{host}}/v1/tokens
 Content-Type: application/json

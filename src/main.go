@@ -2,13 +2,18 @@ package main
 
 import (
 	"api/env"
-	"api/framework/cache"
 	"api/framework/postgres"
+	"api/framework/redis"
 	"api/framework/server"
 	"api/service/admin"
 	"api/service/game"
 	"api/service/order"
 	"api/service/token"
+
+	adminusecase "api/usecase/admin"
+	gameusecase "api/usecase/game"
+	orderusecase "api/usecase/order"
+	tokenusecase "api/usecase/token"
 
 	"github.com/go-chi/chi"
 )
@@ -17,48 +22,54 @@ func main() {
 
 	// === Framework ===
 	env := env.New()
-	cache := cache.Get()
-	db := postgres.New(env.Postgres.ToURL())
+	db := postgres.New(env)
+	redis := redis.New(env)
 	it := server.New(env)
 
-	// === Handler ===
-	game := game.New(it, env, db, cache)
-	admin := admin.New(it, env, db, cache)
-	token := token.New(it, env, db, cache)
-	order := order.New(it, env, db, cache)
+	// === Usecase ===
+	tokenUsecase := tokenusecase.New(env, redis, db)
+	gameUsecase := gameusecase.New(env, redis, db)
+	adminUsecase := adminusecase.New(env, redis, db)
+	orderUsecase := orderusecase.New(env, redis, db)
 
-	it.Route("/"+env.API.Version, func(server chi.Router) {
+	// === Handler ===
+	token := token.New(it, env, tokenUsecase)
+	admin := admin.New(it, env, adminUsecase)
+	game := game.New(it, env, gameUsecase)
+	order := order.New(it, env, orderUsecase)
+
+	it.Route("/"+env.API.Version, func(router chi.Router) {
 		// === Game ===
-		server.Route("/games", func(server chi.Router) {
-			server.Get("/", game.GET_ALL)
-			server.Get("/{name}", game.GET)
-			server.Post("/", game.POST)
-			server.Put("/{name}", game.PUT)
+		router.Route("/games", func(router chi.Router) {
+			router.Get("/", game.GETALL)
+			router.Get("/{id}", game.GET)
+			router.Post("/", game.POST)
+			router.Put("/{id}", game.PUT)
 		})
 
 		// === Admin ===
-		server.Route("/admins", func(server chi.Router) {
-			server.Post("/", admin.POST)
+		router.Route("/admins", func(router chi.Router) {
+			router.Post("/", admin.POST)
 
-			server.Route("/tokens", func(server chi.Router) {
-				server.Post("/", admin.Auth)
+			router.Route("/tokens", func(router chi.Router) {
+				router.Post("/", admin.Auth)
 			})
 		})
 
 		// === User ===
-		server.Route("/users", func(server chi.Router) {
-			server.Get("/{token}", token.Get)
+		router.Route("/users", func(router chi.Router) {
+			router.Get("/{token}", token.GET)
 		})
 
 		// === Token ===
-		server.Route("/tokens", func(server chi.Router) {
-			server.Post("/", token.POST)
+		router.Route("/tokens", func(router chi.Router) {
+			router.Post("/", token.POST)
 		})
 
 		// === Order ===
-		server.Route("/orders", func(server chi.Router) {
-			server.Post("/", order.POST)
-			server.Put("/{order_id}", order.PUT)
+		router.Route("/orders", func(router chi.Router) {
+			router.Post("/", order.POST)
+			router.Put("/{id}", order.PUT)
 		})
 	})
 

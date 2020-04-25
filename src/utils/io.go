@@ -1,12 +1,16 @@
 package utils
 
 import (
+	"api/model"
 	"bytes"
 	"encoding/json"
+	"io"
 	"io/ioutil"
 	"log"
 	"net/http"
 	"time"
+
+	errs "github.com/pkg/errors"
 )
 
 func ParseFile(filename string) string {
@@ -68,4 +72,19 @@ func Post(url string, body interface{}, headers map[string]string) (*http.Respon
 	}
 
 	return client.Do(req)
+}
+
+func ParseJSON(body io.ReadCloser) (map[string]interface{}, error) {
+
+	req := map[string]interface{}{}
+
+	if err := json.NewDecoder(body).Decode(&req); err != nil {
+
+		return nil, &model.Error{
+			Code:    http.StatusInternalServerError,
+			Message: errs.WithMessage(err, "Error occured when parsing payload").Error(),
+		}
+	}
+
+	return req, nil
 }
