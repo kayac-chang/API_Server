@@ -5,9 +5,7 @@ import (
 	"api/framework/redis"
 	"api/model"
 	"database/sql"
-	"encoding/json"
-
-	"github.com/mediocregopher/radix/v3"
+	"fmt"
 )
 
 const table = "admins"
@@ -26,76 +24,38 @@ func New(redis redis.Redis, db postgres.DB) Repo {
 // Store store admin in redis
 func (it Repo) Store(admin *model.Admin) error {
 
-	data, err := json.Marshal(admin)
-	if err != nil {
-		return err
-	}
+	query := fmt.Sprintf(`
+		INSERT INTO %s 
+			(admin_id, email, username, password, created_at, updated_at) 
+		VALUES 
+			(:admin_id, :email, :username, :password, :created_at, :updated_at)
+	`, table)
 
-	return it.redis.Write(table, func(conn radix.Conn) error {
+	_, err := it.db.NamedExec(query, admin)
 
-		err := conn.Do(
-			radix.Cmd(nil, "HSET", table, admin.ID, string(data)),
-		)
-		if err != nil {
-			return err
-		}
-
-		insert := "pending:" + table
-		err = conn.Do(radix.Cmd(nil, "LPUSH", insert, string(data)))
-		if err != nil {
-			return err
-		}
-
-		return nil
-	})
+	return err
 }
 
 // FindByID find admin by specify id
 func (it Repo) FindByID(id string) (*model.Admin, error) {
 
-	var err error
 	admin := model.Admin{}
 
-	findInRedis := func() error {
+	query := fmt.Sprintf("SELECT * FROM %s WHERE admin_id=$1", table)
 
-		res, err := it.redis.Read("HGET", table, id)
-		if err != nil {
-			return err
+	if err := it.db.Ping(); err != nil {
+		return nil, err
+	}
+
+	if err := it.db.Get(&admin, query, id); err != nil {
+
+		if err == sql.ErrNoRows {
+
+			return nil, model.ErrNotFound
 		}
-
-		err = json.Unmarshal([]byte(res), &admin)
-		if err != nil {
-			return err
-		}
-
-		return nil
-	}
-
-	findInDB := func() error {
-
-		sql := "SELECT * FROM admins WHERE admin_id=$1"
-
-		if err := it.db.Ping(); err != nil {
-
-			return err
-		}
-
-		return it.db.Get(&admin, sql, id)
-	}
-
-	if err := findInRedis(); err == nil {
-
-		return &admin, nil
-	}
-
-	if err = findInDB(); err == nil {
-
-		return &admin, nil
-	}
-	if err != sql.ErrNoRows {
 
 		return nil, err
 	}
 
-	return nil, model.ErrNotFound
+	return &admin, nil
 }

@@ -4,16 +4,17 @@ import (
 	"api/model"
 )
 
-func (it Usecase) Auth(token string) (user model.User, err error) {
+func (it Usecase) Auth(token string) (string, error) {
 
-	// user := model.User{
-	// 	Token: token,
-	// }
+	return it.token.Find(token)
+}
 
-	// if err := it.repo.FindBy("Token", &user); err != nil {
-	// 	return nil, err
-	// }
+func (it Usecase) FindUserByID(id string) (*model.User, error) {
 
-	// return &user, nil
-	return
+	user, err := it.user.FindByID(id)
+	if err != nil {
+		return nil, err
+	}
+
+	return user, nil
 }

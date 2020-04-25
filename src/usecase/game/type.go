@@ -56,7 +56,7 @@ func (it Usecase) Update(game *model.Game) (*model.Game, error) {
 
 	game.UpdatedAt = time.Now()
 
-	if err := it.game.Store(game); err != nil {
+	if err := it.game.Update(game); err != nil {
 
 		return nil, err
 	}

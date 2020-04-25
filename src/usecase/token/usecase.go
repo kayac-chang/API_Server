@@ -24,7 +24,7 @@ type Usecase struct {
 // New ...
 func New(env env.Env, redis redis.Redis, db postgres.DB) Usecase {
 
-	user := user.New(redis)
+	user := user.New(redis, db)
 	token := token.New(redis)
 	game := game.New(redis, db)
 	agent := agent.New(env)
