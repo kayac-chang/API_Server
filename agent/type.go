@@ -5,10 +5,10 @@ import (
 	"api/model"
 	"api/utils"
 	"api/utils/json"
+	"fmt"
 	"net/http"
 	"time"
 
-	"fmt"
 	"log"
 )
 
@@ -67,17 +67,25 @@ func (it Agent) CheckPlayer(username string, session string) (float64, error) {
 	json.Parse(resp.Body, &res)
 
 	if resp.StatusCode != 200 {
-		log.Printf("Agent [ %s ] Failed\n Error:\n %s", api, json.Jsonify(res))
+		log.Printf("Agent: [ %s ] Failed...\n Error:\n %s", api, json.Jsonify(res))
 
-		return 0, fmt.Errorf("%s", res["message"])
+		msg, err := getErrorMsg(res)
+		if err != nil {
+			return 0, &model.Error{
+				Code:    resp.StatusCode,
+				Message: err.Error(),
+			}
+		}
+
+		return 0, &model.Error{
+			Code:    resp.StatusCode,
+			Message: msg,
+		}
 	}
 
 	log.Printf("Agent [ %s ] Success\nResponse:\n %s", api, json.Jsonify(res))
 
-	data := res["data"].(map[string]interface{})
-	amount := data["balance"].(float64)
-
-	return amount, nil
+	return getBalance(res)
 }
 
 // SendBet ...
@@ -118,8 +126,13 @@ func (it Agent) SendBet(bet Bet) (float64, error) {
 	if resp.StatusCode != 200 {
 		log.Printf("Agent: [ %s ] Failed...\n Error:\n %s", api, json.Jsonify(res))
 
-		data := res["error"].(map[string]interface{})
-		msg := data["message"].(string)
+		msg, err := getErrorMsg(res)
+		if err != nil {
+			return 0, &model.Error{
+				Code:    resp.StatusCode,
+				Message: err.Error(),
+			}
+		}
 
 		return 0, &model.Error{
 			Code:    resp.StatusCode,
@@ -129,10 +142,7 @@ func (it Agent) SendBet(bet Bet) (float64, error) {
 
 	log.Printf("Agent: [ %s ] Success !!!\nResponse:\n %s", api, json.Jsonify(res))
 
-	data := res["data"].(map[string]interface{})
-	balance := data["balance"].(float64)
-
-	return balance, nil
+	return getBalance(res)
 }
 
 // SendEndRound ...
@@ -173,8 +183,13 @@ func (it Agent) SendEndRound(bet Bet) (float64, error) {
 	if resp.StatusCode != 200 {
 		log.Printf("Agent: [ %s ] Failed...\n Error:\n %s", api, json.Jsonify(res))
 
-		data := res["error"].(map[string]interface{})
-		msg := data["message"].(string)
+		msg, err := getErrorMsg(res)
+		if err != nil {
+			return 0, &model.Error{
+				Code:    resp.StatusCode,
+				Message: err.Error(),
+			}
+		}
 
 		return 0, &model.Error{
 			Code:    resp.StatusCode,
@@ -184,8 +199,35 @@ func (it Agent) SendEndRound(bet Bet) (float64, error) {
 
 	log.Printf("Agent: [ %s ] Success !!!\nResponse:\n %s", api, json.Jsonify(res))
 
-	data := res["data"].(map[string]interface{})
-	balance := data["balance"].(float64)
+	return getBalance(res)
+}
+
+func getErrorMsg(res map[string]interface{}) (string, error) {
+
+	data, ok := res["error"].(map[string]interface{})
+	if !ok {
+		return "", fmt.Errorf("Unexpected response structure from agent: %+v", res)
+	}
+
+	msg, ok := data["message"].(string)
+	if !ok {
+		return "", fmt.Errorf("Unexpected response structure from agent: %+v", res)
+	}
+
+	return msg, nil
+}
+
+func getBalance(res map[string]interface{}) (float64, error) {
+
+	data, ok := res["data"].(map[string]interface{})
+	if !ok {
+		return 0, fmt.Errorf("Unexpected response structure from agent: %+v", res)
+	}
+
+	balance, ok := data["balance"].(float64)
+	if !ok {
+		return 0, fmt.Errorf("Unexpected response structure from agent: %+v", res)
+	}
 
 	return balance, nil
 }
