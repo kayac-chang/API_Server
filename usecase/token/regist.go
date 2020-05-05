@@ -29,34 +29,21 @@ func (it Usecase) Regist(username string, session string) (*model.Token, error) 
 		}
 	}
 
-	// Find User
-	user, err := it.user.FindByID(utils.MD5(username))
-	if err != nil && err != model.ErrNotFound {
+	// Create User
+	user := &model.User{
+		ID:        utils.MD5(username),
+		Username:  username,
+		Balance:   balance,
+		Session:   session,
+		CreatedAt: time.Now(),
+		UpdatedAt: time.Now(),
+	}
+
+	if err := it.user.Store(user); err != nil {
 
 		return nil, &model.Error{
 			Code:    http.StatusInternalServerError,
 			Message: err.Error(),
-		}
-	}
-
-	// Create User
-	if user == nil {
-
-		user = &model.User{
-			ID:        utils.MD5(username),
-			Username:  username,
-			Balance:   balance,
-			Session:   session,
-			CreatedAt: time.Now(),
-			UpdatedAt: time.Now(),
-		}
-
-		if err := it.user.Store(user); err != nil {
-
-			return nil, &model.Error{
-				Code:    http.StatusInternalServerError,
-				Message: err.Error(),
-			}
 		}
 	}
 
