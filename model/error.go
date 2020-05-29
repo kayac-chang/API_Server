@@ -13,6 +13,7 @@ func (it *Error) Error() string {
 }
 
 var (
+	ErrBodyEmpty       = errors.New("Request Body is empty")
 	ErrNotFound        = errors.New("Resource Not Found")
 	ErrUserNotFound    = errors.New("User Not Found")
 	ErrGameNotFound    = errors.New("Game Not Found")
