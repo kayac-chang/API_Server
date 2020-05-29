@@ -1,4 +1,4 @@
-package order
+package suborder
 
 import (
 	"api/model"
@@ -10,19 +10,19 @@ import (
 )
 
 // Parse ...
-func (it Handler) Parse(reqBody io.Reader) (*model.Order, error) {
+func (it Handler) Parse(reqBody io.Reader) (*model.SubOrder, error) {
 
 	reqByte, err := ioutil.ReadAll(reqBody)
 	if err != nil {
 		return nil, err
 	}
 
-	req := pb.Order{}
+	req := pb.SubOrder{}
 	if err := proto.Unmarshal(reqByte, &req); err != nil {
 		return nil, err
 	}
 
-	order := model.Order{}
+	order := model.SubOrder{}
 	if err := order.FromProto(req); err != nil {
 		return nil, err
 	}

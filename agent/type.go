@@ -21,7 +21,8 @@ type Agent struct {
 
 // Bet ...
 type Bet struct {
-	Roundid string
+	OrderID    string
+	SubOrderID string
 
 	Username string
 	Gamename string
@@ -92,15 +93,15 @@ func (it Agent) CheckPlayer(username string, session string) (float64, error) {
 func (it Agent) SendBet(bet Bet) (float64, error) {
 
 	api := "/transaction/game/bet"
-
 	url := it.Domain + it.API + api
 
 	req := map[string]interface{}{
-		"account":    bet.Username,
-		"created_at": bet.CreatedAt.String(),
-		"gamename":   bet.Gamename,
-		"roundid":    bet.Roundid,
-		"amount":     bet.Amount,
+		"account":      bet.Username,
+		"created_at":   bet.CreatedAt.String(),
+		"gamename":     bet.Gamename,
+		"roundid":      bet.OrderID,
+		"sub_order_id": bet.SubOrderID,
+		"amount":       bet.Amount,
 	}
 
 	headers := map[string]string{
@@ -117,7 +118,6 @@ func (it Agent) SendBet(bet Bet) (float64, error) {
 			Message: err.Error(),
 		}
 	}
-
 	defer resp.Body.Close()
 
 	res := map[string]interface{}{}
@@ -146,7 +146,7 @@ func (it Agent) SendBet(bet Bet) (float64, error) {
 }
 
 // SendEndRound ...
-func (it Agent) SendEndRound(bet Bet) (float64, error) {
+func (it Agent) SendEndRound(bet Bet, subOrderIDs ...string) (float64, error) {
 
 	api := "/transaction/game/endround"
 
@@ -155,9 +155,10 @@ func (it Agent) SendEndRound(bet Bet) (float64, error) {
 	req := map[string]interface{}{
 		"account":      bet.Username,
 		"gamename":     bet.Gamename,
-		"roundid":      bet.Roundid,
+		"roundid":      bet.OrderID,
 		"amount":       bet.Amount,
 		"completed_at": bet.CreatedAt.String(),
+		"sub_orders":   subOrderIDs,
 	}
 
 	headers := map[string]string{

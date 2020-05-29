@@ -12,30 +12,33 @@ import (
 
 	"api/repo/game"
 	"api/repo/order"
+	"api/repo/suborder"
 	"api/repo/token"
 	"api/repo/user"
 )
 
 // Usecase ...
 type Usecase struct {
-	env   env.Env
-	order order.Repo
-	game  game.Repo
-	user  user.Repo
-	token token.Repo
-	agent agent.Agent
+	env      env.Env
+	order    order.Repo
+	suborder suborder.Repo
+	game     game.Repo
+	user     user.Repo
+	token    token.Repo
+	agent    agent.Agent
 }
 
 // New ...
 func New(env env.Env, redis redis.Redis, db postgres.DB) Usecase {
 
 	return Usecase{
-		env:   env,
-		order: order.New(redis, db),
-		game:  game.New(redis, db),
-		user:  user.New(redis, db),
-		token: token.New(redis),
-		agent: agent.New(env),
+		env:      env,
+		order:    order.New(redis, db),
+		suborder: suborder.New(redis, db),
+		game:     game.New(redis, db),
+		user:     user.New(redis, db),
+		token:    token.New(redis),
+		agent:    agent.New(env),
 	}
 }
 
@@ -82,41 +85,76 @@ func (it Usecase) FindOrderByID(id string) (*model.Order, error) {
 	return order, nil
 }
 
-// SendBet ...
-func (it Usecase) SendBet(user *model.User, game *model.Game, order *model.Order) error {
+// SendOrder ...
+func (it Usecase) SendOrder(user *model.User, game *model.Game, order *model.Order) (*agent.Bet, error) {
 
 	bet := agent.Bet{
-		Roundid:   utils.UUID(),
-		Username:  user.Username,
-		Gamename:  game.Name,
-		Amount:    order.Bet,
+		OrderID: utils.UUID(),
+
+		Amount: order.Bet,
+
+		Username: user.Username,
+		Gamename: game.Name,
+
 		Session:   user.Session,
 		CreatedAt: time.Now(),
 	}
 
 	balance, err := it.agent.SendBet(bet)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	// == Update Balance ==
 	user.Balance = balance
-	defer it.UpdateUser(user)
+	go it.UpdateUser(user)
 
-	// == Store Order ==
-	order.ID = bet.Roundid
-	order.State = model.Pending
-	order.CreatedAt = bet.CreatedAt
-	defer it.StoreOrder(order)
+	return &bet, nil
+}
 
-	return nil
+// SendSubOrder ...
+func (it Usecase) SendSubOrder(user *model.User, game *model.Game, subOrder *model.SubOrder) (*agent.Bet, error) {
+
+	bet := agent.Bet{
+		OrderID:    subOrder.OrderID,
+		SubOrderID: utils.UUID(),
+
+		Amount: subOrder.Bet,
+
+		Username: user.Username,
+		Gamename: game.Name,
+
+		Session:   user.Session,
+		CreatedAt: time.Now(),
+	}
+
+	balance, err := it.agent.SendBet(bet)
+	if err != nil {
+		return nil, err
+	}
+
+	// == Update Balance ==
+	user.Balance = balance
+	go it.UpdateUser(user)
+
+	return &bet, nil
 }
 
 // Checkout ...
 func (it Usecase) Checkout(user *model.User, game *model.Game, order *model.Order) error {
 
+	subOrders, err := it.suborder.FindAllInOrder(order.ID)
+	if err != nil {
+		return err
+	}
+
+	subOrderIDs := []string{}
+	for _, subOrder := range subOrders {
+		subOrderIDs = append(subOrderIDs, subOrder.ID)
+	}
+
 	bet := agent.Bet{
-		Roundid:   order.ID,
+		OrderID:   order.ID,
 		Username:  user.Username,
 		Gamename:  game.Name,
 		Amount:    order.Win,
@@ -124,7 +162,7 @@ func (it Usecase) Checkout(user *model.User, game *model.Game, order *model.Orde
 		CreatedAt: time.Now(),
 	}
 
-	balance, err := it.agent.SendEndRound(bet)
+	balance, err := it.agent.SendEndRound(bet, subOrderIDs...)
 	if err != nil {
 		order.State = model.Issue
 
@@ -134,10 +172,10 @@ func (it Usecase) Checkout(user *model.User, game *model.Game, order *model.Orde
 	// == Update ==
 	order.State = model.Completed
 	order.CompletedAt = time.Now()
-	defer it.StoreOrder(order)
+	go it.StoreOrder(order)
 
 	user.Balance = balance
-	defer it.UpdateUser(user)
+	go it.UpdateUser(user)
 
 	return nil
 }
@@ -156,4 +194,12 @@ func (it Usecase) UpdateUser(user *model.User) error {
 	user.UpdatedAt = time.Now()
 
 	return it.user.Store(user)
+}
+
+// StoreSubOrder ...
+func (it Usecase) StoreSubOrder(subOrder *model.SubOrder) error {
+
+	subOrder.UpdatedAt = time.Now()
+
+	return it.suborder.Store(subOrder)
 }
