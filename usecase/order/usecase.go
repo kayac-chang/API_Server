@@ -170,8 +170,6 @@ func (it Usecase) Checkout(user *model.User, game *model.Game, order *model.Orde
 	}
 
 	// == Update ==
-	order.State = model.Completed
-	order.CompletedAt = time.Now()
 	go it.StoreOrder(order)
 
 	user.Balance = balance
