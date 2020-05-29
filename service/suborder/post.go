@@ -1,4 +1,4 @@
-package order
+package suborder
 
 import (
 	"api/model"
@@ -8,8 +8,8 @@ import (
 	"net/http"
 )
 
-// PUT ...
-func (it *Handler) PUT(w http.ResponseWriter, r *http.Request) {
+// POST ...
+func (it Handler) POST(w http.ResponseWriter, r *http.Request) {
 
 	main := func() interface{} {
 
@@ -43,7 +43,7 @@ func (it *Handler) PUT(w http.ResponseWriter, r *http.Request) {
 		}
 
 		// == Parse ProtoBuf #3 ==
-		order, err := it.Parse(r.Body)
+		subOrder, err := it.Parse(r.Body)
 		if err != nil {
 
 			return response.ProtoBuf{
@@ -58,7 +58,8 @@ func (it *Handler) PUT(w http.ResponseWriter, r *http.Request) {
 		}
 
 		// == Check Order Exist #4 ==
-		if _, err = it.usecase.FindOrderByID(order.ID); err != nil {
+		order, err := it.usecase.FindOrderByID(subOrder.OrderID)
+		if err != nil {
 
 			return response.ProtoBuf{
 				Code: http.StatusNotFound,
@@ -80,7 +81,6 @@ func (it *Handler) PUT(w http.ResponseWriter, r *http.Request) {
 		})
 		res, err := utils.WaitAll(task1, task2)
 		if err != nil {
-
 			code := http.StatusNotFound
 			if err != model.ErrNotFound {
 				code = http.StatusInternalServerError
@@ -100,62 +100,41 @@ func (it *Handler) PUT(w http.ResponseWriter, r *http.Request) {
 		game := res[0].(*model.Game)
 		user := res[1].(*model.User)
 
-		switch order.State {
-
-		case model.Completed:
-
-			// == Checkout Order #6 ==
-			if err := it.usecase.Checkout(user, game, order); err != nil {
-
-				return response.ProtoBuf{
-					Code: http.StatusInternalServerError,
-
-					Data: &pb.Error{
-						Code:    http.StatusInternalServerError,
-						Name:    "Checkout Order #6",
-						Message: err.Error(),
-					},
-				}
-			}
-
-		case model.Rejected:
+		// == Send SubOrder #6 ==
+		bet, err := it.usecase.SendSubOrder(user, game, subOrder)
+		if err != nil {
+			_err := err.(*model.Error)
 
 			return response.ProtoBuf{
-				Code: http.StatusBadRequest,
+				Code: _err.Code,
 
 				Data: &pb.Error{
-					Code:    http.StatusBadRequest,
-					Name:    "Rejected #6",
-					Message: "Not Implement",
+					Code:    uint32(_err.Code),
+					Name:    "Send SubOrder #6",
+					Message: _err.Error(),
 				},
 			}
+		}
 
-		case model.Issue:
+		// == Store SubOrder #7 ==
+		subOrder.ID = bet.SubOrderID
+		subOrder.State = model.Completed
+		subOrder.CreatedAt = bet.CreatedAt
+		if err := it.usecase.StoreSubOrder(subOrder); err != nil {
 
-			return response.ProtoBuf{
-				Code: http.StatusBadRequest,
-
-				Data: &pb.Error{
-					Code:    http.StatusBadRequest,
-					Name:    "Issue #6",
-					Message: "Not Implement",
-				},
-			}
-
-		default:
 			return response.ProtoBuf{
 				Code: http.StatusInternalServerError,
 
 				Data: &pb.Error{
 					Code:    http.StatusInternalServerError,
-					Name:    "Update Order #6",
-					Message: "Not Support Order State",
+					Name:    "Store SubOrder #7",
+					Message: err.Error(),
 				},
 			}
 		}
 
-		// == Create Protobuf #7 ==
-		data, err := order.ToProto()
+		// == Create Protobuf #8 ==
+		data, err := subOrder.ToProto()
 		if err != nil {
 
 			return response.ProtoBuf{
@@ -163,7 +142,7 @@ func (it *Handler) PUT(w http.ResponseWriter, r *http.Request) {
 
 				Data: &pb.Error{
 					Code:    http.StatusInternalServerError,
-					Name:    "Create Protobuf #7",
+					Name:    "Create Protobuf #8",
 					Message: err.Error(),
 				},
 			}

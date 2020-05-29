@@ -8,6 +8,7 @@ import (
 	"api/service/admin"
 	"api/service/game"
 	"api/service/order"
+	"api/service/suborder"
 	"api/service/token"
 
 	adminusecase "api/usecase/admin"
@@ -37,6 +38,7 @@ func main() {
 	admin := admin.New(it, env, adminUsecase)
 	game := game.New(it, env, gameUsecase)
 	order := order.New(it, env, orderUsecase)
+	subOrder := suborder.New(it, env, orderUsecase)
 
 	it.Route("/"+env.API.Version, func(router chi.Router) {
 		// === Game ===
@@ -70,6 +72,11 @@ func main() {
 		router.Route("/orders", func(router chi.Router) {
 			router.Post("/", order.POST)
 			router.Put("/{id}", order.PUT)
+		})
+
+		// === SubOrder ===
+		router.Route("/sub-orders", func(router chi.Router) {
+			router.Post("/", subOrder.POST)
 		})
 	})
 
