@@ -59,7 +59,7 @@ func (it *Handler) PUT(w http.ResponseWriter, r *http.Request) {
 			}
 		}
 
-		// == Check Exist #4 ==
+		// == Check Exist #5 ==
 		task1 := utils.Promisefy(func() (interface{}, error) {
 			return it.usecase.FindGameByID(order.GameID)
 		})
@@ -79,7 +79,7 @@ func (it *Handler) PUT(w http.ResponseWriter, r *http.Request) {
 
 				Data: &pb.Error{
 					Code:    uint32(code),
-					Name:    "Check Exist #4",
+					Name:    "Check Exist #5",
 					Message: err.Error(),
 				},
 			}
