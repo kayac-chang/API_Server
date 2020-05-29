@@ -7,7 +7,6 @@ import (
 	"log"
 
 	"github.com/mediocregopher/radix/v3"
-	errs "github.com/pkg/errors"
 )
 
 // Redis radix client wrapper
@@ -45,23 +44,6 @@ func (it Redis) Set(key string, val interface{}) error {
 	return it.pool.Do(radix.Cmd(nil, "SET", key, string(json)))
 }
 
-// Get is used to perform redis GET command
-// it will get back json string by key, and parse to val
-func (it Redis) Get(key string, val interface{}) error {
-
-	var res string
-
-	if err := it.pool.Do(radix.Cmd(&res, "GET", key)); err != nil {
-		return err
-	}
-
-	if res == "" {
-		return errs.Errorf("GET key [%s] is empty in redis", key)
-	}
-
-	return json.Unmarshal([]byte(res), val)
-}
-
 func (it Redis) Read(cmd string, args ...string) (string, error) {
 
 	var res string
@@ -81,6 +63,23 @@ func (it Redis) Read(cmd string, args ...string) (string, error) {
 	}
 
 	return res, nil
+}
+
+func (it Redis) Find(cmd string, res interface{}, args ...string) error {
+
+	mn := radix.MaybeNil{Rcv: &res}
+
+	err := it.pool.Do(radix.Cmd(&mn, cmd, args...))
+
+	if err != nil {
+		return err
+	}
+
+	if mn.Nil {
+		return model.ErrNotFound
+	}
+
+	return nil
 }
 
 type Handler func(radix.Conn) error
