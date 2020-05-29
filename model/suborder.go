@@ -7,37 +7,24 @@ import (
 	"github.com/golang/protobuf/ptypes"
 )
 
-// State ...
-type State string
+// SubOrder ...
+type SubOrder struct {
+	ID string `json:"sub_order_id" db:"sub_order_id"`
 
-const (
-	Pending   State = "P"
-	Completed       = "C"
-	Rejected        = "R"
-	Issue           = "I"
-)
-
-// Order ...
-type Order struct {
-	ID string `json:"order_id" db:"order_id"`
-
-	GameID string `json:"game_id" db:"game_id"`
-	UserID string `json:"user_id" db:"user_id"`
+	OrderID string `json:"order_id" db:"order_id"`
 
 	State State   `json:"state" db:"state"`
 	Bet   float64 `json:"bet" db:"bet"`
-	Win   float64 `json:"win" db:"win"`
 
 	CreatedAt   time.Time `json:"created_at" db:"created_at"`
-	CompletedAt time.Time `json:"completed_at" db:"completed_at,omitempty"`
 	UpdatedAt   time.Time `json:"updated_at" db:"updated_at"`
+	CompletedAt time.Time `json:"completed_at" db:"completed_at"`
 }
 
-func (it *Order) FromProto(proto pb.Order) error {
+func (it *SubOrder) FromProto(proto pb.SubOrder) error {
 
-	it.ID = proto.OrderId
-	it.GameID = proto.GameId
-	it.UserID = proto.UserId
+	it.ID = proto.SubOrderId
+	it.OrderID = proto.OrderId
 	it.Bet = float64(proto.Bet)
 	it.SetState(proto.State)
 
@@ -47,7 +34,6 @@ func (it *Order) FromProto(proto pb.Order) error {
 		if err != nil {
 			return err
 		}
-
 		it.CreatedAt = time
 	}
 
@@ -57,7 +43,6 @@ func (it *Order) FromProto(proto pb.Order) error {
 		if err != nil {
 			return err
 		}
-
 		it.CompletedAt = time
 	}
 
@@ -67,15 +52,15 @@ func (it *Order) FromProto(proto pb.Order) error {
 		if err != nil {
 			return err
 		}
-
 		it.UpdatedAt = time
 	}
 
 	return nil
+
 }
 
 // ToProto ...
-func (it *Order) ToProto() (*pb.Order, error) {
+func (it *SubOrder) ToProto() (*pb.SubOrder, error) {
 
 	createAt, err := ptypes.TimestampProto(it.CreatedAt)
 	if err != nil {
@@ -92,15 +77,12 @@ func (it *Order) ToProto() (*pb.Order, error) {
 		return nil, err
 	}
 
-	pb := pb.Order{
-		OrderId: it.ID,
-
-		GameId: it.GameID,
-		UserId: it.UserID,
+	pb := pb.SubOrder{
+		SubOrderId: it.ID,
+		OrderId:    it.OrderID,
 
 		State: it.PbState(),
 		Bet:   uint64(it.Bet),
-		Win:   uint64(it.Win),
 
 		CreatedAt:   createAt,
 		CompletedAt: completedAt,
@@ -110,40 +92,40 @@ func (it *Order) ToProto() (*pb.Order, error) {
 	return &pb, nil
 }
 
-func (it *Order) PbState() pb.Order_State {
+func (it *SubOrder) PbState() pb.SubOrder_State {
 
 	switch it.State {
 
 	case Pending:
-		return pb.Order_Pending
+		return pb.SubOrder_Pending
 
 	case Completed:
-		return pb.Order_Completed
+		return pb.SubOrder_Completed
 
 	case Rejected:
-		return pb.Order_Rejected
+		return pb.SubOrder_Rejected
 
 	case Issue:
-		return pb.Order_Issue
+		return pb.SubOrder_Issue
 	}
 
 	return -1
 }
 
-func (it *Order) SetState(state pb.Order_State) {
+func (it *SubOrder) SetState(state pb.SubOrder_State) {
 
 	switch state {
 
-	case pb.Order_Pending:
+	case pb.SubOrder_Pending:
 		it.State = Pending
 
-	case pb.Order_Completed:
+	case pb.SubOrder_Completed:
 		it.State = Completed
 
-	case pb.Order_Rejected:
+	case pb.SubOrder_Rejected:
 		it.State = Rejected
 
-	case pb.Order_Issue:
+	case pb.SubOrder_Issue:
 		it.State = Issue
 	}
 }

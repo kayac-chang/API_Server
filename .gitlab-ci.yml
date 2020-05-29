@@ -1,0 +1,75 @@
+variables:
+  DEVOPS_PROJECT_TOKEN: "da3491f1522e23828a29057a41e934"
+  DEVOPS_PROJECT_ID: "96"
+  RunnerToken: "PRIVATE-TOKEN: fgE1u5KAaFFgKBR-rTvN"
+
+stages:
+  - env
+  - trigger
+  - check
+
+env:
+  stage: env
+  tags: 
+    - game
+  only:
+    - devops
+    - dev
+    - stg
+  script:
+    - echo $CI_BUILDS_DIR
+    - echo $CI_COMMIT_SHA
+    - echo $CI_PROJECT_PATH
+    - echo $CI_PROJECT_NAME
+    - echo $CI_COMMIT_REF_NAME
+    - echo $GITLAB_USER_NAME
+
+trigger: # This action will trigger remote ci setting to auto build and auto deploy to dev/stg environment.
+  stage: trigger
+  tags: 
+    - game
+  only:
+    - devops
+    - dev
+    - stg
+  before_script:
+    - whoami
+  script:
+    - echo "trigger pipeline"
+    - curl -X POST -F "token=${DEVOPS_PROJECT_TOKEN}" -F "ref=master" -F "variables[RELEASE]=${CI_COMMIT_REF_NAME}" "https://gitlab.fbk168.com/api/v4/projects/${DEVOPS_PROJECT_ID}/trigger/pipeline/"
+    - 'PipelineID=`curl -H "${RunnerToken}" "https://gitlab.fbk168.com/api/v4/projects/${DEVOPS_PROJECT_ID}/pipelines" | docker run -i --rm mbentley/jq .[0].id`'
+    - 'echo "PipelineID: ${PipelineID}"'
+    - 'PipelineStatus=`curl -H "${RunnerToken}" "https://gitlab.fbk168.com/api/v4/projects/${DEVOPS_PROJECT_ID}/pipelines/${PipelineID}" | docker run -i --rm mbentley/jq .status`'
+    - 'echo "PipelineStatus: ${PipelineStatus}"'
+check: # This action will check remote ci result success or failed.
+  stage: check
+  tags:
+    - game
+  only:
+    - devops
+    - dev
+    - stg
+  script:
+    - 'PipelineID=`curl -H "${RunnerToken}" "https://gitlab.fbk168.com/api/v4/projects/${DEVOPS_PROJECT_ID}/pipelines" | docker run -i --rm mbentley/jq .[0].id`'
+    - 'echo "PipelineID: ${PipelineID}"'
+    - 'PipelineStatus=`curl -H "${RunnerToken}" "https://gitlab.fbk168.com/api/v4/projects/${DEVOPS_PROJECT_ID}/pipelines/${PipelineID}" | docker run -i --rm mbentley/jq .status`'
+    - 'echo "PipelineStatus: ${PipelineStatus}"'
+    - 'RetryTime=0'
+    - | 
+      until [ "${PipelineStatus}" == '"success"' ]
+      do
+        sleep 1
+        PipelineStatus=`curl -H "${RunnerToken}" "https://gitlab.fbk168.com/api/v4/projects/${DEVOPS_PROJECT_ID}/pipelines/${PipelineID}" | docker run -i --rm mbentley/jq .status`
+        echo "Remote pipeline status:${PipelineStatus}"
+        if [ "${PipelineStatus}" == '"failed"' ];then
+          echo "Pipeline: ${PipelineStatus}"
+          exit 1
+        elif [ "${RetryTime}" -ge 180 ];then # 3 min timeout
+          echo "Expired ${RereyTime}"
+          exit 1
+        else
+          sleep 2
+          RetryTime=$((RetryTime+3))
+        fi
+      done
+    - 'echo "Remote Pipeline Success"'
