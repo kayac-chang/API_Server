@@ -81,18 +81,26 @@ func (it Repo) FindByID(id string) (*model.SubOrder, error) {
 
 func (it Repo) findAllInRedisByOrderID(orderID string) ([]model.SubOrder, error) {
 
-	res, err := it.redis.Read("LRANGE", orderID, "0", "-1")
+	ids := []string{}
+
+	err := it.redis.Find("LRANGE", &ids, orderID, "0", "-1")
 	if err != nil {
 		return nil, err
 	}
 
-	orders := []model.SubOrder{}
-	err = json.Unmarshal([]byte(res), &orders)
-	if err != nil {
-		return nil, err
+	subOrders := []model.SubOrder{}
+
+	for _, subOrderID := range ids {
+		subOrder, err := it.findInRedisBySubOrderID(subOrderID)
+
+		if err != nil {
+			return nil, err
+		}
+
+		subOrders = append(subOrders, *subOrder)
 	}
 
-	return orders, nil
+	return subOrders, nil
 }
 
 func (it Repo) findAllInDBByOrderID(orderID string) ([]model.SubOrder, error) {
