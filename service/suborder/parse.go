@@ -17,6 +17,10 @@ func (it Handler) Parse(reqBody io.Reader) (*model.SubOrder, error) {
 		return nil, err
 	}
 
+	if len(reqByte) == 0 {
+		return nil, model.ErrBodyEmpty
+	}
+
 	req := pb.SubOrder{}
 	if err := proto.Unmarshal(reqByte, &req); err != nil {
 		return nil, err

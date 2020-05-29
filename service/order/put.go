@@ -42,36 +42,24 @@ func (it *Handler) PUT(w http.ResponseWriter, r *http.Request) {
 			}
 		}
 
-		// == Parse ProtoBuf #3 ==
-		order, err := it.Parse(r.Body)
+		// == Check Order Exist #3 ==
+		orderID := it.URLParam(r, "id")
+
+		order, err := it.usecase.FindOrderByID(orderID)
 		if err != nil {
-
-			return response.ProtoBuf{
-				Code: http.StatusBadRequest,
-
-				Data: &pb.Error{
-					Code:    http.StatusBadRequest,
-					Name:    "Parse ProtoBuf #3",
-					Message: err.Error(),
-				},
-			}
-		}
-
-		// == Check Order Exist #4 ==
-		if _, err = it.usecase.FindOrderByID(order.ID); err != nil {
 
 			return response.ProtoBuf{
 				Code: http.StatusNotFound,
 
 				Data: &pb.Error{
 					Code:    http.StatusNotFound,
-					Name:    "Check Order Exist #4",
+					Name:    "Check Order Exist #3",
 					Message: err.Error(),
 				},
 			}
 		}
 
-		// == Check Exist #5 ==
+		// == Check Exist #4 ==
 		task1 := utils.Promisefy(func() (interface{}, error) {
 			return it.usecase.FindGameByID(order.GameID)
 		})
@@ -91,7 +79,7 @@ func (it *Handler) PUT(w http.ResponseWriter, r *http.Request) {
 
 				Data: &pb.Error{
 					Code:    uint32(code),
-					Name:    "Check Exist #5",
+					Name:    "Check Exist #4",
 					Message: err.Error(),
 				},
 			}
@@ -100,11 +88,30 @@ func (it *Handler) PUT(w http.ResponseWriter, r *http.Request) {
 		game := res[0].(*model.Game)
 		user := res[1].(*model.User)
 
-		switch order.State {
+		// == Parse ProtoBuf #5 ==
+		req, err := it.Parse(r.Body)
+		if err != nil {
+
+			return response.ProtoBuf{
+				Code: http.StatusBadRequest,
+
+				Data: &pb.Error{
+					Code:    http.StatusBadRequest,
+					Name:    "Parse ProtoBuf #5",
+					Message: err.Error(),
+				},
+			}
+		}
+
+		switch req.State {
 
 		case model.Completed:
 
 			// == Checkout Order #6 ==
+			order.State = model.Completed
+			order.Win = req.Win
+			order.CompletedAt = req.CompletedAt
+
 			if err := it.usecase.Checkout(user, game, order); err != nil {
 
 				return response.ProtoBuf{
