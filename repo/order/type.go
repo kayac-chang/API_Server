@@ -27,12 +27,10 @@ func New(redis redis.Redis, db postgres.DB) Repo {
 
 // FindByID ...
 func (it Repo) FindByID(id string) (*model.Order, error) {
-
 	var err error
 	order := model.Order{}
 
 	findInRedis := func() error {
-
 		res, err := it.redis.Read("HGET", table, id)
 		if err != nil {
 			return err
@@ -47,7 +45,6 @@ func (it Repo) FindByID(id string) (*model.Order, error) {
 	}
 
 	findInDB := func() error {
-
 		sql := fmt.Sprintf("SELECT * FROM %s WHERE order_id=$1", table)
 
 		if err := it.db.Ping(); err != nil {
@@ -58,20 +55,15 @@ func (it Repo) FindByID(id string) (*model.Order, error) {
 	}
 
 	if err = findInRedis(); err == nil {
-
 		return &order, nil
 	}
 	if err != model.ErrNotFound {
-
 		return nil, err
 	}
-
 	if err = findInDB(); err == nil {
-
 		return &order, nil
 	}
 	if err != sql.ErrNoRows {
-
 		return nil, err
 	}
 
@@ -87,7 +79,6 @@ func (it Repo) Store(order *model.Order) error {
 	}
 
 	return it.redis.Write(table, func(conn radix.Conn) error {
-
 		err := conn.Do(
 			radix.Cmd(nil, "HSET", table, order.ID, string(data)),
 		)

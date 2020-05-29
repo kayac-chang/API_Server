@@ -82,8 +82,8 @@ func (it Handler) POST(w http.ResponseWriter, r *http.Request) {
 		game := res[0].(*model.Game)
 		user := res[1].(*model.User)
 
-		// == Send Bet #6 ==
-		err = it.usecase.SendBet(user, game, order)
+		// == Send Order #5 ==
+		bet, err := it.usecase.SendOrder(user, game, order)
 		if err != nil {
 			_err := err.(*model.Error)
 
@@ -92,13 +92,30 @@ func (it Handler) POST(w http.ResponseWriter, r *http.Request) {
 
 				Data: &pb.Error{
 					Code:    uint32(_err.Code),
-					Name:    "Send Bet #6",
+					Name:    "Send Order #5",
 					Message: _err.Error(),
 				},
 			}
 		}
 
-		// == Create Protobuf #9 ==
+		// == Store Order #6 ==
+		order.ID = bet.OrderID
+		order.State = model.Pending
+		order.CreatedAt = bet.CreatedAt
+		if err := it.usecase.StoreOrder(order); err != nil {
+
+			return response.ProtoBuf{
+				Code: http.StatusInternalServerError,
+
+				Data: &pb.Error{
+					Code:    http.StatusInternalServerError,
+					Name:    "Store Order #6",
+					Message: err.Error(),
+				},
+			}
+		}
+
+		// == Create Protobuf #7 ==
 		data, err := order.ToProto()
 		if err != nil {
 
@@ -107,7 +124,7 @@ func (it Handler) POST(w http.ResponseWriter, r *http.Request) {
 
 				Data: &pb.Error{
 					Code:    http.StatusInternalServerError,
-					Name:    "Create Protobuf #9",
+					Name:    "Create Protobuf #7",
 					Message: err.Error(),
 				},
 			}
