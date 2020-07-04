@@ -5,6 +5,8 @@ import (
 	"api/model/pb"
 	"api/model/response"
 	"api/utils"
+	"api/utils/json"
+	"log"
 	"net/http"
 )
 
@@ -52,6 +54,8 @@ func (it Handler) POST(w http.ResponseWriter, r *http.Request) {
 				},
 			}
 		}
+
+		log.Printf("Game: [ %s ] Request:\n %s", order.GameID, json.Jsonify(order))
 
 		// == Check Exist #4 ==
 		task1 := utils.Promisefy(func() (interface{}, error) {

@@ -5,7 +5,8 @@ import (
 	"api/model/pb"
 	"api/model/response"
 	"api/utils"
-	"fmt"
+	"api/utils/json"
+	"log"
 	"net/http"
 )
 
@@ -104,7 +105,7 @@ func (it *Handler) PUT(w http.ResponseWriter, r *http.Request) {
 			}
 		}
 
-		fmt.Printf("%+v\n", req)
+		log.Printf("Game: [ %s ] Request:\n %s", req.GameID, json.Jsonify(req))
 
 		switch req.State {
 
