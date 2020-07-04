@@ -39,6 +39,7 @@ func (it *Order) FromProto(proto pb.Order) error {
 	it.GameID = proto.GameId
 	it.UserID = proto.UserId
 	it.Bet = float64(proto.Bet)
+	it.Win = float64(proto.Win)
 	it.SetState(proto.State)
 
 	if proto.CreatedAt != nil {
