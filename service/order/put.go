@@ -5,6 +5,7 @@ import (
 	"api/model/pb"
 	"api/model/response"
 	"api/utils"
+	"fmt"
 	"net/http"
 )
 
@@ -102,6 +103,8 @@ func (it *Handler) PUT(w http.ResponseWriter, r *http.Request) {
 				},
 			}
 		}
+
+		fmt.Printf("%+v\n", req)
 
 		switch req.State {
 
