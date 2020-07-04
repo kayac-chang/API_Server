@@ -104,6 +104,8 @@ func (it Agent) SendBet(bet Bet) (float64, error) {
 		"amount":       bet.Amount,
 	}
 
+	log.Printf("Agent: [ %s ] Request:\n %s", api, json.Jsonify(req))
+
 	headers := map[string]string{
 		"Content-Type":       "application/json",
 		"organization-token": it.Token,
@@ -160,6 +162,8 @@ func (it Agent) SendEndRound(bet Bet, subOrderIDs ...string) (float64, error) {
 		"completed_at": bet.CreatedAt.String(),
 		"sub_orders":   subOrderIDs,
 	}
+
+	log.Printf("Agent: [ %s ] Request:\n %s", api, json.Jsonify(req))
 
 	headers := map[string]string{
 		"Content-Type":       "application/json",
