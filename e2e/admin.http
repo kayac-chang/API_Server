@@ -1,0 +1,53 @@
+@host = https://api.shiyua.online/v1
+@contentType = application/json 
+@secret = my_secret_key
+@email = egg734631@gmail.com
+@username = kayac
+@password = Andy3320.
+@token = Bearer {{login.response.body.$.data.access_token}} 
+
+### Create an Admin account
+POST {{host}}/admins HTTP/2.0
+Content-Type: application/json
+
+{
+    "secret": "{{secret}}",
+    "email": "{{email}}",
+    "username": "{{username}}",
+    "password": "{{password}}"
+}
+
+### Create Admin Token
+# @name login
+POST {{host}}/admins/tokens HTTP/2.0
+Content-Type: application/json
+
+{
+    "secret": "{{secret}}",
+    "email": "{{email}}",
+    "password": "{{password}}"
+}
+
+
+### Create Game
+POST {{host}}/games HTTP/2.0
+Content-Type: application/json
+Authorization: {{token}}
+
+{
+    "name": "Blackjack",
+    "href": "https://blackjack-dev.shiyua.online",
+    "category": "slot"
+}
+
+### Modify Game By ID
+# @gameID = ""
+# PUT {{host}}/games/{{gameID}} HTTP/2.0
+# Content-Type: application/json
+# Authorization: {{token}}
+
+# {
+#     "name": "{{name}}",
+#     "href": "{{href}}",
+#     "category": "{{category}}"
+# }
